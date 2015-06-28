@@ -116,6 +116,8 @@ dependencyManagement {
         
         dependency 'com.lmax:disruptor:3.3.2'
         
+        dependency 'io.reactivex:rxjava:1.0.12'
+        
         dependencySet(group:'io.vertx', version: '3.0.0') {
             entry 'vertx-core'
             entry 'vertx-hazelcast'
@@ -158,6 +160,8 @@ dependencies {
     compile 'org.glassfish:javax.json'
     
     compile 'com.lmax:disruptor'
+    
+    compile 'io.reactivex:rxjava'
     
     compile 'io.vertx:vertx-core'
         

@@ -13,3 +13,22 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+package co.runrightfast.vertx.demo;
+
+import io.vertx.core.Vertx;
+
+/**
+ *
+ * @author alfio
+ */
+public final class VertxMain {
+
+    public static void main(String[] args) {
+        // Create an HTTP server which simply returns "Hello World!" to each request.
+        Vertx.vertx()
+                .createHttpServer()
+                .requestHandler(req -> req.response().end("Hello World!"))
+                .listen(8080);
+    }
+
+}
