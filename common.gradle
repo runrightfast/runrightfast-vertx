@@ -115,6 +115,24 @@ dependencyManagement {
         }
         
         dependency 'com.lmax:disruptor:3.3.2'
+        
+        dependencySet(group:'io.vertx', version: '3.0.0') {
+            entry 'vertx-core'
+            entry 'vertx-hazelcast'
+            entry 'vertx-web'
+            entry 'vertx-dropwizard-metrics'
+            entry 'vertx-service-factory'
+            entry 'vertx-service-proxy'
+            entry 'vertx-maven-service-factory'
+            entry 'vertx-http-service-factory'
+            entry 'vertx-auth-common'
+            entry 'vertx-auth-shiro'
+            entry 'vertx-auth-jwt'
+            entry 'vertx-rx-java'
+            entry 'vertx-unit'
+            entry 'vertx-mail-service'
+            entry 'vertx-mail-client'
+        }
      }
 }
 
