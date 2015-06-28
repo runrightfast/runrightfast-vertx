@@ -133,6 +133,10 @@ dependencyManagement {
             entry 'vertx-mail-service'
             entry 'vertx-mail-client'
         }
+        
+        dependency 'junit:junit:4.12'
+        dependency 'org.hamcrest:hamcrest-all:1.3'
+        dependency 'org.mockito:mockito-core:1.10.19'
      }
 }
 
@@ -145,15 +149,23 @@ dependencies {
     
     compile 'com.typesafe:config'
     
+    compile 'com.google.dagger:dagger'
+    compile 'com.google.dagger:dagger-compiler'
+    
     compile 'com.codahale.metrics:metrics-core'
     compile 'com.codahale.metrics:metrics-healthchecks'
     
     compile 'org.glassfish:javax.json'
+    
+    compile 'io.vertx:vertx-core'
+    
+    compile 'com.lmax:disruptor'
         
     // Adding dependencies here will add the dependencies to each subproject.
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.hamcrest', name:'hamcrest-all', version: '1.3'
-    testCompile group:'org.mockito', name:'mockito-core', version:'1.10.19'
+    testCompile 'junit:junit'
+    testCompile 'org.hamcrest:hamcrest-all'
+    testCompile 'org.mockito:mockito-core'
+    testCompile 'io.vertx:vertx-unit'
 }
 
 String mavenArtifactId = name

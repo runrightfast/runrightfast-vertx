@@ -1,5 +1,16 @@
 import org.gradle.api.artifacts.*
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "io.spring.gradle:dependency-management-plugin:0.5.1.RELEASE"
+    }
+}
+
+apply plugin: "io.spring.dependency-management"
+
 apply plugin: 'base' // To add "clean" task to the root project.
 
 subprojects {
