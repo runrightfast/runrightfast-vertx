@@ -157,9 +157,9 @@ dependencies {
     
     compile 'org.glassfish:javax.json'
     
-    compile 'io.vertx:vertx-core'
-    
     compile 'com.lmax:disruptor'
+    
+    compile 'io.vertx:vertx-core'
         
     // Adding dependencies here will add the dependencies to each subproject.
     testCompile 'junit:junit'
