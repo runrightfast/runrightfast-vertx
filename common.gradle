@@ -56,9 +56,9 @@ dependencyManagement {
         dependency group: 'org.apache.commons', name: 'commons-collections4', version : '4.0'
         dependency group: 'org.apache.commons', name: 'commons-compress', version: '1.9'
         dependency group: 'commons-io', name:"commons-io", version:'2.4'
-        dependency group:'com.typesafe', name:'config', version:'1.3.0'
+        dependency group: 'com.typesafe', name:'config', version:'1.3.0'
         dependency group: 'com.google.protobuf', name:'protobuf-java', version:'3.0.0-alpha-2'
-        dependency group:'org.glassfish', name:'javax.json', version:'1.0.4'
+        dependency group: 'org.glassfish', name:'javax.json', version:'1.0.4'
         
         dependency group:'org.elasticsearch', name:'elasticsearch', version:'1.5.2'
                 
@@ -136,6 +136,10 @@ dependencyManagement {
             entry 'vertx-mail-client'
         }
         
+        dependency group: 'org.hibernate', name:'hibernate-validator', version:'5.1.3.Final'
+        dependency group: 'javax.el', name:'javax.el-api', version:'2.2.5'
+        dependency group: 'org.glassfish.web', name:'javax.el', version:'2.2.6'
+        
         dependency 'junit:junit:4.12'
         dependency 'org.hamcrest:hamcrest-all:1.3'
         dependency 'org.mockito:mockito-core:1.10.19'
@@ -159,11 +163,12 @@ dependencies {
     
     compile 'org.glassfish:javax.json'
     
-    compile 'com.lmax:disruptor'
-    
     compile 'io.reactivex:rxjava'
     
     compile 'io.vertx:vertx-core'
+    compile 'io.vertx:vertx-rx-java'
+    compile 'io.vertx:vertx-dropwizard-metrics'
+    compile 'io.vertx:vertx-service-factory'
         
     // Adding dependencies here will add the dependencies to each subproject.
     testCompile 'junit:junit'
