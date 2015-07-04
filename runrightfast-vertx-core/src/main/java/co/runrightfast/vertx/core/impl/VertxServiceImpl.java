@@ -29,6 +29,8 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -68,8 +70,16 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     }
 
     @Override
-    protected void shutDown() throws Exception {
-
+    protected void shutDown() throws InterruptedException {
+        if (vertx != null) {
+            final CountDownLatch latch = new CountDownLatch(1);
+            vertx.close(result -> latch.countDown());
+            while (latch.await(10, TimeUnit.SECONDS)) {
+                LOG.info("Waiting for Vertx to shutdown");
+            }
+            vertx = null;
+            vertxOptions = null;
+        }
     }
 
     private VertxOptions createVertxOptions() {
