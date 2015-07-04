@@ -67,7 +67,7 @@ dependencyManagement {
             entry 'hazelcast'
         }
           
-        dependencySet(group:'com.codahale.metrics', version: '3.0.2') {
+        dependencySet(group:'io.dropwizard.metrics', version: '3.1.2') {
             entry 'metrics-core'
             entry 'metrics-jvm'
             entry 'metrics-healthchecks'
@@ -158,17 +158,22 @@ dependencies {
     compile 'com.google.dagger:dagger'
     compile 'com.google.dagger:dagger-compiler'
     
-    compile 'com.codahale.metrics:metrics-core'
-    compile 'com.codahale.metrics:metrics-healthchecks'
+    compile 'io.dropwizard.metrics:metrics-core'
+    compile 'io.dropwizard.metrics:metrics-healthchecks'
     
     compile 'org.glassfish:javax.json'
     
     compile 'io.reactivex:rxjava'
     
-    compile 'io.vertx:vertx-core'
-    compile 'io.vertx:vertx-rx-java'
+    compile 'io.vertx:vertx-core'    
     compile 'io.vertx:vertx-dropwizard-metrics'
+    compile 'io.vertx:vertx-hazelcast'
+    
     compile 'io.vertx:vertx-service-factory'
+    compile 'io.vertx:vertx-maven-service-factory'
+    compile 'io.vertx:vertx-http-service-factory'
+    
+    compile 'io.vertx:vertx-rx-java'    
         
     // Adding dependencies here will add the dependencies to each subproject.
     testCompile 'junit:junit'

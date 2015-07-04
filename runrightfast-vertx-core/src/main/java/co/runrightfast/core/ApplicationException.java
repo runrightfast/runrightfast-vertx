@@ -13,27 +13,29 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core;
+package co.runrightfast.core;
 
 /**
  *
  * @author alfio
  */
-public interface VertxConstants {
+public class ApplicationException extends RuntimeException {
 
-    /**
-     * The root config path used as the config namespace within the TypeSafe config.
-     */
-    public static final String CONFIG_ROOT = "runrightfast.vertx";
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * The Vertx registry name.
-     */
-    public static final String VERTX_METRIC_REGISTRY_NAME = CONFIG_ROOT;
+    public ApplicationException() {
+    }
 
-    /**
-     * The Vertx registry name.
-     */
-    public static final String VERTX_HEALTHCHECK_REGISTRY_NAME = CONFIG_ROOT;
+    public ApplicationException(final String message) {
+        super(message);
+    }
+
+    public ApplicationException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
+
+    public ApplicationException(final Throwable cause) {
+        super(cause);
+    }
 
 }

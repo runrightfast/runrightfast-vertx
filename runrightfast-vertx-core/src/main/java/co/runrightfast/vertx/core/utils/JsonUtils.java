@@ -13,16 +13,20 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core;
+package co.runrightfast.vertx.core.utils;
 
-import io.vertx.core.Vertx;
-import java.util.function.Supplier;
+import static com.google.common.base.Preconditions.checkNotNull;
+import io.vertx.core.json.JsonObject;
 
 /**
  *
  * @author alfio
  */
-@FunctionalInterface
-public interface VertxFactory extends Supplier<Vertx> {
+public interface JsonUtils {
+
+    static JsonObject toVertxJsonObject(final javax.json.JsonObject json) {
+        checkNotNull(json);
+        return new JsonObject(json.toString());
+    }
 
 }
