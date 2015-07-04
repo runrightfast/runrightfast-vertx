@@ -31,6 +31,7 @@ import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -67,6 +68,29 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     protected void startUp() throws Exception {
         LOG.config(() -> ConfigUtils.renderConfig(config));
         this.vertxOptions = createVertxOptions();
+        if (this.vertxOptions.isClustered()) {
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<Throwable> exception = new AtomicReference<>();
+            Vertx.clusteredVertx(vertxOptions, result -> {
+                try {
+                    if (result.succeeded()) {
+                        this.vertx = result.result();
+                    } else {
+                        exception.set(result.cause());
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+            while (latch.await(10, TimeUnit.SECONDS)) {
+                LOG.info("Waiting for Vertx to start");
+            }
+            if (exception.get() != null) {
+                throw new RuntimeException("Failed to start a clustered Vertx instance", exception.get());
+            }
+        } else {
+            this.vertx = Vertx.vertx(vertxOptions);
+        }
     }
 
     @Override
