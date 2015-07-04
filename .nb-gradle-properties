@@ -6,4 +6,19 @@
     <template>license-template.txt</template>
     <property name="organization">RunRightFast</property>
   </license-header>
+  <built-in-tasks>
+    <task>
+      <display-name>test.single</display-name>
+      <non-blocking>yes</non-blocking>
+      <task-names>
+        <name must-exist="no">${project}:clean${test-task-name-capital}</name>
+        <name must-exist="no">${project}:${test-task-name}</name>
+      </task-names>
+      <task-args>
+        <arg>-D${test-task-name}.single=${test-file-path}</arg>
+        <arg>--info</arg>
+      </task-args>
+      <task-jvm-args/>
+    </task>
+  </built-in-tasks>
 </gradle-project-properties>

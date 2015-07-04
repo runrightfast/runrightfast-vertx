@@ -16,7 +16,9 @@
 package co.runrightfast.vertx.core.impl;
 
 import co.runrightfast.vertx.core.VertxConstants;
+import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
+import static co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -26,6 +28,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 /**
  *
@@ -60,6 +63,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
 
     @Override
     protected void startUp() throws Exception {
+        LOG.config(() -> ConfigUtils.renderConfig(config));
         this.vertxOptions = createVertxOptions();
     }
 
@@ -88,16 +92,18 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
                 .setEnabled(true)
                 .setJmxEnabled(ConfigUtils.getBoolean(config, "VertxOptions", "metricsOptions", "jmxEnabled").orElse(Boolean.FALSE))
                 .setRegistryName(VertxConstants.VERTX_METRIC_REGISTRY_NAME)
+                .setJmxDomain(ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain")
+                        .orElseGet(() -> ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain").orElse("co.runrightfast"))
+                )
         );
+
     }
 
     private void configureClusterManager() {
         ConfigUtils.getConfig(config, "VertxOptions", "clusterManager", "hazelcast").map(c -> {
-            final com.hazelcast.config.Config hazelcastConfig = new com.hazelcast.config.Config();
-
-            return hazelcastConfig;
-        });
-
+            final com.hazelcast.config.Config hazelcastConfig = hazelcastConfigFactory(VERTX_HAZELCAST_INSTANCE_ID).apply(c);
+            return new HazelcastClusterManager(hazelcastConfig);
+        }).ifPresent(vertxOptions::setClusterManager);
     }
 
 }

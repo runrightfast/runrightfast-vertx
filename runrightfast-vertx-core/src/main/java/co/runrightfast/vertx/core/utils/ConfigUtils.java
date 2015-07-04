@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigRenderOptions;
@@ -42,6 +41,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public interface ConfigUtils {
 
+    static final String CONFIG_NAMESPACE = "runrightfast";
+
     static String configPath(final String name, final String... names) {
         checkArgument(StringUtils.isNotBlank(name));
         if (ArrayUtils.isNotEmpty(names)) {
@@ -61,11 +62,7 @@ public interface ConfigUtils {
     static boolean hasPath(final Config config, final String path, final String... paths) {
         checkNotNull(config);
         checkArgument(StringUtils.isNotBlank(path));
-        try {
-            return config.hasPath(configPath(path, paths));
-        } catch (final ConfigException.BadPath e) {
-            return false;
-        }
+        return config.hasPath(configPath(path, paths));
     }
 
     static Optional<Config> getConfig(final Config config, final String path, final String... paths) {

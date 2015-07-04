@@ -24,12 +24,15 @@ import com.codahale.metrics.health.SharedHealthCheckRegistries;
 import com.google.common.util.concurrent.Service;
 import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
+import java.util.logging.Logger;
 
 /**
  *
  * @author alfio
  */
 public interface VertxService extends Service {
+
+    static final Logger LOG = Logger.getLogger(VertxService.class.getName());
 
     Vertx getVertx();
 

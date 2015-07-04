@@ -15,6 +15,9 @@
  */
 package co.runrightfast.vertx.core;
 
+import co.runrightfast.vertx.core.utils.ConfigUtils;
+import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+
 /**
  *
  * @author alfio
@@ -22,18 +25,23 @@ package co.runrightfast.vertx.core;
 public interface VertxConstants {
 
     /**
-     * The root config path used as the config namespace within the TypeSafe config.
+     * The Vertx root config path used as the config namespace within the TypeSafe config.
      */
-    public static final String CONFIG_ROOT = "runrightfast.vertx";
+    static final String VERTX_CONFIG_ROOT = ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx");
 
     /**
      * The Vertx registry name.
      */
-    public static final String VERTX_METRIC_REGISTRY_NAME = CONFIG_ROOT;
+    static final String VERTX_METRIC_REGISTRY_NAME = VERTX_CONFIG_ROOT;
 
     /**
      * The Vertx registry name.
      */
-    public static final String VERTX_HEALTHCHECK_REGISTRY_NAME = CONFIG_ROOT;
+    static final String VERTX_HEALTHCHECK_REGISTRY_NAME = VERTX_CONFIG_ROOT;
+
+    /**
+     * The Vertx Hazelcast instance id
+     */
+    static final String VERTX_HAZELCAST_INSTANCE_ID = VERTX_CONFIG_ROOT;
 
 }
