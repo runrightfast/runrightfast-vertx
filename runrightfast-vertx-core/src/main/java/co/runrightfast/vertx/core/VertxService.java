@@ -24,6 +24,7 @@ import com.codahale.metrics.health.SharedHealthCheckRegistries;
 import com.google.common.util.concurrent.Service;
 import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import java.util.logging.Logger;
 
 /**
@@ -41,6 +42,12 @@ public interface VertxService extends Service {
      * @return config which was used to create the VertxOptions
      */
     Config getConfig();
+
+    /**
+     *
+     * @return a copy of the VertxOptions that were used to create the Vertx instance
+     */
+    VertxOptions getVertxOptions();
 
     static final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(VERTX_METRIC_REGISTRY_NAME);
 

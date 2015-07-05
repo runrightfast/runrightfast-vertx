@@ -26,6 +26,7 @@ import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import io.vertx.ext.dropwizard.Match;
 import io.vertx.ext.dropwizard.MatchType;
@@ -62,8 +63,18 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
      *
      * @return a copy of the VertxOptions that was used to create the Vertx instance
      */
+    @Override
     public VertxOptions getVertxOptions() {
-        return new VertxOptions(vertxOptions);
+        final VertxOptions copy = new VertxOptions(vertxOptions);
+        final MetricsOptions metricsOptions = vertxOptions.getMetricsOptions();
+        if (metricsOptions != null) {
+            if (metricsOptions instanceof DropwizardMetricsOptions) {
+                copy.setMetricsOptions(new DropwizardMetricsOptions((DropwizardMetricsOptions) metricsOptions));
+            } else {
+                copy.setMetricsOptions(new DropwizardMetricsOptions(metricsOptions));
+            }
+        }
+        return copy;
     }
 
     @Override
@@ -189,7 +200,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
                     return match;
                 }).forEach(metricsOptions::addMonitoredHttpClientUri);
 
-        vertxOptions.setMetricsOptions(metricsOptions);
+        this.vertxOptions.setMetricsOptions(metricsOptions);
     }
 
     private void configureClusterManager() {

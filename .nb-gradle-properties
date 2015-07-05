@@ -20,5 +20,17 @@
       </task-args>
       <task-jvm-args/>
     </task>
+    <task>
+      <display-name>debug.single</display-name>
+      <non-blocking>no</non-blocking>
+      <task-names>
+        <name must-exist="no">${project}:debug</name>
+      </task-names>
+      <task-args>
+        <arg>-PmainClass=${selected-class}</arg>
+        <arg>--info</arg>
+      </task-args>
+      <task-jvm-args/>
+    </task>
   </built-in-tasks>
 </gradle-project-properties>

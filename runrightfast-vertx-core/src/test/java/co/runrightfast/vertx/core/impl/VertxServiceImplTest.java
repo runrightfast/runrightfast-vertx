@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.impl;
 
+import static co.runrightfast.vertx.core.VertxConstants.VERTX_METRIC_REGISTRY_NAME;
 import co.runrightfast.vertx.core.VertxService;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
@@ -22,8 +23,14 @@ import co.runrightfast.vertx.core.utils.ServiceUtils;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import java.util.logging.Level;
+import static java.util.logging.Level.INFO;
 import lombok.extern.java.Log;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -65,8 +72,32 @@ public class VertxServiceImplTest {
         service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-default")));
         ServiceUtils.start(service);
         final Vertx vertx = service.getVertx();
+        assertThat(vertx.isClustered(), is(false));
+        assertThat(vertx.isMetricsEnabled(), is(false));
+    }
+
+    @Test
+    public void test_vertx_metrics_options() {
+        log.info("getVertx");
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-with-metrics")));
+        ServiceUtils.start(service);
+        final Vertx vertx = service.getVertx();
         log.log(Level.INFO, "vertx.isClustered() = {0}", vertx.isClustered());
         log.log(Level.INFO, "vertx.isMetricsEnabled() = {0}", vertx.isMetricsEnabled());
+        assertThat(vertx.isClustered(), is(false));
+        assertThat(vertx.isMetricsEnabled(), is(true));
+
+        final VertxOptions vertxOptions = service.getVertxOptions();
+        final MetricsOptions metricsOptions = vertxOptions.getMetricsOptions();
+        log.log(INFO, "metricsOptions class : {0}", metricsOptions.getClass().getName());
+        final DropwizardMetricsOptions dropwizardMetricsOptions = (DropwizardMetricsOptions) metricsOptions;
+        assertThat(dropwizardMetricsOptions.isJmxEnabled(), is(true));
+        assertThat(dropwizardMetricsOptions.getJmxDomain(), is("co.runrightfast"));
+        assertThat(dropwizardMetricsOptions.getRegistryName(), is(VERTX_METRIC_REGISTRY_NAME));
+        assertThat(dropwizardMetricsOptions.getMonitoredEventBusHandlers().size(), is(2));
+        assertThat(dropwizardMetricsOptions.getMonitoredHttpServerUris().size(), is(3));
+        assertThat(dropwizardMetricsOptions.getMonitoredHttpClientUris().size(), is(4));
+
     }
 
 }
