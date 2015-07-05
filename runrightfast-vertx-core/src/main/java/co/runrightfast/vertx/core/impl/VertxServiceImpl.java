@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import static java.util.logging.Level.CONFIG;
 import static java.util.logging.Level.INFO;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
@@ -121,7 +122,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     }
 
     private void logVertxOptions() {
-        if (!LOG.isLoggable(INFO)) {
+        if (!LOG.isLoggable(CONFIG)) {
             return;
         }
         final JsonObject json = new JsonObject()
@@ -149,7 +150,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             json.put("MetricsOptions", toJsonObject(metricsOptions));
         }
 
-        LOG.logp(INFO, getClass().getName(), "logVertxOptions", json.encodePrettily());
+        LOG.logp(CONFIG, getClass().getName(), "logVertxOptions", json.encodePrettily());
     }
 
     private JsonObject toJsonObject(final MetricsOptions metricsOptions) {
