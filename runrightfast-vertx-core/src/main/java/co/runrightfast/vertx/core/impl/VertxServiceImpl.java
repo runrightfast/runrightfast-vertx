@@ -21,7 +21,6 @@ import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;
-import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
@@ -35,6 +34,8 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import static java.util.logging.Level.INFO;
+import lombok.NonNull;
 
 /**
  *
@@ -48,8 +49,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
 
     private VertxOptions vertxOptions;
 
-    public VertxServiceImpl(final Config config) {
-        checkNotNull(config);
+    public VertxServiceImpl(@NonNull final Config config) {
         this.config = config;
     }
 
@@ -58,8 +58,12 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         return vertx;
     }
 
-    VertxOptions getVertxOptions() {
-        return vertxOptions;
+    /**
+     *
+     * @return a copy of the VertxOptions that was used to create the Vertx instance
+     */
+    public VertxOptions getVertxOptions() {
+        return new VertxOptions(vertxOptions);
     }
 
     @Override
@@ -78,6 +82,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
                 try {
                     if (result.succeeded()) {
                         this.vertx = result.result();
+                        LOG.info("Vertx clustered instance has been created");
                     } else {
                         exception.set(result.cause());
                     }
@@ -85,7 +90,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
                     latch.countDown();
                 }
             });
-            while (latch.await(10, TimeUnit.SECONDS)) {
+            while (!latch.await(10, TimeUnit.SECONDS)) {
                 LOG.info("Waiting for Vertx to start");
             }
             if (exception.get() != null) {
@@ -93,7 +98,9 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             }
         } else {
             this.vertx = Vertx.vertx(vertxOptions);
+            LOG.info("Vertx instance has been created");
         }
+        LOG.logp(INFO, getClass().getName(), "startUp", "success");
     }
 
     @Override
@@ -101,7 +108,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         if (vertx != null) {
             final CountDownLatch latch = new CountDownLatch(1);
             vertx.close(result -> latch.countDown());
-            while (latch.await(10, TimeUnit.SECONDS)) {
+            while (!latch.await(10, TimeUnit.SECONDS)) {
                 LOG.info("Waiting for Vertx to shutdown");
             }
             LOG.info("Vertx shutdown is complete.");
@@ -114,7 +121,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         final JsonObject vertxJsonObject = JsonUtils.toVertxJsonObject(ConfigUtils.toJsonObject(config.getConfig("VertxOptions")));
         vertxOptions = new VertxOptions(vertxJsonObject);
 
-        if (vertxOptions.getMetricsOptions().isEnabled()) {
+        if (vertxOptions.getMetricsOptions() != null && vertxOptions.getMetricsOptions().isEnabled()) {
             configureMetricsOptions();
         }
 
