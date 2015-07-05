@@ -28,7 +28,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
+import io.vertx.ext.dropwizard.Match;
+import io.vertx.ext.dropwizard.MatchType;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -101,6 +104,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             while (latch.await(10, TimeUnit.SECONDS)) {
                 LOG.info("Waiting for Vertx to shutdown");
             }
+            LOG.info("Vertx shutdown is complete.");
             vertx = null;
             vertxOptions = null;
         }
@@ -121,16 +125,64 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         return vertxOptions;
     }
 
+    /**
+     * config structure:
+     *
+     * <code>
+     * VertxOptions {
+     *    metricsOptions {
+     *       enabled = true
+     *       jmxEnabled = true
+     *       jmxDomain = co.runrightfast
+     *       eventbusHandlers = [
+     *          { address="/eventbus-address-1", matchType="EQUALS"}
+     *          { address="/eventbus-address-2/.*", matchType="REGEX"}
+     *       ]
+     *       monitoredHttpServerURIs = [
+     *          { uri="/verticle/log-service", matchType="EQUALS"}
+     *          { uri="/verticle/log-service/.*", matchType="REGEX"}
+     *       ]
+     *       monitoredHttpClientURIs = [
+     *          { uri="/verticle/log-service", matchType="EQUALS"}
+     *          { uri="/verticle/log-service/.*", matchType="REGEX"}
+     *       ]
+     *    }
+     * }
+     * </code>
+     *
+     */
     private void configureMetricsOptions() {
-        vertxOptions.setMetricsOptions(new DropwizardMetricsOptions()
+        final DropwizardMetricsOptions metricsOptions = new DropwizardMetricsOptions()
                 .setEnabled(true)
                 .setJmxEnabled(ConfigUtils.getBoolean(config, "VertxOptions", "metricsOptions", "jmxEnabled").orElse(Boolean.FALSE))
                 .setRegistryName(VertxConstants.VERTX_METRIC_REGISTRY_NAME)
-                .setJmxDomain(ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain")
-                        .orElseGet(() -> ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain").orElse("co.runrightfast"))
-                )
-        );
+                .setJmxDomain(ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain").orElse("co.runrightfast"));
 
+        ConfigUtils.getConfigList(config, "VertxOptions", "metricsOptions", "eventbusHandlers").orElse(Collections.emptyList()).stream()
+                .map(eventbusHandlerMatch -> {
+                    final Match match = new Match();
+                    match.setValue(eventbusHandlerMatch.getString("address"));
+                    match.setType(MatchType.valueOf(eventbusHandlerMatch.getString("matchType")));
+                    return match;
+                }).forEach(metricsOptions::addMonitoredEventBusHandler);
+
+        ConfigUtils.getConfigList(config, "VertxOptions", "metricsOptions", "monitoredHttpServerURIs").orElse(Collections.emptyList()).stream()
+                .map(eventbusHandlerMatch -> {
+                    final Match match = new Match();
+                    match.setValue(eventbusHandlerMatch.getString("uri"));
+                    match.setType(MatchType.valueOf(eventbusHandlerMatch.getString("matchType")));
+                    return match;
+                }).forEach(metricsOptions::addMonitoredHttpServerUri);
+
+        ConfigUtils.getConfigList(config, "VertxOptions", "metricsOptions", "monitoredHttpClientURIs").orElse(Collections.emptyList()).stream()
+                .map(eventbusHandlerMatch -> {
+                    final Match match = new Match();
+                    match.setValue(eventbusHandlerMatch.getString("uri"));
+                    match.setType(MatchType.valueOf(eventbusHandlerMatch.getString("matchType")));
+                    return match;
+                }).forEach(metricsOptions::addMonitoredHttpClientUri);
+
+        vertxOptions.setMetricsOptions(metricsOptions);
     }
 
     private void configureClusterManager() {

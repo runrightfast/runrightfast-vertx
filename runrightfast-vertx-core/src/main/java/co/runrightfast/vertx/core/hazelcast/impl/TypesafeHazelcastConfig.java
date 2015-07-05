@@ -18,7 +18,6 @@ package co.runrightfast.vertx.core.hazelcast.impl;
 import co.runrightfast.core.ConfigurationException.ConfigurationExceptionSupplier;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableSet;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.EvictionPolicy;
@@ -49,6 +48,8 @@ import com.hazelcast.config.TcpIpConfig;
 import com.hazelcast.config.TopicConfig;
 import java.util.Optional;
 import java.util.Set;
+import lombok.Getter;
+import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -59,106 +60,103 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class TypesafeHazelcastConfig {
 
-    protected final String name;
-
-    protected final com.typesafe.config.Config config;
-
-    protected final Optional<Set<SerializerConfig>> serializerConfigs;
+    @Getter
+    protected final Config hazelcastConfig;
 
     /**
      * @param name Hazelcast instance name
-     * @param config TypeSafe config
-     * @param serializerConfigs optional set of serializer configs
+     * @param config TypeSafe typeSafeConfig
+     * @param serializerConfigs can be empty
      */
-    public TypesafeHazelcastConfig(final String name, final com.typesafe.config.Config config, final Set<SerializerConfig> serializerConfigs) {
-        checkArgument(StringUtils.isNotBlank(name));
-        checkNotNull(config);
-        checkNotNull(serializerConfigs);
-        this.name = name;
-        this.config = config;
-        this.serializerConfigs = Optional.of(ImmutableSet.copyOf(serializerConfigs));
+    public TypesafeHazelcastConfig(@NonNull final String name, @NonNull final com.typesafe.config.Config config, @NonNull final Set<SerializerConfig> serializerConfigs) {
+        this.hazelcastConfig = createHazelcastConfig(
+                name,
+                config,
+                serializerConfigs.isEmpty() ? Optional.empty() : Optional.of(ImmutableSet.copyOf(serializerConfigs))
+        );
     }
 
     /**
      * @param name Hazelcast instance name
-     * @param config TypeSafe config
+     * @param config TypeSafe typeSafeConfig
      */
-    public TypesafeHazelcastConfig(final String name, final com.typesafe.config.Config config) {
-        checkArgument(StringUtils.isNotBlank(name));
-        checkNotNull(config);
-        this.name = name;
-        this.config = config;
-        this.serializerConfigs = Optional.empty();
+    public TypesafeHazelcastConfig(@NonNull final String name, @NonNull final com.typesafe.config.Config config) {
+        this.hazelcastConfig = createHazelcastConfig(
+                name,
+                config,
+                Optional.empty()
+        );
     }
 
-    public Config getConfig() {
-        final Config hazelcastConfig = new Config();
-        hazelcastConfig.setInstanceName(name);
+    private Config createHazelcastConfig(@NonNull final String name, @NonNull final com.typesafe.config.Config typeSafeConfig, @NonNull final Optional<Set<SerializerConfig>> serializerConfigs) {
+        checkArgument(StringUtils.isNotBlank(name));
+        final Config _hazelcastConfig = new Config();
+        _hazelcastConfig.setInstanceName(name);
 
-        hazelcastConfig.setGroupConfig(ConfigUtils.getConfig(config, "group-config")
+        _hazelcastConfig.setGroupConfig(ConfigUtils.getConfig(typeSafeConfig, "group-config")
                 .map(this::groupConfig)
                 .orElseThrow(new ConfigurationExceptionSupplier("group-config is required"))
         );
 
-        hazelcastConfig.setNetworkConfig(ConfigUtils.getConfig(config, "network-config")
+        _hazelcastConfig.setNetworkConfig(ConfigUtils.getConfig(typeSafeConfig, "network-config")
                 .map(this::networkConfig)
                 .orElseThrow(new ConfigurationExceptionSupplier("network-config is required"))
         );
 
-        ConfigUtils.getConfigList(config, "map-configs").ifPresent(mapConfigs -> {
-            mapConfigs.stream().map(this::mapConfig).forEach(hazelcastConfig::addMapConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "map-configs").ifPresent(mapConfigs -> {
+            mapConfigs.stream().map(this::mapConfig).forEach(_hazelcastConfig::addMapConfig);
         });
 
-        ConfigUtils.getConfigList(config, "multi-map-configs").ifPresent(mapConfigs -> {
-            mapConfigs.stream().map(this::multiMapConfig).forEach(hazelcastConfig::addMultiMapConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "multi-map-configs").ifPresent(mapConfigs -> {
+            mapConfigs.stream().map(this::multiMapConfig).forEach(_hazelcastConfig::addMultiMapConfig);
         });
 
-        ConfigUtils.getConfigList(config, "queue-configs").ifPresent(queueConfigs -> {
-            queueConfigs.stream().map(this::queueConfig).forEach(hazelcastConfig::addQueueConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "queue-configs").ifPresent(queueConfigs -> {
+            queueConfigs.stream().map(this::queueConfig).forEach(_hazelcastConfig::addQueueConfig);
         });
 
-        ConfigUtils.getConfigList(config, "topic-configs").ifPresent(queueConfigs -> {
-            queueConfigs.stream().map(this::topicConfig).forEach(hazelcastConfig::addTopicConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "topic-configs").ifPresent(queueConfigs -> {
+            queueConfigs.stream().map(this::topicConfig).forEach(_hazelcastConfig::addTopicConfig);
         });
 
-        ConfigUtils.getConfigList(config, "list-configs").ifPresent(listConfigs -> {
-            listConfigs.stream().map(this::listConfig).forEach(hazelcastConfig::addListConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "list-configs").ifPresent(listConfigs -> {
+            listConfigs.stream().map(this::listConfig).forEach(_hazelcastConfig::addListConfig);
         });
 
-        ConfigUtils.getConfigList(config, "set-configs").ifPresent(listConfigs -> {
-            listConfigs.stream().map(this::getSetConfig).forEach(hazelcastConfig::addSetConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "set-configs").ifPresent(listConfigs -> {
+            listConfigs.stream().map(this::getSetConfig).forEach(_hazelcastConfig::addSetConfig);
         });
 
-        ConfigUtils.getConfigList(config, "semaphore-configs").ifPresent(semaphoreConfigs -> {
-            semaphoreConfigs.stream().map(this::semaphoreConfig).forEach(hazelcastConfig::addSemaphoreConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "semaphore-configs").ifPresent(semaphoreConfigs -> {
+            semaphoreConfigs.stream().map(this::semaphoreConfig).forEach(_hazelcastConfig::addSemaphoreConfig);
         });
 
-        ConfigUtils.getConfigList(config, "executor-configs").ifPresent(executorConfigs -> {
-            executorConfigs.stream().map(this::executorConfig).forEach(hazelcastConfig::addExecutorConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "executor-configs").ifPresent(executorConfigs -> {
+            executorConfigs.stream().map(this::executorConfig).forEach(_hazelcastConfig::addExecutorConfig);
         });
 
-        hazelcastConfig.setSerializationConfig(new SerializationConfig());
-        serializerConfigs.ifPresent(configs -> configs.stream().forEach(serializerConfig -> hazelcastConfig.getSerializationConfig().addSerializerConfig(serializerConfig)));
+        _hazelcastConfig.setSerializationConfig(new SerializationConfig());
+        serializerConfigs.ifPresent(configs -> configs.stream().forEach(serializerConfig -> _hazelcastConfig.getSerializationConfig().addSerializerConfig(serializerConfig)));
 
-        ConfigUtils.getConfigList(config, "partition-group-config").ifPresent(partitionGroupConfig -> {
-            partitionGroupConfig.stream().map(this::partitionConfig).forEach(hazelcastConfig::setPartitionGroupConfig);
+        ConfigUtils.getConfigList(typeSafeConfig, "partition-group-config").ifPresent(partitionGroupConfig -> {
+            partitionGroupConfig.stream().map(this::partitionConfig).forEach(_hazelcastConfig::setPartitionGroupConfig);
         });
 
         // Application manages the lifecycle and registers a shutdown hook - we want to ensure this is the last service that this is the last service that is started
-        hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
-        // mapping hazelcast.jmx.enabled to hazelcast.jmx because using Typesafe config, hazelcast.jmx is an object and cannot be set to a boolean
-        ConfigUtils.getBoolean(config, "properties", "hazelcast", "jmx", "enabled").ifPresent(jmxEnabled -> hazelcastConfig.setProperty("hazelcast.jmx", Boolean.toString(jmxEnabled)));
+        _hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
+        // mapping hazelcast.jmx.enabled to hazelcast.jmx because using Typesafe typeSafeConfig, hazelcast.jmx is an object and cannot be set to a boolean
+        ConfigUtils.getBoolean(typeSafeConfig, "properties", "hazelcast", "jmx", "enabled").ifPresent(jmxEnabled -> _hazelcastConfig.setProperty("hazelcast.jmx", Boolean.toString(jmxEnabled)));
 
-        ConfigUtils.getConfig(config, "properties").ifPresent(properties -> {
-            hazelcastConfig.setProperties(ConfigUtils.toProperties(properties));
+        ConfigUtils.getConfig(typeSafeConfig, "properties").ifPresent(properties -> {
+            _hazelcastConfig.setProperties(ConfigUtils.toProperties(properties));
         });
 
-        ConfigUtils.getConfig(config, "member-attribute-config")
+        ConfigUtils.getConfig(typeSafeConfig, "member-attribute-config")
                 .map(this::memberAttributeConfig)
-                .ifPresent(hazelcastConfig::setMemberAttributeConfig);
+                .ifPresent(_hazelcastConfig::setMemberAttributeConfig);
 
-        applyAdditionalConfiguration(hazelcastConfig);
-        return hazelcastConfig;
+        applyAdditionalConfiguration(_hazelcastConfig);
+        return _hazelcastConfig;
     }
 
     private MemberAttributeConfig memberAttributeConfig(final com.typesafe.config.Config c) {
@@ -275,10 +273,6 @@ public class TypesafeHazelcastConfig {
         return maxSizeConfig;
     }
 
-    protected GroupConfig groupConfig(final com.typesafe.config.Config config) {
-        return new GroupConfig(config.getString("name"), config.getString("password"));
-    }
-
     private NetworkConfig networkConfig(final com.typesafe.config.Config config) {
         final NetworkConfig networkConfig = new NetworkConfig()
                 .setReuseAddress(ConfigUtils.getBoolean(config, "reuse-address").orElse(true))
@@ -344,13 +338,17 @@ public class TypesafeHazelcastConfig {
                 .orElseGet(() -> new MulticastConfig().setEnabled(false));
     }
 
+    private GroupConfig groupConfig(final com.typesafe.config.Config config) {
+        return new GroupConfig(config.getString("name"), config.getString("password"));
+    }
+
     /**
-     * Is invoked after all of the config specified in the Typesafe config is applied. This provides a hook to be able to configure aspects that are not
-     * supported by the Typesafe config.
+     * Is invoked after all of the typeSafeConfig specified in the Typesafe typeSafeConfig is applied. This provides a hook to be able to configure aspects that
+     * are not supported by the Typesafe typeSafeConfig.
      *
      * By default, this is a no-op method.
      *
-     * @param hazelcastConfig config
+     * @param hazelcastConfig typeSafeConfig
      */
     protected void applyAdditionalConfiguration(final Config hazelcastConfig) {
     }

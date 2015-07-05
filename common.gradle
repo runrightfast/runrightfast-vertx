@@ -60,6 +60,8 @@ dependencyManagement {
         dependency group: 'com.google.protobuf', name:'protobuf-java', version:'3.0.0-alpha-2'
         dependency group: 'org.glassfish', name:'javax.json', version:'1.0.4'
         
+        dependency group: 'org.projectlombok', name:'lombok', version:'1.16.4'
+        
         dependency group:'org.elasticsearch', name:'elasticsearch', version:'1.5.2'
                 
         dependencySet(group:'com.hazelcast', version: '3.5') {
@@ -147,6 +149,8 @@ dependencyManagement {
 }
 
 dependencies {
+    compile 'org.projectlombok:lombok'
+
     compile 'com.google.guava:guava'
     
     compile 'org.apache.commons:commons-lang3'

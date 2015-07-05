@@ -23,17 +23,19 @@ import java.util.function.Function;
 
 /**
  *
+ * The Hazelcast config is defined using TypeSafe config. The factory maps a TypeSafe config to a Hazelcast config.
+ *
  * @author alfio
  */
 @FunctionalInterface
 public interface HazelcastConfigFactory extends Function<Config, com.hazelcast.config.Config> {
 
     static HazelcastConfigFactory hazelcastConfigFactory(final String hazelcastInstanceName, final Set<SerializerConfig> serializerConfigs) {
-        return config -> new TypesafeHazelcastConfig(hazelcastInstanceName, config, serializerConfigs).getConfig();
+        return config -> new TypesafeHazelcastConfig(hazelcastInstanceName, config, serializerConfigs).getHazelcastConfig();
     }
 
     static HazelcastConfigFactory hazelcastConfigFactory(final String hazelcastInstanceName) {
-        return config -> new TypesafeHazelcastConfig(hazelcastInstanceName, config).getConfig();
+        return config -> new TypesafeHazelcastConfig(hazelcastInstanceName, config).getHazelcastConfig();
     }
 
 }
