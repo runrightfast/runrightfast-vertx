@@ -25,18 +25,23 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import io.vertx.ext.dropwizard.Match;
 import io.vertx.ext.dropwizard.MatchType;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import static java.util.logging.Level.INFO;
 import lombok.NonNull;
+import org.apache.commons.collections4.CollectionUtils;
 
 /**
  *
@@ -86,6 +91,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     protected void startUp() throws Exception {
         LOG.config(() -> ConfigUtils.renderConfig(config));
         this.vertxOptions = createVertxOptions();
+        logVertxOptions();
         if (this.vertxOptions.isClustered()) {
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicReference<Throwable> exception = new AtomicReference<>();
@@ -112,6 +118,67 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             LOG.info("Vertx instance has been created");
         }
         LOG.logp(INFO, getClass().getName(), "startUp", "success");
+    }
+
+    private void logVertxOptions() {
+        if (!LOG.isLoggable(INFO)) {
+            return;
+        }
+        final JsonObject json = new JsonObject()
+                .put("BlockedThreadCheckInterval", vertxOptions.getBlockedThreadCheckInterval())
+                .put("ClusterHost", vertxOptions.getClusterHost())
+                .put("ClusterPingInterval", vertxOptions.getClusterPingInterval())
+                .put("ClusterPingReplyInterval", vertxOptions.getClusterPingReplyInterval())
+                .put("ClusterPort", vertxOptions.getClusterPort())
+                .put("EventLoopPoolSize", vertxOptions.getEventLoopPoolSize())
+                .put("HAGroup", vertxOptions.getHAGroup())
+                .put("InternalBlockingPoolSize", vertxOptions.getInternalBlockingPoolSize())
+                .put("MaxEventLoopExecuteTime", vertxOptions.getMaxEventLoopExecuteTime())
+                .put("MaxWorkerExecuteTime", vertxOptions.getMaxWorkerExecuteTime())
+                .put("QuorumSize", vertxOptions.getQuorumSize())
+                .put("WarningExceptionTime", vertxOptions.getWarningExceptionTime())
+                .put("WorkerPoolSize", vertxOptions.getWorkerPoolSize());
+
+        final ClusterManager clusterManager = vertxOptions.getClusterManager();
+        if (clusterManager != null) {
+            json.put("clusterManagerClass", clusterManager.getClass().getName());
+        }
+
+        final MetricsOptions metricsOptions = vertxOptions.getMetricsOptions();
+        if (metricsOptions != null) {
+            json.put("MetricsOptions", toJsonObject(metricsOptions));
+        }
+
+        LOG.logp(INFO, getClass().getName(), "logVertxOptions", json.encodePrettily());
+    }
+
+    private JsonObject toJsonObject(final MetricsOptions metricsOptions) {
+        if (metricsOptions instanceof DropwizardMetricsOptions) {
+            final DropwizardMetricsOptions dropwizardMetricsOptions = (DropwizardMetricsOptions) metricsOptions;
+            final JsonObject json = new JsonObject().put("enabled", metricsOptions.isEnabled())
+                    .put("jmxEnabled", dropwizardMetricsOptions.isJmxEnabled());
+
+            toJsonObject(dropwizardMetricsOptions.getMonitoredEventBusHandlers()).ifPresent(jsonArray -> json.put("MonitoredEventBusHandlers", jsonArray));
+            toJsonObject(dropwizardMetricsOptions.getMonitoredHttpClientUris()).ifPresent(jsonArray -> json.put("MonitoredHttpClientUris", jsonArray));
+            toJsonObject(dropwizardMetricsOptions.getMonitoredHttpServerUris()).ifPresent(jsonArray -> json.put("MonitoredHttpServerUris", jsonArray));
+
+            return json;
+        } else {
+            return new JsonObject().put("enabled", metricsOptions.isEnabled());
+        }
+    }
+
+    private Optional<JsonArray> toJsonObject(final List<Match> matches) {
+        if (CollectionUtils.isEmpty(matches)) {
+            return Optional.empty();
+        }
+
+        final JsonArray jsonArray = new JsonArray();
+        matches.stream()
+                .map(match -> new JsonObject().put("value", match.getValue()).put("type", match.getType()))
+                .forEach(jsonArray::add);
+
+        return Optional.of(jsonArray);
     }
 
     @Override
