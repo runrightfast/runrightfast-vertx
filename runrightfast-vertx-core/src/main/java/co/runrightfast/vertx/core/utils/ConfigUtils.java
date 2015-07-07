@@ -203,14 +203,21 @@ public interface ConfigUtils {
      * @return Config
      */
     static Config loadConfig(final boolean invalidateCaches) {
+        System.setProperty("HOSTNAME", JvmProcess.getHost());
         if (invalidateCaches) {
             ConfigFactory.invalidateCaches();
         }
-
-        System.setProperty("HOSTNAME", JvmProcess.getHost());
-
         return ConfigFactory.load();
+    }
 
+    static Config loadConfig(final String configResource, final boolean invalidateCaches) {
+        checkArgument(StringUtils.isNotBlank(configResource));
+        System.setProperty("config.resource", configResource);
+        System.setProperty("HOSTNAME", JvmProcess.getHost());
+        if (invalidateCaches) {
+            ConfigFactory.invalidateCaches();
+        }
+        return ConfigFactory.load();
     }
 
     static Properties toProperties(final Config config) {

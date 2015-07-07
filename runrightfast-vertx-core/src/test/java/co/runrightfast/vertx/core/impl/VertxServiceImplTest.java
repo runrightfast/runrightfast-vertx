@@ -19,6 +19,7 @@ import static co.runrightfast.vertx.core.VertxConstants.VERTX_METRIC_REGISTRY_NA
 import co.runrightfast.vertx.core.VertxService;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import co.runrightfast.vertx.core.utils.JvmProcess;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -30,6 +31,7 @@ import java.util.logging.Level;
 import static java.util.logging.Level.INFO;
 import lombok.extern.java.Log;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.After;
 import org.junit.Before;
@@ -49,8 +51,7 @@ public class VertxServiceImplTest {
 
     @BeforeClass
     public static void setUpClass() {
-        ConfigFactory.invalidateCaches();
-        config = ConfigFactory.load(String.format("%s.conf", VertxServiceImplTest.class.getSimpleName()));
+        config = ConfigUtils.loadConfig(String.format("%s.conf", VertxServiceImplTest.class.getSimpleName()), true);
     }
 
     @Before
@@ -97,6 +98,35 @@ public class VertxServiceImplTest {
         assertThat(dropwizardMetricsOptions.getMonitoredEventBusHandlers().size(), is(2));
         assertThat(dropwizardMetricsOptions.getMonitoredHttpServerUris().size(), is(3));
         assertThat(dropwizardMetricsOptions.getMonitoredHttpClientUris().size(), is(4));
+
+    }
+
+    /**
+     * Test of getVertx method, of class VertxServiceImpl.
+     */
+    @Test
+    public void test_vertx_custom_options() {
+        log.info("getVertx");
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-custom-non-clustered")));
+        ServiceUtils.start(service);
+        final Vertx vertx = service.getVertx();
+        assertThat(vertx.isClustered(), is(false));
+        assertThat(vertx.isMetricsEnabled(), is(false));
+
+        final VertxOptions vertxOptions = service.getVertxOptions();
+        assertThat(vertxOptions.getBlockedThreadCheckInterval(), is(3000L));
+        assertThat(vertxOptions.getClusterHost(), is(JvmProcess.getHost()));
+        assertThat(vertxOptions.getHAGroup(), is("elasticsearch"));
+        assertThat(vertxOptions.getClusterPingInterval(), is(1000L));
+        assertThat(vertxOptions.getClusterPort(), is(1234));
+        assertThat(vertxOptions.getClusterManager(), is(nullValue()));
+        assertThat(vertxOptions.getEventLoopPoolSize(), is(20));
+        assertThat(vertxOptions.getInternalBlockingPoolSize(), is(2000));
+        assertThat(vertxOptions.getMaxEventLoopExecuteTime(), is(4000000000L));
+        assertThat(vertxOptions.getMaxWorkerExecuteTime(), is(50000000000L));
+        assertThat(vertxOptions.getQuorumSize(), is(3));
+        assertThat(vertxOptions.getWarningExceptionTime(), is(3500000000L));
+        assertThat(vertxOptions.getWorkerPoolSize(), is(30));
 
     }
 
