@@ -271,9 +271,15 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         this.vertxOptions.setMetricsOptions(metricsOptions);
     }
 
+    /**
+     * The Hazelcast instance name will always start with "vertx". If an instance-name is specified, it will be appended to "vertx/", e.g., vertx/instance-name
+     */
     private void configureClusterManager() {
         ConfigUtils.getConfig(config, "VertxOptions", "clusterManager", "hazelcast").map(c -> {
-            final com.hazelcast.config.Config hazelcastConfig = hazelcastConfigFactory(VERTX_HAZELCAST_INSTANCE_ID).apply(c);
+            final String hazelcastInstanceName = ConfigUtils.getString(c, "instance-name")
+                    .map(name -> String.format("%s/%s", VERTX_HAZELCAST_INSTANCE_ID, name))
+                    .orElse(VERTX_HAZELCAST_INSTANCE_ID);
+            final com.hazelcast.config.Config hazelcastConfig = hazelcastConfigFactory(hazelcastInstanceName).apply(c);
             return new HazelcastClusterManager(hazelcastConfig);
         }).ifPresent(vertxOptions::setClusterManager);
     }
