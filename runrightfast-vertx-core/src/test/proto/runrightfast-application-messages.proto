@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package co.runrightfast.protobuf.application;
+
+option java_generate_equals_and_hash = true;
+option java_string_check_utf8 = true;
+option java_multiple_files = true;
+
+message RunRightFastApplicationInstance {
+    string app_name = 1;
+
+    string app_version = 2;
+
+    string app_deployment_version = 3;
+
+    repeated string profiles = 4;
+
+    string jvm_id = 5;
+
+    string host = 6;
+
+    string started_on = 7;
+}

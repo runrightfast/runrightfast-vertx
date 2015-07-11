@@ -1,3 +1,42 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.5.0'
+  }
+}
+
+apply plugin: 'com.google.protobuf'
+
+protobuf {
+    protoc {
+        // Download from repositories
+        artifact = 'com.google.protobuf:protoc:3.0.0-alpha-3.1'
+    }
+    
+    generatedFilesBaseDir = "$buildDir/generated/source/proto"
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ["$buildDir/generated/source/proto/main/java",'src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources','src/main/proto']
+        }
+    }
+    test {
+        java {
+            srcDirs = ["$buildDir/generated/source/proto/test/java",'src/test/java']
+        }
+        resources {
+            srcDirs = ['src/test/resources','src/test/proto']
+        }
+    }
+}
+
 // Note: "common.gradle" in the root project contains additional initialization
 //   for this project. This initialization is applied in the "build.gradle"
 //   of the root project.

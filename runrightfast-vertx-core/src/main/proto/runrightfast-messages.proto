@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package co.runrightfast.protobuf;
+
+option java_generate_equals_and_hash = true;
+option java_string_check_utf8 = true;
+option java_multiple_files = true;
+
+message RequestHeader {
+
+    message RetryPolicy {
+        int32 max_retries = 1;
+
+        int32 retry_wait_time_millis = 2;
+    }
+
+    message RetryStatus {
+        int32 retry_count = 1;
+
+        // the EPOCH time in milliseconds
+        uint64 last_failed_on = 2;
+
+        int32 status_code = 3;
+
+        string status_message = 4;
+
+        // Exception class name
+        string exception = 5;
+    }
+
+    string request_id = 1;
+
+    // EPOCH time in milliseconds
+    uint64 created_on = 2;
+
+    map<string,string> headers_string = 4;
+
+    map<string,int32> headers_int = 5;
+
+    map<string,bool> headers_bool = 6;
+
+    repeated string tags = 7;
+
+    RetryPolicy retry_policy = 8;
+
+    RetryStatus retry_status = 9;
+
+}
+
+message ResponseHeader {
+
+    message Status {
+        bool success = 1;
+
+        int32 status_code = 2;
+
+        string status_message = 3;
+
+        // Exception class name
+        string exception = 4;
+    }
+
+    string response_id = 1;
+
+    string request_id = 2;
+
+    // EPOCH time in milliseconds
+    uint64 created_on = 3;
+
+    Status status = 4;
+
+    map<string,string> headers_string = 5;
+
+    map<string,int32> headers_int = 6;
+
+    map<string,bool> headers_bool = 7;
+
+    repeated string tags = 8;
+
+}
+
+
+
+
+
+
