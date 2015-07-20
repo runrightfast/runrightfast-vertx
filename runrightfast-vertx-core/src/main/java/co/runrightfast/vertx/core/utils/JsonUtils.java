@@ -15,8 +15,8 @@
  */
 package co.runrightfast.vertx.core.utils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import io.vertx.core.json.JsonObject;
+import lombok.NonNull;
 
 /**
  *
@@ -24,8 +24,7 @@ import io.vertx.core.json.JsonObject;
  */
 public interface JsonUtils {
 
-    static JsonObject toVertxJsonObject(final javax.json.JsonObject json) {
-        checkNotNull(json);
+    static JsonObject toVertxJsonObject(@NonNull final javax.json.JsonObject json) {
         return new JsonObject(json.toString());
     }
 

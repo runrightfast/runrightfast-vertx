@@ -5,7 +5,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "io.spring.gradle:dependency-management-plugin:0.5.1.RELEASE"
+        classpath "io.spring.gradle:dependency-management-plugin:0.5.3.RELEASE"
     }
 }
 
@@ -31,5 +31,5 @@ task mergedJavadoc(type: Javadoc, description: 'Creates Javadoc from all the pro
 }
 
 task wrapper(type: Wrapper, description: 'Creates and deploys the Gradle wrapper to the current directory.') {
-    gradleVersion = '2.4'
+    gradleVersion = '2.5'
 }
