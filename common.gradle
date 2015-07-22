@@ -168,17 +168,9 @@ dependencies {
     
     compile 'com.google.protobuf:protobuf-java'
     
-    compile 'io.reactivex:rxjava'
-    
     compile 'io.vertx:vertx-core'    
     compile 'io.vertx:vertx-dropwizard-metrics'
     compile 'io.vertx:vertx-hazelcast'
-    
-    compile 'io.vertx:vertx-service-factory'
-    compile 'io.vertx:vertx-maven-service-factory'
-    compile 'io.vertx:vertx-http-service-factory'
-    
-    compile 'io.vertx:vertx-rx-java'
         
     // Adding dependencies here will add the dependencies to each subproject.
     testCompile 'junit:junit'
