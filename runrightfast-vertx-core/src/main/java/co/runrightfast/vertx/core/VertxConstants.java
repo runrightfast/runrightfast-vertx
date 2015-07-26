@@ -26,6 +26,8 @@ public interface VertxConstants {
 
     /**
      * The Vertx root config path used as the config namespace within the TypeSafe config.
+     *
+     * runrightfast.vertx
      */
     static final String VERTX_CONFIG_ROOT = ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx");
 
