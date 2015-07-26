@@ -15,14 +15,20 @@
  */
 package co.runrightfast.vertx.core.components;
 
+import co.runrightfast.vertx.core.RunRightFastVerticle;
+import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
 import co.runrightfast.vertx.core.modules.ApplicationConfigModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import com.codahale.metrics.MetricFilter;
 import com.typesafe.config.ConfigFactory;
 import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import javax.inject.Singleton;
 import lombok.extern.java.Log;
@@ -39,12 +45,47 @@ import org.junit.Test;
 @Log
 public class RunRightFastVertxApplicationTest {
 
+    static class TestVerticle extends RunRightFastVerticle {
+
+        @Override
+        protected RunRightFastVerticleId runRightFastVerticleId() {
+            return RunRightFastVerticleId.builder()
+                    .group(RunRightFastVerticleId.RUNRIGHTFAST_GROUP)
+                    .name(getClass().getSimpleName())
+                    .version("1.0.0")
+                    .build();
+        }
+
+        @Override
+        protected void startUp() {
+        }
+
+        @Override
+        protected void shutDown() {
+        }
+
+    }
+
     private static VertxService vertxService;
+
+    @Module
+    static class RunRightFastVerticleDeploymentModule {
+
+        @Provides(type = Provides.Type.SET)
+        @Singleton
+        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment() {
+            return RunRightFastVerticleDeployment.builder()
+                    .deploymentOptions(new DeploymentOptions())
+                    .verticle(new TestVerticle())
+                    .build();
+        }
+    }
 
     @Component(
             modules = {
                 ApplicationConfigModule.class,
-                VertxServiceModule.class
+                VertxServiceModule.class,
+                RunRightFastVerticleDeploymentModule.class
             }
     )
     @Singleton

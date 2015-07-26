@@ -16,6 +16,9 @@
 package co.runrightfast.vertx.core.utils;
 
 import io.vertx.core.json.JsonObject;
+import java.io.StringReader;
+import javax.json.Json;
+import javax.json.JsonReader;
 import lombok.NonNull;
 
 /**
@@ -26,6 +29,12 @@ public interface JsonUtils {
 
     static JsonObject toVertxJsonObject(@NonNull final javax.json.JsonObject json) {
         return new JsonObject(json.toString());
+    }
+
+    static javax.json.JsonObject toJsonObject(@NonNull final JsonObject json) {
+        try (final JsonReader reader = Json.createReader(new StringReader(json.encode()))) {
+            return reader.readObject();
+        }
     }
 
 }

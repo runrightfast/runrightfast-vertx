@@ -18,10 +18,13 @@ package co.runrightfast.vertx.core.impl;
 import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
+import static co.runrightfast.vertx.core.VertxService.LOG;
 import static co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
@@ -36,7 +39,9 @@ import io.vertx.ext.dropwizard.MatchType;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,9 +63,12 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
 
     private VertxOptions vertxOptions;
 
+    private final RunRightFastVerticleManager verticleManager;
+
     @Inject
-    public VertxServiceImpl(@NonNull @VertxServiceConfig final Config config) {
+    public VertxServiceImpl(@NonNull @VertxServiceConfig final Config config, final Set<RunRightFastVerticleDeployment> deployments) {
         this.config = config;
+        this.verticleManager = new RunRightFastVerticleManager(deployments);
     }
 
     @Override
@@ -96,31 +104,8 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         LOG.config(() -> ConfigUtils.renderConfig(config));
         this.vertxOptions = createVertxOptions();
         logVertxOptions();
-        if (this.vertxOptions.isClustered()) {
-            final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<Throwable> exception = new AtomicReference<>();
-            Vertx.clusteredVertx(vertxOptions, result -> {
-                try {
-                    if (result.succeeded()) {
-                        this.vertx = result.result();
-                        LOG.info("Vertx clustered instance has been created");
-                    } else {
-                        exception.set(result.cause());
-                    }
-                } finally {
-                    latch.countDown();
-                }
-            });
-            while (!latch.await(10, TimeUnit.SECONDS)) {
-                LOG.info("Waiting for Vertx to start");
-            }
-            if (exception.get() != null) {
-                throw new RuntimeException("Failed to start a clustered Vertx instance", exception.get());
-            }
-        } else {
-            this.vertx = Vertx.vertx(vertxOptions);
-            LOG.info("Vertx instance has been created");
-        }
+        initVertx();
+        deployVerticleManager();
         LOG.logp(INFO, getClass().getName(), "startUp", "success");
     }
 
@@ -154,6 +139,56 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         }
 
         LOG.logp(CONFIG, getClass().getName(), "logVertxOptions", json.encodePrettily());
+    }
+
+    private void initVertx() throws InterruptedException {
+        if (this.vertxOptions.isClustered()) {
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<Throwable> exception = new AtomicReference<>();
+            Vertx.clusteredVertx(vertxOptions, result -> {
+                try {
+                    if (result.succeeded()) {
+                        this.vertx = result.result();
+                        LOG.logp(INFO, getClass().getName(), "initVertx", "Vertx clustered instance has been created");
+                    } else {
+                        exception.set(result.cause());
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+            while (!latch.await(10, TimeUnit.SECONDS)) {
+                LOG.logp(INFO, getClass().getName(), "initVertx", "Waiting for Vertx to start");
+            }
+            if (exception.get() != null) {
+                throw new RuntimeException("Failed to start a clustered Vertx instance", exception.get());
+            }
+        } else {
+            this.vertx = Vertx.vertx(vertxOptions);
+            LOG.logp(INFO, getClass().getName(), "initVertx", "Vertx instance has been created");
+        }
+    }
+
+    private void deployVerticleManager() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<Throwable> exception = new AtomicReference<>();
+        vertx.deployVerticle(verticleManager, result -> {
+            try {
+                if (result.succeeded()) {
+                    LOG.logp(INFO, getClass().getName(), "deployVerticleManager", result.result());
+                } else {
+                    exception.set(result.cause());
+                }
+            } finally {
+                latch.countDown();
+            }
+        });
+        while (!latch.await(10, TimeUnit.SECONDS)) {
+            LOG.logp(INFO, getClass().getName(), "initVertx", "Waiting for RunRightFastVerticleManager deployment to complete");
+        }
+        if (exception.get() != null) {
+            throw new RuntimeException("Failed to deploy RunRightFastVerticleManager", exception.get());
+        }
     }
 
     private JsonObject toJsonObject(final MetricsOptions metricsOptions) {
@@ -285,6 +320,16 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             final com.hazelcast.config.Config hazelcastConfig = hazelcastConfigFactory(hazelcastInstanceName).apply(c);
             return new HazelcastClusterManager(hazelcastConfig);
         }).ifPresent(vertxOptions::setClusterManager);
+    }
+
+    @Override
+    public Map<String, RunRightFastVerticleDeployment> deployedVerticles() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Set<RunRightFastVerticleDeployment> deployments() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

@@ -17,6 +17,7 @@ package co.runrightfast.vertx.core;
 
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HEALTHCHECK_REGISTRY_NAME;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_METRIC_REGISTRY_NAME;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -25,6 +26,8 @@ import com.google.common.util.concurrent.Service;
 import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -48,6 +51,10 @@ public interface VertxService extends Service {
      * @return a copy of the VertxOptions that were used to create the Vertx instance
      */
     VertxOptions getVertxOptions();
+
+    Map<String, RunRightFastVerticleDeployment> deployedVerticles();
+
+    Set<RunRightFastVerticleDeployment> deployments();
 
     static final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(VERTX_METRIC_REGISTRY_NAME);
 

@@ -13,26 +13,12 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.verticles.verticleManager;
-
-import co.runrightfast.vertx.core.RunRightFastVerticle;
-import io.vertx.core.DeploymentOptions;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
+package co.runrightfast.vertx.core.utils;
 
 /**
  *
  * @author alfio
  */
-@Value
-@Builder
-public final class RunRightFastVerticleDeployment {
-
-    @NonNull
-    private final RunRightFastVerticle verticle;
-
-    @NonNull
-    private final DeploymentOptions deploymentOptions;
+public interface JsonObjectConversions {
 
 }

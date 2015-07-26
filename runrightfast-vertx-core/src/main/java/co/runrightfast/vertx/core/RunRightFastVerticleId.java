@@ -16,8 +16,11 @@
 package co.runrightfast.vertx.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import javax.json.Json;
+import javax.json.JsonObject;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -43,6 +46,22 @@ public final class RunRightFastVerticleId {
         this.group = group;
         this.name = name;
         this.version = version;
+    }
+
+    public RunRightFastVerticleId(@NonNull final JsonObject json) {
+        this(
+                json.getString("group"),
+                json.getString("name"),
+                json.getString("version")
+        );
+    }
+
+    public JsonObject toJson() {
+        return Json.createObjectBuilder()
+                .add("group", group)
+                .add("name", name)
+                .add("version", version)
+                .build();
     }
 
 }

@@ -25,6 +25,7 @@ import io.vertx.core.Vertx;
 import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.logging.Level.INFO;
 import java.util.logging.Logger;
+import javax.json.Json;
 import lombok.Getter;
 
 /**
@@ -48,7 +49,6 @@ import lombok.Getter;
  */
 public abstract class RunRightFastVerticle extends AbstractVerticle {
 
-    private static final String LIFECYCLE_LOG_MSG = "%s verticle instance %d";
     private static final AtomicInteger instanceSequence = new AtomicInteger(0);
 
     protected final String CLASS_NAME = getClass().getName();
@@ -84,29 +84,38 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         this.metricRegistry = SharedMetricRegistries.getOrCreate(context.deploymentID());
         this.healthCheckRegistry = SharedHealthCheckRegistries.getOrCreate(context.deploymentID());
         this.instanceId = instanceSequence.incrementAndGet();
-        log.logp(INFO, CLASS_NAME, "init", () -> String.format(LIFECYCLE_LOG_MSG, "initialized", instanceId));
+        log.logp(INFO, CLASS_NAME, "init", () -> lifeCycleMsg("initialized"));
     }
 
     @Override
     public final void start() throws Exception {
-        log.logp(INFO, CLASS_NAME, "start", () -> String.format(LIFECYCLE_LOG_MSG, "starting", instanceId));
+        log.logp(INFO, CLASS_NAME, "start", () -> lifeCycleMsg("starting"));
         try {
             metricRegistry.counter(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).inc();
             startUp();
         } finally {
-            log.logp(INFO, CLASS_NAME, "start", () -> String.format(LIFECYCLE_LOG_MSG, "started", instanceId));
+            log.logp(INFO, CLASS_NAME, "start", () -> lifeCycleMsg("started"));
         }
     }
 
     @Override
     public final void stop() throws Exception {
-        log.logp(INFO, CLASS_NAME, "stop", () -> String.format(LIFECYCLE_LOG_MSG, "stopping", instanceId));
+        log.logp(INFO, CLASS_NAME, "stop", () -> lifeCycleMsg("stopping"));
         try {
             shutDown();
         } finally {
             metricRegistry.counter(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).dec();
-            log.logp(INFO, CLASS_NAME, "stop", () -> String.format(LIFECYCLE_LOG_MSG, "stopped", instanceId));
+            log.logp(INFO, CLASS_NAME, "stop", () -> lifeCycleMsg("stopped"));
         }
+    }
+
+    private String lifeCycleMsg(final String state) {
+        return Json.createObjectBuilder()
+                .add("verticleId", verticleId.toJson())
+                .add("instanceId", instanceId)
+                .add("state", state)
+                .build()
+                .toString();
     }
 
     /**

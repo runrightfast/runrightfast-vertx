@@ -19,9 +19,11 @@ import co.runrightfast.vertx.core.VertxService;
 import co.runrightfast.vertx.core.impl.VertxServiceImpl;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import com.typesafe.config.Config;
 import dagger.Module;
 import dagger.Provides;
+import java.util.Set;
 
 /**
  *
@@ -31,8 +33,8 @@ import dagger.Provides;
 public class VertxServiceModule {
 
     @Provides
-    public VertxService vertxService(@VertxServiceConfig final Config config) {
-        final VertxService service = new VertxServiceImpl(config);
+    public VertxService vertxService(@VertxServiceConfig final Config config, final Set<RunRightFastVerticleDeployment> deployments) {
+        final VertxService service = new VertxServiceImpl(config, deployments);
         ServiceUtils.start(service);
         return service;
     }

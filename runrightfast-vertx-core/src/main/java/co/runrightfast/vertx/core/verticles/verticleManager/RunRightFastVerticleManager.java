@@ -18,19 +18,29 @@ package co.runrightfast.vertx.core.verticles.verticleManager;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
+import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
 import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.inject.Inject;
+import javax.json.Json;
+import javax.json.JsonObject;
+import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
 
 /**
  *
  * @author alfio
  */
+@Log
 public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     private final Set<RunRightFastVerticleDeployment> deployments;
+
+    private ImmutableMap<String, RunRightFastVerticleDeployment> deployedVerticles = ImmutableMap.of();
 
     @Inject
     public RunRightFastVerticleManager(final Set<RunRightFastVerticleDeployment> deployments) {
@@ -41,6 +51,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     @Override
     protected void startUp() {
+        deployments.stream().forEach(this::deployVerticle);
     }
 
     @Override
@@ -54,6 +65,36 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                 .name(getClass().getSimpleName())
                 .version("0.1")
                 .build();
+    }
+
+    private void deployVerticle(final RunRightFastVerticleDeployment deployment) {
+        vertx.deployVerticle(deployment.getVerticle(), deployment.getDeploymentOptions(), result -> {
+            if (result.succeeded()) {
+                final ImmutableMap.Builder<String, RunRightFastVerticleDeployment> mapBuilder = ImmutableMap.builder();
+                mapBuilder.putAll(deployedVerticles);
+                mapBuilder.put(result.result(), deployment);
+                this.deployedVerticles = mapBuilder.build();
+                log.logp(Level.INFO, CLASS_NAME, "deployVerticle", () -> toJson(deployment).toString());
+            } else {
+                log.logp(Level.SEVERE, CLASS_NAME, "deployVerticle", result.cause(), () -> toJson(deployment).toString());
+            }
+        });
+    }
+
+    private JsonObject toJson(final RunRightFastVerticleDeployment deployment) {
+        return Json.createObjectBuilder()
+                .add("verticleClass", deployment.getVerticle().getClass().getName())
+                .add("verticleId", deployment.getVerticle().getVerticleId().toJson())
+                .add("deploymentOptions", toJsonObject(deployment.getDeploymentOptions().toJson()))
+                .build();
+    }
+
+    /**
+     *
+     * @return immutable map
+     */
+    public Map<String, RunRightFastVerticleDeployment> deployedVerticles() {
+        return deployedVerticles;
     }
 
 }
