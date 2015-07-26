@@ -19,6 +19,7 @@ import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
+import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import static java.util.logging.Level.CONFIG;
 import static java.util.logging.Level.INFO;
+import javax.inject.Inject;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -56,7 +58,8 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
 
     private VertxOptions vertxOptions;
 
-    public VertxServiceImpl(@NonNull final Config config) {
+    @Inject
+    public VertxServiceImpl(@NonNull @VertxServiceConfig final Config config) {
         this.config = config;
     }
 

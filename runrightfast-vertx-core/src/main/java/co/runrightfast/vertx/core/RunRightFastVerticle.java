@@ -25,6 +25,7 @@ import io.vertx.core.Vertx;
 import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.logging.Level.INFO;
 import java.util.logging.Logger;
+import lombok.Getter;
 
 /**
  * Base class for verticles, which provides support for :
@@ -41,6 +42,7 @@ import java.util.logging.Logger;
  * Subclasses must override the {@link #startUp()} and {@link #shutDown()} methods, which are invoked by the corresponding {@link #start()} and {@link #stop()}
  * methods.
  *
+ * Each verticle defines its RunRightFastVerticleId and manages its own versioning.
  *
  * @author alfio
  */
@@ -56,6 +58,14 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     protected HealthCheckRegistry healthCheckRegistry;
 
     protected int instanceId;
+
+    @Getter
+    protected RunRightFastVerticleId verticleId;
+
+    @SuppressWarnings("OverridableMethodCallInConstructor")
+    protected RunRightFastVerticle() {
+        this.verticleId = runRightFastVerticleId();
+    }
 
     /**
      * Performs the following:
@@ -98,6 +108,13 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
             log.logp(INFO, CLASS_NAME, "stop", () -> String.format(LIFECYCLE_LOG_MSG, "stopped", instanceId));
         }
     }
+
+    /**
+     * Used to initialize the {@link #verticleId} field.
+     *
+     * @return RunRightFastVerticleId
+     */
+    protected abstract RunRightFastVerticleId runRightFastVerticleId();
 
     /**
      * Verticle specific start up

@@ -28,6 +28,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @Builder
 public final class RunRightFastVerticleId {
 
+    public static final String RUNRIGHTFAST_GROUP = "co.runrightfast";
+
     private final String group;
 
     private final String name;
