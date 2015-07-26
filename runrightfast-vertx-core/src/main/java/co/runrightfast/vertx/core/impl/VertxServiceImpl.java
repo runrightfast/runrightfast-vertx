@@ -324,12 +324,15 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
 
     @Override
     public Map<String, RunRightFastVerticleDeployment> deployedVerticles() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (this.verticleManager != null) {
+            return this.verticleManager.getDeployedVerticles();
+        }
+        return Collections.emptyMap();
     }
 
     @Override
     public Set<RunRightFastVerticleDeployment> deployments() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return this.verticleManager.getDeployments();
     }
 
 }

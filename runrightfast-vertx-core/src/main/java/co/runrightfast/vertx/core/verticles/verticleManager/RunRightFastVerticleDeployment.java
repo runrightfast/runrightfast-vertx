@@ -16,7 +16,10 @@
 package co.runrightfast.vertx.core.verticles.verticleManager;
 
 import co.runrightfast.vertx.core.RunRightFastVerticle;
+import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
 import io.vertx.core.DeploymentOptions;
+import javax.json.Json;
+import javax.json.JsonObject;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -34,5 +37,13 @@ public final class RunRightFastVerticleDeployment {
 
     @NonNull
     private final DeploymentOptions deploymentOptions;
+
+    public JsonObject toJson() {
+        return Json.createObjectBuilder()
+                .add("verticleClass", verticle.getClass().getName())
+                .add("verticleId", verticle.getVerticleId().toJson())
+                .add("deploymentOptions", toJsonObject(deploymentOptions.toJson()))
+                .build();
+    }
 
 }

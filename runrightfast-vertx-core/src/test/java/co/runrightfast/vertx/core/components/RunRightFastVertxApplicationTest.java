@@ -30,6 +30,7 @@ import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import static java.util.logging.Level.INFO;
 import javax.inject.Singleton;
 import lombok.extern.java.Log;
 import static org.hamcrest.CoreMatchers.is;
@@ -111,6 +112,13 @@ public class RunRightFastVertxApplicationTest {
         final Vertx vertx = vertxService.getVertx();
         assertThat(vertx.isClustered(), is(false));
         assertThat(vertx.isMetricsEnabled(), is(false));
+
+        assertThat(vertxService.deployments().size(), is(1));
+        Thread.yield();
+        vertxService.deployedVerticles().entrySet().stream().forEach(entry -> {
+            log.logp(INFO, getClass().getName(), "test_vertx_default_options", String.format("%s -> %s", entry.getKey(), entry.getValue().toJson()));
+        });
+        assertThat(vertxService.deployedVerticles().size(), is(vertxService.deployments().size()));
     }
 
 }
