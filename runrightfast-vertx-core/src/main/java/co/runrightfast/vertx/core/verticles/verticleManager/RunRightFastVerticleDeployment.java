@@ -41,7 +41,7 @@ public final class RunRightFastVerticleDeployment {
     public JsonObject toJson() {
         return Json.createObjectBuilder()
                 .add("verticleClass", verticle.getClass().getName())
-                .add("verticleId", verticle.getVerticleId().toJson())
+                .add("verticleId", verticle.getRunRightFastVerticleId().toJson())
                 .add("deploymentOptions", toJsonObject(deploymentOptions.toJson()))
                 .build();
     }

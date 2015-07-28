@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package co.runrightfast.vertx.core.verticles.verticleManager.messages;
+
+option java_generate_equals_and_hash = true;
+option java_string_check_utf8 = true;
+option java_multiple_files = true;
+
+// returns list of managed verticle deployments
+message GetVerticleDeployments {
+
+    message Request {
+        // below are filters used to filter out what is returned, if no filters are specified, then all deployments are returned
+        //
+        repeated VerticleId verticle_ids = 1;
+        repeated string groups = 2;
+        repeated string names = 3;
+    }
+
+    message Response {
+        repeated VerticleDeployment deployments = 1;
+    }
+
+}
+
+message VerticleId {
+    string group = 1;
+
+    string name = 2;
+
+    string version = 3;
+}
+
+message VerticleDeployment {
+    string verticle_class = 1;
+
+    VerticleId verticle_id = 2;    
+}
+
+message DeploymentOptions {
+    VerticleType verticle_type = 1;
+
+    int32 instances = 2;
+
+    string config_json = 3;
+
+    bool ha = 4;
+
+    string isolation_group = 5;
+
+    repeated string isolated_classes = 6;
+    
+    repeated string extra_classpath = 7;
+}
+
+enum VerticleType {
+    STANDARD = 0;
+
+    WORKER = 1;
+
+    MULTITHREADED = 2;
+}
+

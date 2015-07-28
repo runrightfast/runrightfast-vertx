@@ -18,9 +18,13 @@ package co.runrightfast.vertx.core.verticles.verticleManager;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
+import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
+import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.inject.Inject;
@@ -34,6 +38,15 @@ import org.apache.commons.collections4.CollectionUtils;
  */
 @Log
 public final class RunRightFastVerticleManager extends RunRightFastVerticle {
+
+    public static final RunRightFastVerticleId VERTICLE_ID = RunRightFastVerticleId.builder()
+            .group(RUNRIGHTFAST_GROUP)
+            .name(RunRightFastVerticleManager.class.getSimpleName())
+            .version("0.1")
+            .build();
+
+    @Getter
+    private final RunRightFastVerticleId runRightFastVerticleId = VERTICLE_ID;
 
     @Getter
     private final Set<RunRightFastVerticleDeployment> deployments;
@@ -51,19 +64,30 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     @Override
     protected void startUp() {
         deployments.stream().forEach(this::deployVerticle);
+        registerGetVerticleDeploymentsMessageConsumer();
+    }
+
+    private void registerGetVerticleDeploymentsMessageConsumer() {
+        registerMessageConsumer(MessageConsumerConfig.<GetVerticleDeployments.Request, GetVerticleDeployments.Response>builder()
+                .addressMessageMapping(EventBusAddressMessageMapping.builder()
+                        .address(eventBusAddress("get-verticle-deployments"))
+                        .requestDefaultInstance(GetVerticleDeployments.Request.getDefaultInstance())
+                        .responseDefaultInstance(Optional.of(GetVerticleDeployments.Response.getDefaultInstance()))
+                        .build()
+                ).handler(request -> {
+                    // TODO : process GetVerticleDeployments request
+
+                    final GetVerticleDeployments.Response response = GetVerticleDeployments.Response.newBuilder()
+                    .build();
+
+                    request.reply(response);
+                })
+                .build()
+        );
     }
 
     @Override
     protected void shutDown() {
-    }
-
-    @Override
-    protected RunRightFastVerticleId runRightFastVerticleId() {
-        return RunRightFastVerticleId.builder()
-                .group(RUNRIGHTFAST_GROUP)
-                .name(getClass().getSimpleName())
-                .version("0.1")
-                .build();
     }
 
     /**

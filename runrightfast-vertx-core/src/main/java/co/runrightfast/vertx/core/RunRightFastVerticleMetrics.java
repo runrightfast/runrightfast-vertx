@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.core;
 
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.MetricType.COUNTER;
+import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.MetricType.TIMER;
 import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Arrays;
 import lombok.NonNull;
@@ -41,6 +42,10 @@ public interface RunRightFastVerticleMetrics {
         return metricName(COUNTER, name, names);
     }
 
+    static String timerName(final String name, final String... names) {
+        return metricName(TIMER, name, names);
+    }
+
     static String metricName(@NonNull final MetricType metricType, final String name, final String... names) {
         checkArgument(StringUtils.isNotBlank(name));
         if (names != null) {
@@ -63,12 +68,27 @@ public interface RunRightFastVerticleMetrics {
 
     static enum Counters {
 
-        INSTANCE_STARTED("verticle", "instance", "started");
+        INSTANCE_STARTED("verticle", "instance", "started"),
+        // the EventBus address will be appended to the metric name
+        MESSAGE_CONSUMER_EXCEPTION("message-consumer", "exception"),
+        MESSAGE_CONSUMER_MESSAGE_TOTAL("message-consumer", "message", "total"),
+        MESSAGE_CONSUMER_MESSAGE_PROCESSING("message-consumer", "message", "processing");
 
         public final String metricName;
 
         private Counters(final String name, final String... names) {
             this.metricName = counterName(name, names);
+        }
+    }
+
+    static enum Timers {
+
+        MESSAGE_CONSUMER_HANDLER("message-consumer", "handler");
+
+        public final String metricName;
+
+        private Timers(final String name, final String... names) {
+            this.metricName = timerName(name, names);
         }
     }
 

@@ -19,19 +19,32 @@ import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
+import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.modules.ApplicationConfigModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.codahale.metrics.MetricFilter;
 import com.typesafe.config.ConfigFactory;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.Message;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import static java.util.logging.Level.INFO;
+import static java.util.logging.Level.SEVERE;
 import javax.inject.Singleton;
+import lombok.Getter;
 import lombok.extern.java.Log;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,14 +61,13 @@ public class RunRightFastVertxApplicationTest {
 
     static class TestVerticle extends RunRightFastVerticle {
 
-        @Override
-        protected RunRightFastVerticleId runRightFastVerticleId() {
-            return RunRightFastVerticleId.builder()
-                    .group(RunRightFastVerticleId.RUNRIGHTFAST_GROUP)
-                    .name(getClass().getSimpleName())
-                    .version("1.0.0")
-                    .build();
-        }
+        @Getter
+        private final RunRightFastVerticleId runRightFastVerticleId
+                = RunRightFastVerticleId.builder()
+                .group(RunRightFastVerticleId.RUNRIGHTFAST_GROUP)
+                .name(getClass().getSimpleName())
+                .version("1.0.0")
+                .build();
 
         @Override
         protected void startUp() {
@@ -107,7 +119,7 @@ public class RunRightFastVertxApplicationTest {
     }
 
     @Test
-    public void test_vertx_default_options() {
+    public void test_vertx_default_options() throws InterruptedException, ExecutionException, TimeoutException {
         log.info("test_vertx_default_options");
         final Vertx vertx = vertxService.getVertx();
         assertThat(vertx.isClustered(), is(false));
@@ -119,6 +131,28 @@ public class RunRightFastVertxApplicationTest {
             log.logp(INFO, getClass().getName(), "test_vertx_default_options", String.format("%s -> %s", entry.getKey(), entry.getValue().toJson()));
         });
         assertThat(vertxService.deployedVerticles().size(), is(vertxService.deployments().size()));
+
+        final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
+        final CompletableFuture future = new CompletableFuture();
+        final String address = EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments");
+        vertx.eventBus().send(
+                address,
+                GetVerticleDeployments.Request.newBuilder().build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                getVerticleDeploymentsResponseHandler(future)
+        );
+        final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
     }
 
+    private Handler<AsyncResult<Message<GetVerticleDeployments.Response>>> getVerticleDeploymentsResponseHandler(final CompletableFuture future) {
+        return result -> {
+            if (result.succeeded()) {
+                log.logp(INFO, getClass().getName(), "test_vertx_default_options.success", result.result().body().getDescriptorForType().getFullName());
+                future.complete(result.result().body());
+            } else {
+                log.logp(SEVERE, getClass().getName(), "test_vertx_default_options.failure", "get-verticle-deployments failed", result.cause());
+                future.completeExceptionally(result.cause());
+            }
+        };
+    }
 }

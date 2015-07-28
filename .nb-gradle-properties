@@ -32,5 +32,30 @@
       </task-args>
       <task-jvm-args/>
     </task>
+    <task>
+      <display-name>build</display-name>
+      <non-blocking>yes</non-blocking>
+      <task-names>
+        <name must-exist="no">build</name>
+      </task-names>
+      <task-args>
+        <arg>--info</arg>
+      </task-args>
+      <task-jvm-args/>
+    </task>
+    <task>
+      <display-name>debug.test.single</display-name>
+      <non-blocking>no</non-blocking>
+      <task-names>
+        <name must-exist="no">${project}:clean${test-task-name-capital}</name>
+        <name must-exist="no">${project}:${test-task-name}</name>
+      </task-names>
+      <task-args>
+        <arg>-D${test-task-name}.single=${test-file-path}</arg>
+        <arg>-D${test-task-name}.debug</arg>
+        <arg>--info</arg>
+      </task-args>
+      <task-jvm-args/>
+    </task>
   </built-in-tasks>
 </gradle-project-properties>

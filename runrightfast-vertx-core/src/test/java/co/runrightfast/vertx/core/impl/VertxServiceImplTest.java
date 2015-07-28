@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import static java.util.logging.Level.INFO;
+import lombok.Getter;
 import lombok.extern.java.Log;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -59,14 +60,13 @@ public class VertxServiceImplTest {
 
     static class TestVerticle extends RunRightFastVerticle {
 
-        @Override
-        protected RunRightFastVerticleId runRightFastVerticleId() {
-            return RunRightFastVerticleId.builder()
-                    .group(RunRightFastVerticleId.RUNRIGHTFAST_GROUP)
-                    .name(getClass().getSimpleName())
-                    .version("1.0.0")
-                    .build();
-        }
+        @Getter
+        private final RunRightFastVerticleId runRightFastVerticleId
+                = RunRightFastVerticleId.builder()
+                .group(RunRightFastVerticleId.RUNRIGHTFAST_GROUP)
+                .name(getClass().getSimpleName())
+                .version("1.0.0")
+                .build();
 
         @Override
         protected void startUp() {
