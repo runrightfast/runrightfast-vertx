@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.core.eventbus;
 
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
+import co.runrightfast.vertx.core.utils.JvmProcess;
 import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Arrays;
 import lombok.NonNull;
@@ -62,6 +63,14 @@ public interface EventBusAddress {
             sb.append('/').append(String.join("/", paths));
         }
         return sb.toString();
+    }
+
+    public static String toProcessSpecificEventBusAddress(final String address) {
+        checkArgument(isNotBlank(address));
+        if (address.charAt(0) == '/') {
+            return String.format("/%s%s", JvmProcess.JVM_ID, address);
+        }
+        return String.format("/%s/%s", JvmProcess.JVM_ID, address);
     }
 
 }

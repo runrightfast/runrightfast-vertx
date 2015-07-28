@@ -35,6 +35,10 @@ public final class MessageConsumerRegistration<REQUEST extends com.google.protob
 
     @Getter
     @NonNull
+    private final MessageConsumer processSpecificMessageConsumer;
+
+    @Getter
+    @NonNull
     private final MessageConsumerConfig<REQUEST, RESPONSE> config;
 
 }

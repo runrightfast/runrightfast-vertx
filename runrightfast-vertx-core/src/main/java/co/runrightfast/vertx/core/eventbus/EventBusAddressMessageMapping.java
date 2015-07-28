@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import static co.runrightfast.vertx.core.eventbus.EventBusAddress.toProcessSpecificEventBusAddress;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Optional;
@@ -58,6 +59,7 @@ public final class EventBusAddressMessageMapping<REQUEST extends com.google.prot
 
         public EventBusAddressMessageMapping build() {
             mapping.validate();
+            mapping.processSpecificAddress = toProcessSpecificEventBusAddress(mapping.address);
             return mapping;
         }
     }
@@ -66,8 +68,17 @@ public final class EventBusAddressMessageMapping<REQUEST extends com.google.prot
         return new Builder<>();
     }
 
+    /**
+     * Serves as the cluster address. If a message is published to this address any verticle running in any process can receive the message.
+     */
     @Getter
     private String address;
+
+    /**
+     * Enables sending a message to a specific JVM process
+     */
+    @Getter
+    private String processSpecificAddress;
 
     @Getter
     private REQUEST requestDefaultInstance;

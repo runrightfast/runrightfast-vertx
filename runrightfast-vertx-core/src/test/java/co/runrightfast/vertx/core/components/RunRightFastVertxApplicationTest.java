@@ -131,10 +131,33 @@ public class RunRightFastVertxApplicationTest {
             log.logp(INFO, getClass().getName(), "test_vertx_default_options", String.format("%s -> %s", entry.getKey(), entry.getValue().toJson()));
         });
         assertThat(vertxService.deployedVerticles().size(), is(vertxService.deployments().size()));
+    }
+
+    @Test
+    public void test_eventBus_GetVerticleDeployments() throws InterruptedException, ExecutionException, TimeoutException {
+        log.info("test_eventBus_GetVerticleDeployments");
+        final Vertx vertx = vertxService.getVertx();
 
         final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
         final CompletableFuture future = new CompletableFuture();
         final String address = EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments");
+        vertx.eventBus().send(
+                address,
+                GetVerticleDeployments.Request.newBuilder().build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                getVerticleDeploymentsResponseHandler(future)
+        );
+        final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void test_eventBus_GetVerticleDeployments_atProcessSpecificAddress() throws InterruptedException, ExecutionException, TimeoutException {
+        log.info("test_eventBus_GetVerticleDeployments_atProcessSpecificAddress");
+        final Vertx vertx = vertxService.getVertx();
+
+        final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
+        final CompletableFuture future = new CompletableFuture();
+        final String address = EventBusAddress.toProcessSpecificEventBusAddress(EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments"));
         vertx.eventBus().send(
                 address,
                 GetVerticleDeployments.Request.newBuilder().build(),

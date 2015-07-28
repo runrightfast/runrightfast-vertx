@@ -141,25 +141,43 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
      * @param <REQ>
      * @param <RESP>
      * @param config
-     * @return
+     * @return MessageConsumer
      */
-    protected <REQ extends Message, RESP extends Message> MessageConsumer<REQ> registerMessageConsumer(@NonNull final MessageConsumerConfig<REQ, RESP> config) {
+    protected <REQ extends Message, RESP extends Message> MessageConsumerRegistration<REQ, RESP> registerMessageConsumer(@NonNull final MessageConsumerConfig<REQ, RESP> config) {
         Preconditions.checkState(!messageConsumerRegistrations.containsKey(config.getAddressMessageMapping().getAddress()));
         final EventBus eventBus = vertx.eventBus();
         registerMessageCodecs(config);
-        final MessageConsumer<REQ> consumer = config.isLocal() ? eventBus.localConsumer(config.getAddressMessageMapping().getAddress()) : eventBus.consumer(config.getAddressMessageMapping().getAddress());
-        consumer.completionHandler(config.getCompletionHandler().map(handler -> messageConsumerCompletionHandler(Optional.of(handler), config))
-                .orElseGet(() -> messageConsumerCompletionHandler(Optional.empty(), config)));
-        consumer.endHandler(config.getEndHandler().map(handler -> messageConsumerEndHandler(Optional.of(handler), config))
-                .orElseGet(() -> messageConsumerEndHandler(Optional.empty(), config)));
-        consumer.exceptionHandler(config.getExceptionHandler().map(handler -> messageConsumerExceptionHandler(Optional.of(handler), config))
-                .orElseGet(() -> messageConsumerExceptionHandler(Optional.empty(), config)));
+
+        final String address = config.getAddressMessageMapping().getAddress();
+        final MessageConsumer<REQ> consumer = config.isLocal() ? eventBus.localConsumer(address) : eventBus.consumer(address);
+        consumer.completionHandler(config.getCompletionHandler().map(handler -> messageConsumerCompletionHandler(address, Optional.of(handler), config))
+                .orElseGet(() -> messageConsumerCompletionHandler(address, Optional.empty(), config)));
+        consumer.endHandler(config.getEndHandler().map(handler -> messageConsumerEndHandler(address, Optional.of(handler), config))
+                .orElseGet(() -> messageConsumerEndHandler(address, Optional.empty(), config)));
+        consumer.exceptionHandler(config.getExceptionHandler().map(handler -> messageConsumerExceptionHandler(address, Optional.of(handler), config))
+                .orElseGet(() -> messageConsumerExceptionHandler(address, Optional.empty(), config)));
         consumer.handler(messageConsumerHandler(config));
+
+        final String processSpecificAddress = config.getAddressMessageMapping().getProcessSpecificAddress();
+        final MessageConsumer<REQ> processSpecificConsumer = config.isLocal() ? eventBus.localConsumer(processSpecificAddress) : eventBus.consumer(processSpecificAddress);
+        processSpecificConsumer.completionHandler(config.getCompletionHandler().map(handler -> messageConsumerCompletionHandler(processSpecificAddress, Optional.of(handler), config))
+                .orElseGet(() -> messageConsumerCompletionHandler(processSpecificAddress, Optional.empty(), config)));
+        processSpecificConsumer.endHandler(config.getEndHandler().map(handler -> messageConsumerEndHandler(processSpecificAddress, Optional.of(handler), config))
+                .orElseGet(() -> messageConsumerEndHandler(processSpecificAddress, Optional.empty(), config)));
+        processSpecificConsumer.exceptionHandler(config.getExceptionHandler().map(handler -> messageConsumerExceptionHandler(processSpecificAddress, Optional.of(handler), config))
+                .orElseGet(() -> messageConsumerExceptionHandler(processSpecificAddress, Optional.empty(), config)));
+        processSpecificConsumer.handler(messageConsumerHandler(config));
+
+        final MessageConsumerRegistration<REQ, RESP> messageConsumerRegistration = MessageConsumerRegistration.<REQ, RESP>builder()
+                .messageConsumer(consumer)
+                .processSpecificMessageConsumer(processSpecificConsumer)
+                .config(config)
+                .build();
         messageConsumerRegistrations = ImmutableMap.<String, MessageConsumerRegistration<?, ?>>builder().putAll(messageConsumerRegistrations).put(
                 config.address(),
-                MessageConsumerRegistration.<REQ, RESP>builder().messageConsumer(consumer).config(config).build()
+                messageConsumerRegistration
         ).build();
-        return consumer;
+        return messageConsumerRegistration;
     }
 
     /**
@@ -192,20 +210,28 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         });
     }
 
-    private <REQ extends Message, RESP extends Message> Handler<AsyncResult<Void>> messageConsumerCompletionHandler(final Optional<Handler<AsyncResult<Void>>> handler, final MessageConsumerConfig<REQ, RESP> config) {
+    private <REQ extends Message, RESP extends Message> String messageConsumerLogInfo(final String address, final MessageConsumerConfig<REQ, RESP> config) {
+        return Json.createObjectBuilder()
+                .add("messageConsumerAddress", address)
+                .add("config", config.toJson())
+                .build()
+                .toString();
+    }
+
+    private <REQ extends Message, RESP extends Message> Handler<AsyncResult<Void>> messageConsumerCompletionHandler(final String address, final Optional<Handler<AsyncResult<Void>>> handler, final MessageConsumerConfig<REQ, RESP> config) {
         return (AsyncResult<Void> result) -> {
             if (result.succeeded()) {
-                log.logp(INFO, CLASS_NAME, "messageConsumerCompletionHandler.succeeded", config::toString);
+                log.logp(INFO, CLASS_NAME, "messageConsumerCompletionHandler.succeeded", () -> messageConsumerLogInfo(address, config));
             } else {
-                log.logp(SEVERE, CLASS_NAME, "messageConsumerCompletionHandler.failed", config.toString(), result.cause());
+                log.logp(SEVERE, CLASS_NAME, "messageConsumerCompletionHandler.failed", messageConsumerLogInfo(address, config), result.cause());
             }
             handler.ifPresent(h -> h.handle(result));
         };
     }
 
-    private <REQ extends Message, RESP extends Message> Handler<Void> messageConsumerEndHandler(final Optional<Handler<Void>> handler, final MessageConsumerConfig<REQ, RESP> config) {
+    private <REQ extends Message, RESP extends Message> Handler<Void> messageConsumerEndHandler(final String address, final Optional<Handler<Void>> handler, final MessageConsumerConfig<REQ, RESP> config) {
         final Handler<Void> defaultHandler = result -> {
-            log.logp(INFO, CLASS_NAME, "messageConsumerEndHandler", config::toString);
+            log.logp(INFO, CLASS_NAME, "messageConsumerEndHandler", () -> messageConsumerLogInfo(address, config));
         };
 
         return handler.map(h -> {
@@ -217,10 +243,10 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         }).orElse(defaultHandler);
     }
 
-    private <REQ extends Message, RESP extends Message> Handler<Throwable> messageConsumerExceptionHandler(final Optional<Handler<Throwable>> handler, final MessageConsumerConfig<REQ, RESP> config) {
+    private <REQ extends Message, RESP extends Message> Handler<Throwable> messageConsumerExceptionHandler(final String address, final Optional<Handler<Throwable>> handler, final MessageConsumerConfig<REQ, RESP> config) {
         final Handler<Throwable> defaultHandler = result -> {
-            metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_EXCEPTION.metricName, config.getAddressMessageMapping().getAddress())).inc();
-            log.logp(INFO, CLASS_NAME, "messageConsumerEndHandler", config.toString(), result);
+            metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_EXCEPTION.metricName, address)).inc();
+            log.logp(INFO, CLASS_NAME, "messageConsumerEndHandler", messageConsumerLogInfo(address, config), result);
         };
 
         return handler.map(h -> {
