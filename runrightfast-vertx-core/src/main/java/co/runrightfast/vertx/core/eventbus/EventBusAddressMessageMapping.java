@@ -15,15 +15,14 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Optional;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -32,31 +31,63 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * @param <REQUEST> Request message payload type
  * @param <RESPONSE> Response message payload type
  */
-@Builder
 @EqualsAndHashCode(of = {"address"})
 public final class EventBusAddressMessageMapping<REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> {
 
-    @Getter
-    @NonNull
-    private final String address;
+    public static final class Builder<REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> {
+
+        private final EventBusAddressMessageMapping mapping = new EventBusAddressMessageMapping();
+
+        private Builder() {
+        }
+
+        public Builder<REQUEST, RESPONSE> address(final String address) {
+            mapping.address = address;
+            return this;
+        }
+
+        public Builder<REQUEST, RESPONSE> requestDefaultInstance(final REQUEST req) {
+            mapping.requestDefaultInstance = req;
+            return this;
+        }
+
+        public Builder<REQUEST, RESPONSE> responseDefaultInstance(final RESPONSE response) {
+            mapping.responseDefaultInstance = Optional.ofNullable(response);
+            return this;
+        }
+
+        public EventBusAddressMessageMapping build() {
+            mapping.validate();
+            return mapping;
+        }
+    }
+
+    public static <REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> Builder<REQUEST, RESPONSE> builder() {
+        return new Builder<>();
+    }
 
     @Getter
-    @NonNull
-    private final REQUEST requestDefaultInstance;
+    private String address;
 
     @Getter
-    @NonNull
+    private REQUEST requestDefaultInstance;
+
+    @Getter
     private Optional<RESPONSE> responseDefaultInstance = Optional.empty();
 
+    private EventBusAddressMessageMapping() {
+    }
+
     public void validate() {
-        checkState(isNotBlank(address));
+        checkNotNull(requestDefaultInstance);
+        checkArgument(isNotBlank(address));
     }
 
     public JsonObject toJson() {
         final JsonObjectBuilder json = Json.createObjectBuilder()
                 .add("address", address)
                 .add("requestMessageType", requestDefaultInstance.getDescriptorForType().getFullName());
-        responseDefaultInstance.ifPresent(instance -> json.add("responseMessageType", instance.getDescriptorForType().getFullName()));
+        getResponseDefaultInstance().ifPresent(instance -> json.add("responseMessageType", instance.getDescriptorForType().getFullName()));
         return json.build();
     }
 

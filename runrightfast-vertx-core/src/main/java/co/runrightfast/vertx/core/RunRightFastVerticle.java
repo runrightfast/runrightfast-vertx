@@ -136,6 +136,13 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
                 .toString();
     }
 
+    /**
+     *
+     * @param <REQ>
+     * @param <RESP>
+     * @param config
+     * @return
+     */
     protected <REQ extends Message, RESP extends Message> MessageConsumer<REQ> registerMessageConsumer(@NonNull final MessageConsumerConfig<REQ, RESP> config) {
         Preconditions.checkState(!messageConsumerRegistrations.containsKey(config.getAddressMessageMapping().getAddress()));
         final EventBus eventBus = vertx.eventBus();
@@ -259,7 +266,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     }
 
     /**
-     * Used to initialize the {@link #verticleId} field.
+     * Used to initialize the {@link #getRunRightFastVerticleId()} field.
      *
      * @return RunRightFastVerticleId
      */

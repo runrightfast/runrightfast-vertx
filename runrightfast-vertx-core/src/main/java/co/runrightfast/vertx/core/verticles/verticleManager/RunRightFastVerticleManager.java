@@ -24,7 +24,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticle
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import java.util.Optional;
+import io.vertx.core.eventbus.Message;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.inject.Inject;
@@ -51,6 +51,9 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     @Getter
     private final Set<RunRightFastVerticleDeployment> deployments;
 
+    /**
+     * Maps the Vertx verticle deployment id to the RunRightFastVerticleDeployment
+     */
     @Getter
     private ImmutableMap<String, RunRightFastVerticleDeployment> deployedVerticles = ImmutableMap.of();
 
@@ -72,18 +75,19 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                 .addressMessageMapping(EventBusAddressMessageMapping.builder()
                         .address(eventBusAddress("get-verticle-deployments"))
                         .requestDefaultInstance(GetVerticleDeployments.Request.getDefaultInstance())
-                        .responseDefaultInstance(Optional.of(GetVerticleDeployments.Response.getDefaultInstance()))
+                        .responseDefaultInstance(GetVerticleDeployments.Response.getDefaultInstance())
                         .build()
-                ).handler(request -> {
-                    // TODO : process GetVerticleDeployments request
-
-                    final GetVerticleDeployments.Response response = GetVerticleDeployments.Response.newBuilder()
-                    .build();
-
-                    request.reply(response);
-                })
+                ).handler(this::handleGetVerticleDeploymentsMessage)
                 .build()
         );
+    }
+
+    private void handleGetVerticleDeploymentsMessage(final Message<GetVerticleDeployments.Request> request) {
+        // TODO : process GetVerticleDeployments request
+        final GetVerticleDeployments.Response response = GetVerticleDeployments.Response.newBuilder()
+                .build();
+
+        request.reply(response);
     }
 
     @Override

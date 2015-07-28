@@ -15,11 +15,13 @@
  */
 package co.runrightfast.vertx.core.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import io.vertx.core.json.JsonObject;
 import java.io.StringReader;
 import javax.json.Json;
 import javax.json.JsonReader;
 import lombok.NonNull;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  *
@@ -33,6 +35,13 @@ public interface JsonUtils {
 
     static javax.json.JsonObject toJsonObject(@NonNull final JsonObject json) {
         try (final JsonReader reader = Json.createReader(new StringReader(json.encode()))) {
+            return reader.readObject();
+        }
+    }
+
+    static javax.json.JsonObject parse(final String json) {
+        checkArgument(isNotBlank(json));
+        try (final JsonReader reader = Json.createReader(new StringReader(json))) {
             return reader.readObject();
         }
     }

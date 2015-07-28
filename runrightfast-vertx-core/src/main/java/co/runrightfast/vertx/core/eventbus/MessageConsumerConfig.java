@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -22,10 +23,8 @@ import io.vertx.core.eventbus.Message;
 import java.util.Optional;
 import javax.json.Json;
 import javax.json.JsonObject;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 
 /**
  *
@@ -33,16 +32,63 @@ import lombok.NonNull;
  * @param <REQUEST> Request message payload type
  * @param <RESPONSE> Response message payload type
  */
-@Builder
 @EqualsAndHashCode(of = {"addressMessageMapping"})
 public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> {
 
-    @Getter
-    @NonNull
-    private final EventBusAddressMessageMapping addressMessageMapping;
+    public static final class Builder<REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> {
+
+        private final MessageConsumerConfig config = new MessageConsumerConfig();
+
+        public Builder<REQUEST, RESPONSE> addressMessageMapping(final EventBusAddressMessageMapping mapping) {
+            this.config.addressMessageMapping = mapping;
+            return this;
+        }
+
+        public Builder<REQUEST, RESPONSE> local(final boolean local) {
+            this.config.local = local;
+            return this;
+        }
+
+        public Builder<REQUEST, RESPONSE> maxBufferedMessages(final int maxBufferedMessages) {
+            this.config.maxBufferedMessages = maxBufferedMessages;
+            return this;
+        }
+
+        public Builder<REQUEST, RESPONSE> handler(final Handler<Message<REQUEST>> handler) {
+            this.config.handler = handler;
+            return this;
+        }
+
+        public Builder<REQUEST, RESPONSE> completionHandler(final Handler<AsyncResult<Void>> completionHandler) {
+            this.config.completionHandler = Optional.ofNullable(completionHandler);
+            return this;
+        }
+
+        public Builder<REQUEST, RESPONSE> endHandler(final Handler<Void> endHandler) {
+            this.config.endHandler = Optional.ofNullable(endHandler);
+            return this;
+        }
+
+        public Builder<REQUEST, RESPONSE> exceptionHandler(final Handler<Throwable> exceptionHandler) {
+            this.config.exceptionHandler = Optional.ofNullable(exceptionHandler);
+            return this;
+        }
+
+        public MessageConsumerConfig build() {
+            config.validate();
+            return config;
+        }
+    }
+
+    public static <REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> Builder<REQUEST, RESPONSE> builder() {
+        return new Builder<>();
+    }
 
     @Getter
-    private final boolean local;
+    private EventBusAddressMessageMapping addressMessageMapping;
+
+    @Getter
+    private boolean local;
 
     /**
      * the maximum number of messages that can be buffered when this stream is paused
@@ -51,29 +97,24 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     private int maxBufferedMessages;
 
     @Getter
-    private final Handler<Message<REQUEST>> handler;
+    private Handler<Message<REQUEST>> handler;
 
+    @Getter
     private Optional<Handler<AsyncResult<Void>>> completionHandler = Optional.empty();
 
+    @Getter
     private Optional<Handler<Void>> endHandler = Optional.empty();
 
+    @Getter
     private Optional<Handler<Throwable>> exceptionHandler = Optional.empty();
 
-    public Optional<Handler<AsyncResult<Void>>> getCompletionHandler() {
-        return completionHandler != null ? completionHandler : Optional.empty();
-    }
-
-    public Optional<Handler<Void>> getEndHandler() {
-        return endHandler != null ? endHandler : Optional.empty();
-    }
-
-    public Optional<Handler<Throwable>> getExceptionHandler() {
-        return exceptionHandler != null ? exceptionHandler : Optional.empty();
+    private MessageConsumerConfig() {
     }
 
     public void validate() {
-        addressMessageMapping.validate();
-        checkState(maxBufferedMessages > 0);
+        checkNotNull(addressMessageMapping);
+        checkNotNull(handler);
+        checkState(maxBufferedMessages >= 0);
     }
 
     public String address() {
