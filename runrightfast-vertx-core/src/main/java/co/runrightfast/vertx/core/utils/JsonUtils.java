@@ -16,11 +16,16 @@
 package co.runrightfast.vertx.core.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import java.io.StringReader;
+import java.util.List;
 import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import lombok.NonNull;
+import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -28,6 +33,9 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * @author alfio
  */
 public interface JsonUtils {
+
+    static final javax.json.JsonObject EMPTY_OBJECT = Json.createObjectBuilder().build();
+    static final javax.json.JsonArray EMPTY_ARRAY = Json.createArrayBuilder().build();
 
     static JsonObject toVertxJsonObject(@NonNull final javax.json.JsonObject json) {
         return new JsonObject(json.toString());
@@ -44,6 +52,27 @@ public interface JsonUtils {
         try (final JsonReader reader = Json.createReader(new StringReader(json))) {
             return reader.readObject();
         }
+    }
+
+    static javax.json.JsonArray toJsonArray(final List<String> stringList) {
+        if (CollectionUtils.isEmpty(stringList)) {
+            return EMPTY_ARRAY;
+        }
+
+        final JsonArrayBuilder json = Json.createArrayBuilder();
+        stringList.forEach(json::add);
+        return json.build();
+    }
+
+    static javax.json.JsonObject toJsonObject(final MultiMap map) {
+        if (map == null || map.isEmpty()) {
+            return EMPTY_OBJECT;
+        }
+        final JsonObjectBuilder json = Json.createObjectBuilder();
+        map.names().forEach(name -> {
+            json.add(name, toJsonArray(map.getAll(name)));
+        });
+        return json.build();
     }
 
 }

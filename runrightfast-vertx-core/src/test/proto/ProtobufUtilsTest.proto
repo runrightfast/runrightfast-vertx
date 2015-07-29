@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package co.runrightfast.protobuf.test;
+
+option java_generate_equals_and_hash = true;
+option java_string_check_utf8 = true;
+option java_multiple_files = true;
+
+message ProtobufUtilsToJsonTestMessage {
+    bool bool_field = 1;
+
+    repeated bool repeated_bool_field = 2;
+
+    bytes bytes_field = 3;
+
+    repeated bytes repeated_bytes_field = 4;
+
+    double double_field = 5;
+
+    repeated double repeated_double_field = 6;
+
+    float float_field = 7;
+
+    repeated float repeated_float_field = 8;
+
+    int32 int_field = 9;
+
+    repeated int32 repeated_int_field = 10;
+
+    int64 long_field = 11;
+
+    repeated int64 repeated_long_field = 12;
+
+    string string_field = 13;
+
+    repeated string repeated_string_field = 14;
+
+    ApplicationInstance msg_field = 15;
+
+    repeated ApplicationInstance repeated_msg_field = 16;
+
+    map<string,ApplicationInstance> map_field = 17;
+}
+
+message ApplicationInstance {
+    string app_name = 1;
+
+    string app_version = 2;
+
+    string app_deployment_version = 3;
+
+    repeated string profiles = 4;
+
+    string jvm_id = 5;
+
+    string host = 6;
+
+    string started_on = 7;
+}

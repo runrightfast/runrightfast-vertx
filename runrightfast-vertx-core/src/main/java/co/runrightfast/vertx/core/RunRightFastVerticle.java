@@ -17,12 +17,16 @@ package co.runrightfast.vertx.core;
 
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_EXCEPTION;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_PROCESSING;
+import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_SUCCESS;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_TOTAL;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Timers.MESSAGE_CONSUMER_HANDLER;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
+import co.runrightfast.vertx.core.eventbus.MessageConsumerHandlerException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerRegistration;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
+import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
+import static co.runrightfast.vertx.core.utils.ProtobufUtils.protobuMessageToJson;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -47,6 +51,8 @@ import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
 import java.util.logging.Logger;
 import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import lombok.NonNull;
 
 /**
@@ -209,11 +215,13 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     }
 
     private <REQ extends Message, RESP extends Message> String messageConsumerLogInfo(final String address, final MessageConsumerConfig<REQ, RESP> config) {
+        return messageConsumerLogInfoAsJson(address, config).build().toString();
+    }
+
+    private <REQ extends Message, RESP extends Message> JsonObjectBuilder messageConsumerLogInfoAsJson(final String address, final MessageConsumerConfig<REQ, RESP> config) {
         return Json.createObjectBuilder()
                 .add("messageConsumerAddress", address)
-                .add("config", config.toJson())
-                .build()
-                .toString();
+                .add("config", config.toJson());
     }
 
     private <REQ extends Message, RESP extends Message> Handler<AsyncResult<Void>> messageConsumerCompletionHandler(final String address, final Optional<Handler<AsyncResult<Void>>> handler, final MessageConsumerConfig<REQ, RESP> config) {
@@ -242,15 +250,28 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     }
 
     private <REQ extends Message, RESP extends Message> Handler<Throwable> messageConsumerExceptionHandler(final String address, final Optional<Handler<Throwable>> handler, final MessageConsumerConfig<REQ, RESP> config) {
-        final Handler<Throwable> defaultHandler = result -> {
+        final Handler<Throwable> defaultHandler = exception -> {
             metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_EXCEPTION.metricName, address)).inc();
-            log.logp(INFO, CLASS_NAME, "messageConsumerEndHandler", messageConsumerLogInfo(address, config), result);
+            if (exception instanceof MessageConsumerHandlerException) {
+                final MessageConsumerHandlerException messageConsumerHandlerException = (MessageConsumerHandlerException) exception;
+                final JsonObject message = Json.createObjectBuilder()
+                        .add("headers", toJsonObject(messageConsumerHandlerException.getFailedMessage().headers()))
+                        .add("body", protobuMessageToJson(messageConsumerHandlerException.getFailedMessage().body()))
+                        .build();
+
+                log.logp(SEVERE, CLASS_NAME, "messageConsumerExceptionHandler", messageConsumerLogInfoAsJson(address, config).add("message", message).toString(), exception);
+            } else {
+                log.logp(SEVERE, CLASS_NAME, "messageConsumerExceptionHandler", messageConsumerLogInfo(address, config), exception);
+            }
+
+            // TODO: fail the message if the config indicates that there is a response message
+            // TODO: map exceptions to failure codes in the config
         };
 
         return handler.map(h -> {
-            final Handler<Throwable> endHandler = result -> {
-                defaultHandler.handle(result);
-                h.handle(result);
+            final Handler<Throwable> endHandler = exception -> {
+                defaultHandler.handle(exception);
+                h.handle(exception);
             };
             return endHandler;
         }).orElse(defaultHandler);
@@ -259,7 +280,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     private <REQ extends Message, RESP extends Message> Handler<io.vertx.core.eventbus.Message<REQ>> messageConsumerHandler(final MessageConsumerConfig<REQ, RESP> config) {
         final Counter messageTotalCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_TOTAL.metricName, config.getAddressMessageMapping().getAddress()));
         final Counter messageProcessingCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_PROCESSING.metricName, config.getAddressMessageMapping().getAddress()));
-        final Counter messageSuccessCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_TOTAL.metricName, config.getAddressMessageMapping().getAddress()));
+        final Counter messageSuccessCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_SUCCESS.metricName, config.getAddressMessageMapping().getAddress()));
         final Timer timer = metricRegistry.timer(String.format("%s::%s", MESSAGE_CONSUMER_HANDLER.metricName, config.getAddressMessageMapping().getAddress()));
         final Handler<io.vertx.core.eventbus.Message<REQ>> handler = config.getHandler();
         return msg -> {
@@ -270,6 +291,8 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
             try {
                 handler.handle(msg);
                 messageSuccessCounter.inc();
+            } catch (final Throwable t) {
+                throw new MessageConsumerHandlerException(msg, t);
             } finally {
                 timerCtx.stop();
                 messageProcessingCounter.dec();
