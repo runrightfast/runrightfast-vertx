@@ -193,7 +193,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
             final MessageCodec codec = new ProtobufMessageCodec(config.getAddressMessageMapping().getRequestDefaultInstance());
             // Order matters - the default codec must be registered first
             eventBus.registerDefaultCodec(config.getAddressMessageMapping().getRequestDefaultInstance().getClass(), codec);
-            eventBus.registerCodec(codec);
         } catch (final IllegalStateException e) {
             log.logp(FINE, CLASS_NAME, "registerMessageCodecs", "failed to register codec for request message", e.getCause());
         }
@@ -203,7 +202,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
                 final MessageCodec codec = new ProtobufMessageCodec((Message) responseDefaultInstance);
                 // Order matters - the default codec must be registered first
                 eventBus.registerDefaultCodec(responseDefaultInstance.getClass(), codec);
-                eventBus.registerCodec(codec);
             } catch (final IllegalStateException e) {
                 log.logp(FINE, CLASS_NAME, "registerMessageCodecs", "failed to register codec for response message", e.getCause());
             }
