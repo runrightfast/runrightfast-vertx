@@ -22,6 +22,8 @@ import static co.runrightfast.vertx.core.VertxService.metricRegistry;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.modules.ApplicationConfigModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
+import co.runrightfast.vertx.core.utils.JsonUtils;
+import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
@@ -170,7 +172,9 @@ public class RunRightFastVertxApplicationTest {
     private Handler<AsyncResult<Message<GetVerticleDeployments.Response>>> getVerticleDeploymentsResponseHandler(final CompletableFuture future) {
         return result -> {
             if (result.succeeded()) {
-                log.logp(INFO, getClass().getName(), "test_vertx_default_options.success", result.result().body().getDescriptorForType().getFullName());
+                log.logp(INFO, getClass().getName(), "test_vertx_default_options.success",
+                        JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(result.result().body())).encodePrettily()
+                );
                 future.complete(result.result().body());
             } else {
                 log.logp(SEVERE, getClass().getName(), "test_vertx_default_options.failure", "get-verticle-deployments failed", result.cause());

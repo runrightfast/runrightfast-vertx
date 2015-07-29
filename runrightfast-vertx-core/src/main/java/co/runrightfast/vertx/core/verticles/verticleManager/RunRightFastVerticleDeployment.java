@@ -45,5 +45,4 @@ public final class RunRightFastVerticleDeployment {
                 .add("deploymentOptions", toJsonObject(deploymentOptions.toJson()))
                 .build();
     }
-
 }

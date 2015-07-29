@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core;
 
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleId;
 import static com.google.common.base.Preconditions.checkArgument;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -62,6 +63,14 @@ public final class RunRightFastVerticleId {
                 .add("name", name)
                 .add("version", version)
                 .build();
+    }
+
+    public boolean equals(final VerticleId id) {
+        if (id == null) {
+            return false;
+        }
+
+        return id.getGroup().equals(group) && id.getName().equals(name) && id.getVersion().equals(version);
     }
 
 }

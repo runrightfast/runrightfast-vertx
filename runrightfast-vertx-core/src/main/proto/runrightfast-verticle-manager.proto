@@ -33,7 +33,9 @@ message VerticleId {
 message VerticleDeployment {
     string verticle_class = 1;
 
-    VerticleId verticle_id = 2;    
+    VerticleId verticle_id = 2;  
+
+    DeploymentOptions deployment_options = 3;
 }
 
 message DeploymentOptions {

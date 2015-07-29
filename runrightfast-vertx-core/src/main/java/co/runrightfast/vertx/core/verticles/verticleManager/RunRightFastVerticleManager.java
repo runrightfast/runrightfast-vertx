@@ -20,6 +20,7 @@ import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
+import co.runrightfast.vertx.core.protobuf.MessageConversions;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
@@ -82,15 +83,43 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
         );
     }
 
-    private void handleGetVerticleDeploymentsMessage(final Message<GetVerticleDeployments.Request> request) {
-        // TODO : process GetVerticleDeployments request
-        final GetVerticleDeployments.Response response = GetVerticleDeployments.Response.newBuilder()
-                .build();
+    private void handleGetVerticleDeploymentsMessage(final Message<GetVerticleDeployments.Request> message) {
+        final GetVerticleDeployments.Response.Builder response = GetVerticleDeployments.Response.newBuilder();
+        final GetVerticleDeployments.Request request = message.body();
+        if (hasFilters(request)) {
+            deployments.stream()
+                    .filter(deployment -> {
+                        final RunRightFastVerticleId id = deployment.getVerticle().getRunRightFastVerticleId();
+                        if (request.getGroupsList().stream().filter(group -> group.equals(id.getGroup())).findFirst().isPresent()) {
+                            return true;
+                        }
+                        if (request.getNamesList().stream().filter(name -> name.equals(id.getName())).findFirst().isPresent()) {
+                            return true;
+                        }
 
-        request.reply(response);
+                        if (request.getVerticleIdsList().stream().filter(id::equals).findFirst().isPresent()) {
+                            return true;
+                        }
+
+                        return false;
+                    })
+                    .map(MessageConversions::toVerticleDeployment)
+                    .forEach(response::addDeployments);
+        } else {
+            deployments.stream()
+                    .map(MessageConversions::toVerticleDeployment)
+                    .forEach(response::addDeployments);
+        }
+
+        message.reply(response.build());
+    }
+
+    private boolean hasFilters(final GetVerticleDeployments.Request request) {
+        return request.getVerticleIdsCount() > 0 || request.getGroupsCount() > 0 || request.getNamesCount() > 0;
     }
 
     @Override
+
     protected void shutDown() {
     }
 
