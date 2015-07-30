@@ -255,9 +255,8 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
      * <code>
      * VertxOptions {
      *    metricsOptions {
-     *       enabled = true
      *       jmxEnabled = true
-     *       jmxDomain = co.runrightfast
+     *       jmxDomain = co.runrightfast.metrics
      *       eventbusHandlers = [
      *          { address="/eventbus-address-1", matchType="EQUALS"}
      *          { address="/eventbus-address-2/.*", matchType="REGEX"}
@@ -278,9 +277,9 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     private void configureMetricsOptions() {
         final DropwizardMetricsOptions metricsOptions = new DropwizardMetricsOptions()
                 .setEnabled(true)
-                .setJmxEnabled(ConfigUtils.getBoolean(config, "VertxOptions", "metricsOptions", "jmxEnabled").orElse(Boolean.FALSE))
+                .setJmxEnabled(ConfigUtils.getBoolean(config, "VertxOptions", "metricsOptions", "jmxEnabled").orElse(Boolean.TRUE))
                 .setRegistryName(VertxConstants.VERTX_METRIC_REGISTRY_NAME)
-                .setJmxDomain(ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain").orElse("co.runrightfast"));
+                .setJmxDomain(ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain").orElse("co.runrightfast.metrics"));
 
         ConfigUtils.getConfigList(config, "VertxOptions", "metricsOptions", "eventbusHandlers").orElse(Collections.emptyList()).stream()
                 .map(eventbusHandlerMatch -> {

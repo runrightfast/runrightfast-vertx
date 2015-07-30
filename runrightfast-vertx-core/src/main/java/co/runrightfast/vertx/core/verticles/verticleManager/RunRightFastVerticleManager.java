@@ -42,7 +42,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     public static final RunRightFastVerticleId VERTICLE_ID = RunRightFastVerticleId.builder()
             .group(RUNRIGHTFAST_GROUP)
-            .name(RunRightFastVerticleManager.class.getSimpleName())
+            .name("verticle-manager")
             .version("0.1")
             .build();
 
