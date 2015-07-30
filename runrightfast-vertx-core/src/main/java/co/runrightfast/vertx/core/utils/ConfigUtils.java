@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.utils;
 
+import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
@@ -203,7 +204,7 @@ public interface ConfigUtils {
      * @return Config
      */
     static Config loadConfig(final boolean invalidateCaches) {
-        System.setProperty("HOSTNAME", JvmProcess.getHost());
+        System.setProperty("HOSTNAME", HOST);
         if (invalidateCaches) {
             ConfigFactory.invalidateCaches();
         }
@@ -213,7 +214,7 @@ public interface ConfigUtils {
     static Config loadConfig(final String configResource, final boolean invalidateCaches) {
         checkArgument(StringUtils.isNotBlank(configResource));
         System.setProperty("config.resource", configResource);
-        System.setProperty("HOSTNAME", JvmProcess.getHost());
+        System.setProperty("HOSTNAME", HOST);
         if (invalidateCaches) {
             ConfigFactory.invalidateCaches();
         }

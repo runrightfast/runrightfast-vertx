@@ -20,7 +20,7 @@ public final class JvmProcess {
     private JvmProcess() {
     }
 
-    private static final String host;
+    public static final String HOST;
 
     public static final String JVM_ID = ManagementFactory.getRuntimeMXBean().getName();
 
@@ -35,15 +35,6 @@ public final class JvmProcess {
                 Logger.getLogger(JvmProcess.class.getSimpleName()).logp(Level.SEVERE, JvmProcess.class.getName(), "static-initializer", "failed to get host name", ex2);
             }
         }
-        host = _host;
-    }
-
-    /**
-     * If the host name cannot be obtained, the the host address will be tried. If the host address cannot be obtained, then "UNKNOWN" is returned
-     *
-     * @return host name or host address
-     */
-    public static String getHost() {
-        return host;
+        HOST = _host;
     }
 }

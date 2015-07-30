@@ -16,6 +16,8 @@
 package co.runrightfast.vertx.core.modules;
 
 import co.runrightfast.core.ConfigurationException;
+import co.runrightfast.vertx.core.application.ApplicationId;
+import co.runrightfast.vertx.core.application.RunRightFastApplication;
 import co.runrightfast.vertx.core.inject.qualifiers.ApplicationConfig;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
@@ -44,17 +46,31 @@ public final class ApplicationConfigModule {
     /**
      * Expects the vertx config to be located at path: runrightfast.vertx
      *
-     * @param appConfig app config
+     * @param config app config
      * @return vertx config
      */
     @Provides
     @Singleton
     @VertxServiceConfig
     @SuppressWarnings({"ThrowableInstanceNotThrown", "ThrowableInstanceNeverThrown"})
-    public Config provideVertxServiceConfig(@ApplicationConfig final Config appConfig) {
+    public Config provideVertxServiceConfig(@ApplicationConfig final Config config) {
         final String configPath = configPath(CONFIG_NAMESPACE, "vertx");
-        return ConfigUtils.getConfig(appConfig, configPath)
+        return ConfigUtils.getConfig(config, configPath)
                 .orElseThrow(() -> new ConfigurationException(String.format("Missing required config: %s", configPath)));
+    }
+
+    @Provides
+    @Singleton
+    public ApplicationId provideApplicationId(@ApplicationConfig final Config config) {
+        final Config appConfig = ConfigUtils.getConfig(config, CONFIG_NAMESPACE)
+                .orElseThrow(() -> new ConfigurationException(String.format("Missing required config: %s", CONFIG_NAMESPACE)));
+        return ApplicationId.fromConfig(appConfig);
+    }
+
+    @Provides
+    @Singleton
+    public RunRightFastApplication provideRunRightFastApplication(final ApplicationId applicationId, @ApplicationConfig final Config config) {
+        return RunRightFastApplication.builder().applicationId(applicationId).config(config).build();
     }
 
 }

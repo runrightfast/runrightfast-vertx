@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.core.components;
 
 import co.runrightfast.vertx.core.VertxService;
+import co.runrightfast.vertx.core.application.RunRightFastApplication;
 
 /**
  * Applications extend this component interface and include the appropriate modules to provide the VertxService
@@ -23,6 +24,8 @@ import co.runrightfast.vertx.core.VertxService;
  * @author alfio
  */
 public interface RunRightFastVertxApplication {
+
+    RunRightFastApplication runRightFastApplication();
 
     VertxService vertxService();
 }

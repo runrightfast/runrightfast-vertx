@@ -22,7 +22,7 @@ import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
-import co.runrightfast.vertx.core.utils.JvmProcess;
+import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import com.codahale.metrics.MetricFilter;
@@ -159,7 +159,7 @@ public class VertxServiceImplTest {
 
         final VertxOptions vertxOptions = service.getVertxOptions();
         assertThat(vertxOptions.getBlockedThreadCheckInterval(), is(3000L));
-        assertThat(vertxOptions.getClusterHost(), is(JvmProcess.getHost()));
+        assertThat(vertxOptions.getClusterHost(), is(HOST));
         assertThat(vertxOptions.getHAGroup(), is("elasticsearch"));
         assertThat(vertxOptions.getClusterPingInterval(), is(1000L));
         assertThat(vertxOptions.getClusterPort(), is(1234));
