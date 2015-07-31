@@ -77,6 +77,27 @@ public interface ServiceUtils {
         }
     }
 
+    static void stopAsync(final Service service) {
+        if (service != null) {
+            switch (service.state()) {
+                case STARTING:
+                case RUNNING:
+                    service.stopAsync();
+                    return;
+                case STOPPING:
+                    return;
+                case NEW:
+                case FAILED:
+                case TERMINATED:
+                    if (LOG.isLoggable(FINE)) {
+                        LOG.logp(FINE, ServiceUtils.class.getName(), "stop",
+                                "Service ({0}) is not running: {1}", new Object[]{service.getClass().getName(), service.state()}
+                        );
+                    }
+            }
+        }
+    }
+
     /**
      * Logs a warning every 10 seconds, waiting for the service to stop
      *

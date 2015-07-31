@@ -7,6 +7,8 @@ package co.runrightfast.vertx.core.application;
 
 import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
 import com.typesafe.config.Config;
+import javax.json.Json;
+import javax.json.JsonObject;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
@@ -46,6 +48,14 @@ public final class ApplicationId {
                 .group(config.getString(configPath("app", "group")))
                 .name(config.getString(configPath("app", "name")))
                 .version(config.getString(configPath("app", "version")))
+                .build();
+    }
+
+    public JsonObject toJson() {
+        return Json.createObjectBuilder()
+                .add("group", group)
+                .add("name", name)
+                .add("version", version)
                 .build();
     }
 
