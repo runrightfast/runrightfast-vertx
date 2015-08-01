@@ -16,9 +16,12 @@
 package co.runrightfast.vertx.core.utils;
 
 import co.runrightfast.core.ApplicationException;
+import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.application.jmx.MBeanRegistration;
 import static com.google.common.base.Preconditions.checkArgument;
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.Set;
 import static java.util.logging.Level.WARNING;
 import java.util.logging.Logger;
@@ -31,6 +34,7 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -42,6 +46,20 @@ public interface JmxUtils {
 
     static final String RUNRIGHTFAST_JMX_DOMAIN = "co.runrightfast";
 
+    static String verticleJmxDomain(@NonNull final RunRightFastVerticleId verticleId, final String... subDomains) {
+        final StringBuilder sb = new StringBuilder(80)
+                .append(RUNRIGHTFAST_JMX_DOMAIN)
+                .append(String.format("/%s-%s-%s",
+                                verticleId.getGroup(),
+                                verticleId.getName(),
+                                verticleId.getVersion()
+                        ));
+        if (ArrayUtils.isNotEmpty(subDomains)) {
+            Arrays.stream(subDomains).forEach(subDomain -> sb.append('/').append(subDomain));
+        }
+        return sb.toString();
+    }
+
     /**
      *
      * @param domain JMX domain
@@ -52,6 +70,20 @@ public interface JmxUtils {
         checkArgument(isNotBlank(domain));
         try {
             return ObjectName.getInstance(domain, "type", mbeanType.getSimpleName());
+        } catch (final MalformedObjectNameException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static ObjectName applicationMBeanObjectName(final String domain, @NonNull final Class<?> mbeanType, final String name) {
+        checkArgument(isNotBlank(domain));
+        checkArgument(isNotBlank(name));
+        try {
+            @SuppressWarnings("UseOfObsoleteCollectionType")
+            final Hashtable<String, String> attributes = new Hashtable<>();
+            attributes.put("type", mbeanType.getSimpleName());
+            attributes.put("name", name);
+            return ObjectName.getInstance(domain, attributes);
         } catch (final MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }

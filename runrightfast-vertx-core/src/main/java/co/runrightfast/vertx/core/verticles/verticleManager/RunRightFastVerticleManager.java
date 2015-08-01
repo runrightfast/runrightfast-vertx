@@ -21,15 +21,19 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GRO
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.protobuf.MessageConversions;
+import static co.runrightfast.vertx.core.utils.JmxUtils.verticleJmxDomain;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
+import com.codahale.metrics.JmxReporter;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.eventbus.Message;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.inject.Inject;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -58,6 +62,8 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     @Getter
     private ImmutableMap<String, RunRightFastVerticleDeployment> deployedVerticles = ImmutableMap.of();
 
+    private ImmutableMap<RunRightFastVerticleDeployment, JmxReporter> verticleJmxReporters = ImmutableMap.of();
+
     @Inject
     public RunRightFastVerticleManager(final Set<RunRightFastVerticleDeployment> deployments) {
         super();
@@ -83,7 +89,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
         );
     }
 
-    private void handleGetVerticleDeploymentsMessage(final Message<GetVerticleDeployments.Request> message) {
+    private void handleGetVerticleDeploymentsMessage(@NonNull final Message<GetVerticleDeployments.Request> message) {
         final GetVerticleDeployments.Response.Builder response = GetVerticleDeployments.Response.newBuilder();
         final GetVerticleDeployments.Request request = message.body();
         if (hasFilters(request)) {
@@ -92,7 +98,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                         final RunRightFastVerticleId id = deployment.getVerticle().getRunRightFastVerticleId();
                         return request.getGroupsList().stream().filter(group -> group.equals(id.getGroup())).findFirst().isPresent()
                         || request.getNamesList().stream().filter(name -> name.equals(id.getName())).findFirst().isPresent()
-                        || request.getVerticleIdsList().stream().filter(id::equals).findFirst().isPresent();
+                        || request.getVerticleIdsList().stream().filter(id::equalsVerticleId).findFirst().isPresent();
                     })
                     .map(MessageConversions::toVerticleDeployment)
                     .forEach(response::addDeployments);
@@ -105,12 +111,16 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
         message.reply(response.build());
     }
 
-    private boolean hasFilters(final GetVerticleDeployments.Request request) {
+    private boolean hasFilters(@NonNull final GetVerticleDeployments.Request request) {
         return request.getVerticleIdsCount() > 0 || request.getGroupsCount() > 0 || request.getNamesCount() > 0;
     }
 
     @Override
     protected void shutDown() {
+        verticleJmxReporters.values().forEach(reporter -> {
+            reporter.stop();
+            reporter.close();
+        });
     }
 
     /**
@@ -118,19 +128,40 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
      *
      * @param deployment config
      */
-    private void deployVerticle(final RunRightFastVerticleDeployment deployment) {
+    private void deployVerticle(@NonNull final RunRightFastVerticleDeployment deployment) {
         vertx.deployVerticle(deployment.getVerticle(), deployment.getDeploymentOptions(), result -> {
             if (result.succeeded()) {
-                final ImmutableMap.Builder<String, RunRightFastVerticleDeployment> mapBuilder = ImmutableMap.builder();
-                mapBuilder.putAll(deployedVerticles);
-                mapBuilder.put(result.result(), deployment);
-                this.deployedVerticles = mapBuilder.build();
+                this.deployedVerticles = ImmutableMap.<String, RunRightFastVerticleDeployment>builder()
+                        .putAll(deployedVerticles)
+                        .put(result.result(), deployment)
+                        .build();
+                registerJmxReporter(deployment);
                 log.logp(Level.INFO, CLASS_NAME, "deployVerticle", () -> deployment.toJson().toString());
             } else {
                 log.logp(Level.SEVERE, CLASS_NAME, "deployVerticle", result.cause(), () -> deployment.toJson().toString());
                 // TODO: raise an alert if the deployment fails
             }
         });
+    }
+
+    private void registerJmxReporter(@NonNull final RunRightFastVerticleDeployment deployment) {
+        if (verticleJmxReporters.containsKey(deployment)) {
+            return;
+        }
+
+        final RunRightFastVerticle verticle = deployment.getVerticle();
+        final RunRightFastVerticleId verticleId = verticle.getRunRightFastVerticleId();
+        final JmxReporter jmxReporter = JmxReporter.forRegistry(verticle.getMetricRegistry())
+                .inDomain(verticleJmxDomain(verticleId, "metrics"))
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .build();
+        jmxReporter.start();
+        verticleJmxReporters = ImmutableMap.<RunRightFastVerticleDeployment, JmxReporter>builder()
+                .putAll(verticleJmxReporters)
+                .put(deployment, jmxReporter)
+                .build();
+
     }
 
 }

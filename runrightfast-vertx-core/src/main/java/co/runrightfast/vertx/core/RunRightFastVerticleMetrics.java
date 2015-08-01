@@ -16,6 +16,9 @@
 package co.runrightfast.vertx.core;
 
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.MetricType.COUNTER;
+import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.MetricType.GAUGE;
+import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.MetricType.HISTOGRAM;
+import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.MetricType.METER;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.MetricType.TIMER;
 import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Arrays;
@@ -46,13 +49,25 @@ public interface RunRightFastVerticleMetrics {
         return metricName(TIMER, name, names);
     }
 
+    static String gaugeName(final String name, final String... names) {
+        return metricName(GAUGE, name, names);
+    }
+
+    static String meterName(final String name, final String... names) {
+        return metricName(METER, name, names);
+    }
+
+    static String histogramName(final String name, final String... names) {
+        return metricName(HISTOGRAM, name, names);
+    }
+
     static String metricName(@NonNull final MetricType metricType, final String name, final String... names) {
         checkArgument(StringUtils.isNotBlank(name));
         if (names != null) {
             checkArgument(!Arrays.stream(names).filter(StringUtils::isBlank).findFirst().isPresent(), "any of the names cannot be blank");
         }
         final StringBuilder sb = new StringBuilder(64);
-        sb.append(metricType.name()).append(name);
+        sb.append(metricType.name()).append('.').append(name);
         Arrays.stream(names).forEach(n -> sb.append('.').append(n));
         return sb.toString();
     }

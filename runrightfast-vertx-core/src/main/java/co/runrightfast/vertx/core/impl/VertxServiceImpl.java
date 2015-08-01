@@ -279,7 +279,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
                 .setEnabled(true)
                 .setJmxEnabled(ConfigUtils.getBoolean(config, "VertxOptions", "metricsOptions", "jmxEnabled").orElse(Boolean.TRUE))
                 .setRegistryName(VertxConstants.VERTX_METRIC_REGISTRY_NAME)
-                .setJmxDomain(ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain").orElse("co.runrightfast.metrics"));
+                .setJmxDomain(ConfigUtils.getString(config, "VertxOptions", "metricsOptions", "jmxDomain").orElse("co.runrightfast.vertx.metrics"));
 
         ConfigUtils.getConfigList(config, "VertxOptions", "metricsOptions", "eventbusHandlers").orElse(Collections.emptyList()).stream()
                 .map(eventbusHandlerMatch -> {

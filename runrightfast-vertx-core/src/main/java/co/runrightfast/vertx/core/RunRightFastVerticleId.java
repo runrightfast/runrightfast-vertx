@@ -65,7 +65,7 @@ public final class RunRightFastVerticleId {
                 .build();
     }
 
-    public boolean equals(final VerticleId id) {
+    public boolean equalsVerticleId(final VerticleId id) {
         if (id == null) {
             return false;
         }

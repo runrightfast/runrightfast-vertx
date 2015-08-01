@@ -148,7 +148,7 @@ public class RunRightFastVertxApplicationTest {
         log.info("test_vertx_default_options");
         final Vertx vertx = vertxService.getVertx();
         assertThat(vertx.isClustered(), is(false));
-        assertThat(vertx.isMetricsEnabled(), is(false));
+        assertThat(vertx.isMetricsEnabled(), is(true));
 
         assertThat(vertxService.deployments().size(), is(1));
         Thread.yield();

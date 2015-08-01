@@ -21,6 +21,7 @@ import io.vertx.core.DeploymentOptions;
 import javax.json.Json;
 import javax.json.JsonObject;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -30,6 +31,7 @@ import lombok.Value;
  */
 @Value
 @Builder
+@EqualsAndHashCode(of = "verticle")
 public final class RunRightFastVerticleDeployment {
 
     @NonNull

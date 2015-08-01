@@ -53,6 +53,7 @@ import java.util.logging.Logger;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import lombok.Getter;
 import lombok.NonNull;
 
 /**
@@ -83,7 +84,10 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     protected final String CLASS_NAME = getClass().getName();
     protected final Logger log = Logger.getLogger(CLASS_NAME);
 
+    @Getter
     protected MetricRegistry metricRegistry;
+
+    @Getter
     protected HealthCheckRegistry healthCheckRegistry;
 
     // EventBus address -> MessageConsumerRegistration
@@ -328,5 +332,22 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
      * Verticle specific start up shutdown
      */
     protected abstract void shutDown();
+
+    @Override
+    public int hashCode() {
+        return getRunRightFastVerticleId().hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final RunRightFastVerticle other = (RunRightFastVerticle) obj;
+        return getRunRightFastVerticleId().equals(other.getRunRightFastVerticleId());
+    }
 
 }

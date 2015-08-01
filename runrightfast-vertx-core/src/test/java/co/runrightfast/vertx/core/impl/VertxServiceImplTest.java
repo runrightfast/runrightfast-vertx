@@ -137,7 +137,7 @@ public class VertxServiceImplTest {
         log.log(INFO, "metricsOptions class : {0}", metricsOptions.getClass().getName());
         final DropwizardMetricsOptions dropwizardMetricsOptions = (DropwizardMetricsOptions) metricsOptions;
         assertThat(dropwizardMetricsOptions.isJmxEnabled(), is(true));
-        assertThat(dropwizardMetricsOptions.getJmxDomain(), is("co.runrightfast.metrics"));
+        assertThat(dropwizardMetricsOptions.getJmxDomain(), is("co.runrightfast.vertx.metrics"));
         assertThat(dropwizardMetricsOptions.getRegistryName(), is(VERTX_METRIC_REGISTRY_NAME));
         assertThat(dropwizardMetricsOptions.getMonitoredEventBusHandlers().size(), is(2));
         assertThat(dropwizardMetricsOptions.getMonitoredHttpServerUris().size(), is(3));
