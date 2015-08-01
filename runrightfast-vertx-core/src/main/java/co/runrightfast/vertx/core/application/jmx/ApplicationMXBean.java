@@ -42,8 +42,11 @@ public interface ApplicationMXBean {
      */
     String configWithCommentsAndSourceInfo();
 
+    String[] getVerticleIds();
+
     /**
      * Shutdown the application
      */
     void shutdown();
+
 }
