@@ -32,6 +32,16 @@ public interface EventBusAddress {
 
     public static final String RUNRIGHTFAST = "runrightfast";
 
+    /**
+     * Address format follows a URI path convention.
+     *
+     * e.g., eventBusAddress("path1","path2","path3") returns "/path1/path2/path3"
+     *
+     *
+     * @param path REQUIRED
+     * @param paths OPTIONAL
+     * @return eventbus address
+     */
     public static String eventBusAddress(final String path, final String... paths) {
         checkArgument(isNotBlank(path));
         final StringBuilder sb = new StringBuilder(128).append('/').append(path);
@@ -42,6 +52,16 @@ public interface EventBusAddress {
         return sb.toString();
     }
 
+    /**
+     * Address format follows a URI path convention, but prefixes the path with 'runrightfast'.
+     *
+     * e.g., eventBusAddress("path1","path2","path3") returns "/runrightfast/path1/path2/path3"
+     *
+     *
+     * @param path REQUIRED
+     * @param paths OPTIONAL
+     * @return eventbus address
+     */
     public static String runrightfastEventBusAddress(final String path, final String... paths) {
         checkArgument(isNotBlank(path));
         final StringBuilder sb = new StringBuilder(128).append('/').append(RUNRIGHTFAST).append('/').append(path);
@@ -52,6 +72,19 @@ public interface EventBusAddress {
         return sb.toString();
     }
 
+    /**
+     * Address format follows a URI path convention. The address path is prefixe with the verticle id's group and name
+     *
+     * e.g., eventBusAddress(verticleId,"path1","path2","path3") returns "/runrightfast/verticle-manager/path1/path2/path3"
+     *
+     * where the verticle id group is "runrightfast" and the verticle id name is "verticle-manager"
+     *
+     *
+     * @param verticleId REQUIRED verticleId
+     * @param path REQUIRED
+     * @param paths OPTIONAL
+     * @return eventbus address
+     */
     public static String eventBusAddress(@NonNull final RunRightFastVerticleId verticleId, final String path, final String... paths) {
         checkArgument(isNotBlank(path));
         final StringBuilder sb = new StringBuilder(128)
@@ -65,6 +98,16 @@ public interface EventBusAddress {
         return sb.toString();
     }
 
+    /**
+     * Prefixes the eventbus address with the JVM ID.
+     *
+     * e.g., toProcessSpecificEventBusAddress("/a/b/c") returns "/1234@some-host/a/b/c"
+     *
+     * where the JVM ID = "1234@some-host"
+     *
+     * @param address eventbus address
+     * @return process specific address
+     */
     public static String toProcessSpecificEventBusAddress(final String address) {
         checkArgument(isNotBlank(address));
         if (address.charAt(0) == '/') {

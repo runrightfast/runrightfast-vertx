@@ -90,18 +90,9 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
             deployments.stream()
                     .filter(deployment -> {
                         final RunRightFastVerticleId id = deployment.getVerticle().getRunRightFastVerticleId();
-                        if (request.getGroupsList().stream().filter(group -> group.equals(id.getGroup())).findFirst().isPresent()) {
-                            return true;
-                        }
-                        if (request.getNamesList().stream().filter(name -> name.equals(id.getName())).findFirst().isPresent()) {
-                            return true;
-                        }
-
-                        if (request.getVerticleIdsList().stream().filter(id::equals).findFirst().isPresent()) {
-                            return true;
-                        }
-
-                        return false;
+                        return request.getGroupsList().stream().filter(group -> group.equals(id.getGroup())).findFirst().isPresent()
+                        || request.getNamesList().stream().filter(name -> name.equals(id.getName())).findFirst().isPresent()
+                        || request.getVerticleIdsList().stream().filter(id::equals).findFirst().isPresent();
                     })
                     .map(MessageConversions::toVerticleDeployment)
                     .forEach(response::addDeployments);
@@ -119,7 +110,6 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     }
 
     @Override
-
     protected void shutDown() {
     }
 

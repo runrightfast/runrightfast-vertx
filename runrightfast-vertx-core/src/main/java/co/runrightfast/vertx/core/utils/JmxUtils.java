@@ -16,15 +16,22 @@
 package co.runrightfast.vertx.core.utils;
 
 import co.runrightfast.core.ApplicationException;
+import co.runrightfast.vertx.core.application.jmx.MBeanRegistration;
 import static com.google.common.base.Preconditions.checkArgument;
 import java.lang.management.ManagementFactory;
+import java.util.Set;
+import static java.util.logging.Level.WARNING;
+import java.util.logging.Logger;
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import lombok.NonNull;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -33,6 +40,14 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  */
 public interface JmxUtils {
 
+    static final String RUNRIGHTFAST_JMX_DOMAIN = "co.runrightfast";
+
+    /**
+     *
+     * @param domain JMX domain
+     * @param mbeanType used to add a type attribute
+     * @return ObjectName
+     */
     static ObjectName applicationMBeanObjectName(final String domain, @NonNull final Class<?> mbeanType) {
         checkArgument(isNotBlank(domain));
         try {
@@ -49,6 +64,32 @@ public interface JmxUtils {
         } catch (final InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException ex) {
             throw new ApplicationException(String.format("registerApplicationMBean() failed for: %s", mbean.getClass().getName()), ex);
         }
+    }
+
+    static void unregisterApplicationMBean(final String domain, final Class<?> mbeanType) {
+        final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+        try {
+            mbeanServer.unregisterMBean(applicationMBeanObjectName(domain, mbeanType));
+        } catch (final InstanceNotFoundException | MBeanRegistrationException ex) {
+            final Logger log = Logger.getLogger(JmxUtils.class.getName());
+            log.logp(WARNING, JmxUtils.class.getName(), "unregisterApplicationMBean", "failed", ex);
+        }
+    }
+
+    static void registerMBeans(final String domain, final Set<MBeanRegistration<?>> mBeanRegistrations) {
+        if (CollectionUtils.isEmpty(mBeanRegistrations)) {
+            return;
+        }
+        checkArgument(StringUtils.isNotBlank(domain));
+        mBeanRegistrations.stream().forEach(reg -> registerApplicationMBean(domain, reg.getMbean(), reg.getClass()));
+    }
+
+    static void unregisterMBeans(final String domain, final Set<MBeanRegistration<?>> mBeanRegistrations) {
+        if (CollectionUtils.isEmpty(mBeanRegistrations)) {
+            return;
+        }
+        checkArgument(StringUtils.isNotBlank(domain));
+        mBeanRegistrations.stream().forEach(reg -> unregisterApplicationMBean(domain, reg.getMbeanType()));
     }
 
 }

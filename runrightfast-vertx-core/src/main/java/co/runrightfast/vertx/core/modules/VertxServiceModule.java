@@ -24,6 +24,7 @@ import com.typesafe.config.Config;
 import dagger.Module;
 import dagger.Provides;
 import java.util.Set;
+import javax.inject.Singleton;
 
 /**
  *
@@ -33,6 +34,7 @@ import java.util.Set;
 public class VertxServiceModule {
 
     @Provides
+    @Singleton
     public VertxService vertxService(@VertxServiceConfig final Config config, final Set<RunRightFastVerticleDeployment> deployments) {
         final VertxService service = new VertxServiceImpl(config, deployments);
         ServiceUtils.start(service);

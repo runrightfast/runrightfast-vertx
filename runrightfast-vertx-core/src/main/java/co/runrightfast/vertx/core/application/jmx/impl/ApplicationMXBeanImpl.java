@@ -5,12 +5,12 @@
  */
 package co.runrightfast.vertx.core.application.jmx.impl;
 
-import co.runrightfast.vertx.core.application.ApplicationId;
+import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationService;
 import co.runrightfast.vertx.core.application.jmx.ApplicationMXBean;
 import co.runrightfast.vertx.core.application.jmx.MBeanSupport;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
+import co.runrightfast.vertx.core.utils.ServiceUtils;
 import com.typesafe.config.Config;
-import java.util.concurrent.CountDownLatch;
 import lombok.Builder;
 import lombok.NonNull;
 
@@ -21,55 +21,49 @@ import lombok.NonNull;
 @Builder
 public final class ApplicationMXBeanImpl extends MBeanSupport implements ApplicationMXBean {
 
-    private final ApplicationId applicationId;
+    private final RunRightFastVertxApplicationService appService;
 
-    private final Config config;
-
-    private final CountDownLatch applicationShutdownLatch;
-
-    public ApplicationMXBeanImpl(
-            @NonNull final ApplicationId applicationId,
-            @NonNull final Config config,
-            @NonNull final CountDownLatch applicationShutdownLatch) {
+    public ApplicationMXBeanImpl(@NonNull final RunRightFastVertxApplicationService appService) {
         super(ApplicationMXBean.class);
-        this.config = config;
-        this.applicationId = applicationId;
-        this.applicationShutdownLatch = applicationShutdownLatch;
+        this.appService = appService;
     }
 
     @Override
     public String getApplicationGroup() {
-        return applicationId.getGroup();
+        return appService.getApp().runRightFastApplication().getApplicationId().getGroup();
     }
 
     @Override
     public String getApplicationName() {
-        return applicationId.getName();
+        return appService.getApp().runRightFastApplication().getApplicationId().getName();
     }
 
     @Override
     public String getApplicationVersion() {
-        return applicationId.getVersion();
+        return appService.getApp().runRightFastApplication().getApplicationId().getVersion();
     }
 
     @Override
     public String configAsJson() {
+        final Config config = appService.getApp().runRightFastApplication().getConfig();
         return ConfigUtils.renderConfig(config, false, false, true);
     }
 
     @Override
     public String configAsHConf() {
+        final Config config = appService.getApp().runRightFastApplication().getConfig();
         return ConfigUtils.renderConfig(config, false, false, false);
     }
 
     @Override
     public String configWithCommentsAndSourceInfo() {
+        final Config config = appService.getApp().runRightFastApplication().getConfig();
         return ConfigUtils.renderConfig(config, true, true, false);
     }
 
     @Override
     public void shutdown() {
-        applicationShutdownLatch.countDown();
+        ServiceUtils.stopAsync(appService);
     }
 
 }

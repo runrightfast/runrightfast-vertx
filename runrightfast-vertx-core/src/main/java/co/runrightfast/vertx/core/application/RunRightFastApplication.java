@@ -18,6 +18,7 @@ package co.runrightfast.vertx.core.application;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
 import co.runrightfast.vertx.core.utils.JmxUtils;
+import static co.runrightfast.vertx.core.utils.JmxUtils.RUNRIGHTFAST_JMX_DOMAIN;
 import com.typesafe.config.Config;
 import javax.management.ObjectName;
 import lombok.Builder;
@@ -40,7 +41,7 @@ public final class RunRightFastApplication {
     private final Config config;
 
     public String getJmxDefaultDomain() {
-        return ConfigUtils.getString(config, CONFIG_NAMESPACE, "jmx", "default-domain").orElse("co.runrightfast");
+        return ConfigUtils.getString(config, CONFIG_NAMESPACE, "jmx", "default-domain").orElse(RUNRIGHTFAST_JMX_DOMAIN);
     }
 
     public ObjectName applicationMBeanObjectName() {
