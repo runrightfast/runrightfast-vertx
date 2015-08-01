@@ -21,4 +21,5 @@ The demo features and key points
       - the RunRightFastVertxApplication component interface is the main application component
 5. Hazelcast is used for Vertx clustering
 6. DropWizard is used for metrics and healthchecks
+   - metrics are enabled by default and exposed via JMX under domain co.runrightfast.vertx.metrics
 7. JDK built in logging is used
