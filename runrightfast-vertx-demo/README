@@ -1,0 +1,24 @@
+The demo features and key points
+1. co.runrightfast.vertx.demo.VertxApp
+    - main class
+    - shows how easy it is to start a RunRightFast Vertx app
+    - the code to launch the app is centralized in co.runrightfast.vertx.core.application.RunRightFastVertxApplicationLauncher
+    - provide a CLI - current options supported are:
+
+      -c,--config    Show the application configuration as JSON
+      -h,--help      Print usage
+      -v,--version   Show the application version
+
+    - registers an application MBean under the co.runrightfast JMX domain
+      - used to view the deployed application version
+      - exposes an operation to shutdown the app
+2. Framework provides support to make it easy to develop, configure, and deploy verticles     
+3. Vertx is embedded
+    - see co.runrightfast.vertx.core.VertxService and its implementation
+3. Application configuration is managed via TypeSafe config
+4. Dagger 2 is used for DI
+    - component interfaces package: co.runrightfast.vertx.core.components
+      - the RunRightFastVertxApplication component interface is the main application component
+5. Hazelcast is used for Vertx clustering
+6. DropWizard is used for metrics and healthchecks
+7. JDK built in logging is used
