@@ -61,18 +61,18 @@ import org.apache.commons.lang3.StringUtils;
  * <li>The application main method delegates to {@link RunRightFastVertxApplicationService#run(java.util.function.Supplier, java.lang.String...)}
  * </ol>
  *
- * <code>
+ * <pre>
  *
  *  public final class MyApp  {
  *      public static void main(final String[] args){
- *          System.exit(RunRightFastVertxApplicationService.run(MyApp::createRunRightFastVertxApplicationService, args));
+ *          System.exit(RunRightFastVertxApplicationService.run(MyApp::runRightFastVertxApplication, args));
  *      }
  *
- *      private static RunRightFastVertxApplicationService createRunRightFastVertxApplicationService(){
+ *      private static RunRightFastVertxApplication runRightFastVertxApplication(){
  *          ...
  *      }
  *  }
- * </code>
+ * </pre>
  *
  * @author alfio
  */
