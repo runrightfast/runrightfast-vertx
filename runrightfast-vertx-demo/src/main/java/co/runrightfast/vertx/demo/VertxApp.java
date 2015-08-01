@@ -15,20 +15,22 @@
  */
 package co.runrightfast.vertx.demo;
 
-import io.vertx.core.Vertx;
+import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationService;
+import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
+import co.runrightfast.vertx.demo.components.DaggerDemoApp;
 
 /**
  *
  * @author alfio
  */
-public final class VertxMain {
+public final class VertxApp {
 
-    public static void main(String[] args) {
-        // Create an HTTP server which simply returns "Hello World!" to each request.
-        Vertx.vertx()
-                .createHttpServer()
-                .requestHandler(req -> req.response().end("Hello World!"))
-                .listen(8080);
+    public static void main(final String[] args) {
+        System.exit(RunRightFastVertxApplicationService.run(VertxApp::runRightFastVertxApplication, args));
+    }
+
+    public static RunRightFastVertxApplication runRightFastVertxApplication() {
+        return DaggerDemoApp.create();
     }
 
 }

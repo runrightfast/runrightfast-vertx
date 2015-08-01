@@ -15,7 +15,7 @@ if (!hasProperty('mainClass')) {
     ext.mainClass = ''
 }
 
-mainClassName = 'co.runrightfast.vertx.demo.VertxMain'
+mainClassName = 'co.runrightfast.vertx.demo.VertxApp'
 
 applicationDefaultJvmArgs = [    
     // enable remote debugging
