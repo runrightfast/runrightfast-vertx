@@ -5,7 +5,7 @@
  */
 package co.runrightfast.vertx.core.application.jmx.impl;
 
-import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationService;
+import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationLauncher;
 import co.runrightfast.vertx.core.application.jmx.ApplicationMXBean;
 import co.runrightfast.vertx.core.application.jmx.MBeanSupport;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
@@ -21,9 +21,9 @@ import lombok.NonNull;
 @Builder
 public final class ApplicationMXBeanImpl extends MBeanSupport implements ApplicationMXBean {
 
-    private final RunRightFastVertxApplicationService appService;
+    private final RunRightFastVertxApplicationLauncher appService;
 
-    public ApplicationMXBeanImpl(@NonNull final RunRightFastVertxApplicationService appService) {
+    public ApplicationMXBeanImpl(@NonNull final RunRightFastVertxApplicationLauncher appService) {
         super(ApplicationMXBean.class);
         this.appService = appService;
     }

@@ -15,7 +15,7 @@
  */
 package co.runrightfast.vertx.demo;
 
-import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationService;
+import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationLauncher;
 import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
 import co.runrightfast.vertx.demo.components.DaggerDemoApp;
 
@@ -26,7 +26,7 @@ import co.runrightfast.vertx.demo.components.DaggerDemoApp;
 public final class VertxApp {
 
     public static void main(final String[] args) {
-        System.exit(RunRightFastVertxApplicationService.run(VertxApp::runRightFastVertxApplication, args));
+        System.exit(RunRightFastVertxApplicationLauncher.run(VertxApp::runRightFastVertxApplication, args));
     }
 
     public static RunRightFastVertxApplication runRightFastVertxApplication() {

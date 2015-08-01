@@ -58,27 +58,27 @@ import org.apache.commons.lang3.StringUtils;
  *
  * <ol>
  * <li>Create an application main class which provides a method to create an {@link RunRightFastVertxApplication} instance
- * <li>The application main method delegates to {@link RunRightFastVertxApplicationService#run(java.util.function.Supplier, java.lang.String...)}
+ * <li>The application main method delegates to {@link RunRightFastVertxApplicationLauncher#run(java.util.function.Supplier, java.lang.String...)}
  * </ol>
  *
  * <pre>
  *
- *  public final class MyApp  {
- *      public static void main(final String[] args){
- *          System.exit(RunRightFastVertxApplicationService.run(MyApp::runRightFastVertxApplication, args));
- *      }
+ * public final class MyApp  {
+ *     public static void main(final String[] args){
+ *         System.exit(RunRightFastVertxApplicationLauncher.run(MyApp::runRightFastVertxApplication, args));
+ *     }
  *
- *      private static RunRightFastVertxApplication runRightFastVertxApplication(){
- *          ...
- *      }
- *  }
+ *     private static RunRightFastVertxApplication runRightFastVertxApplication(){
+ *         ...
+ *     }
+ * }
  * </pre>
  *
  * @author alfio
  */
 @Log
 @Builder
-public final class RunRightFastVertxApplicationService extends AbstractIdleService {
+public final class RunRightFastVertxApplicationLauncher extends AbstractIdleService {
 
     public static interface EventBusAddresses {
 
@@ -86,7 +86,7 @@ public final class RunRightFastVertxApplicationService extends AbstractIdleServi
         static final String APP_INSTANCE_STOPPED = runrightfastEventBusAddress("application-instance", "stopped");
     }
 
-    private static final String CLASS_NAME = RunRightFastVertxApplicationService.class.getName();
+    private static final String CLASS_NAME = RunRightFastVertxApplicationLauncher.class.getName();
 
     @Getter
     @NonNull
@@ -97,13 +97,13 @@ public final class RunRightFastVertxApplicationService extends AbstractIdleServi
         @Override
         public void failed(final Service.State from, Throwable failure) {
             log.logp(SEVERE, CLASS_NAME, "vertxServiceShutdownListener", "failed", failure);
-            ServiceUtils.stopAsync(RunRightFastVertxApplicationService.this);
+            ServiceUtils.stopAsync(RunRightFastVertxApplicationLauncher.this);
         }
 
         @Override
         public void terminated(final Service.State from) {
             log.logp(INFO, CLASS_NAME, "vertxServiceShutdownListener", "terminated");
-            ServiceUtils.stopAsync(RunRightFastVertxApplicationService.this);
+            ServiceUtils.stopAsync(RunRightFastVertxApplicationLauncher.this);
         }
 
     };
@@ -204,7 +204,7 @@ public final class RunRightFastVertxApplicationService extends AbstractIdleServi
     }
 
     private static void runApp(final Supplier<RunRightFastVertxApplication> app) {
-        final RunRightFastVertxApplicationService service = RunRightFastVertxApplicationService.builder().app(app.get()).build();
+        final RunRightFastVertxApplicationLauncher service = RunRightFastVertxApplicationLauncher.builder().app(app.get()).build();
         log.logp(INFO, CLASS_NAME, "runApp", "starting");
         service.startAsync();
         service.awaitRunning();
@@ -251,7 +251,7 @@ public final class RunRightFastVertxApplicationService extends AbstractIdleServi
             public void run() {
                 try {
                     log.logp(INFO, CLASS_NAME, "shutdownHook", "invoked");
-                    ServiceUtils.stop(RunRightFastVertxApplicationService.this);
+                    ServiceUtils.stop(RunRightFastVertxApplicationLauncher.this);
                     log.logp(INFO, CLASS_NAME, "shutdownHook", "complete");
                 } catch (final Throwable ex) {
                     log.logp(SEVERE, CLASS_NAME, "shutdownHook", "exception", ex);

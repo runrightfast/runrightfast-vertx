@@ -65,7 +65,7 @@ import org.junit.Test;
  * @author alfio
  */
 @Log
-public class RunRightFastVertxApplicationServiceTest {
+public class RunRightFastVertxApplicationLauncherTest {
 
     static class TestVerticle extends RunRightFastVerticle {
 
@@ -95,7 +95,7 @@ public class RunRightFastVertxApplicationServiceTest {
         public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment() {
             return RunRightFastVerticleDeployment.builder()
                     .deploymentOptions(new DeploymentOptions())
-                    .verticle(new RunRightFastVertxApplicationServiceTest.TestVerticle())
+                    .verticle(new RunRightFastVertxApplicationLauncherTest.TestVerticle())
                     .build();
         }
     }
@@ -115,7 +115,7 @@ public class RunRightFastVertxApplicationServiceTest {
 
     @BeforeClass
     public static void setUpClass() {
-        System.setProperty("config.resource", String.format("%s.conf", RunRightFastVertxApplicationServiceTest.class.getSimpleName()));
+        System.setProperty("config.resource", String.format("%s.conf", RunRightFastVertxApplicationLauncherTest.class.getSimpleName()));
         ConfigFactory.invalidateCaches();
         metricRegistry.removeMatching(MetricFilter.ALL);
         app = DaggerRunRightFastVertxApplicationTest_TestApp.create();
@@ -128,41 +128,41 @@ public class RunRightFastVertxApplicationServiceTest {
     }
 
     /**
-     * Test of run method, of class RunRightFastVertxApplicationService.
+     * Test of run method, of class RunRightFastVertxApplicationLauncher.
      */
     @Test
     public void testHelpOption() {
         System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testHelpOption -h", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
-        RunRightFastVertxApplicationService.run(() -> app, "-h");
+        RunRightFastVertxApplicationLauncher.run(() -> app, "-h");
         System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testHelpOption --help", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
-        RunRightFastVertxApplicationService.run(() -> app, "--help");
+        RunRightFastVertxApplicationLauncher.run(() -> app, "--help");
     }
 
     /**
-     * Test of run method, of class RunRightFastVertxApplicationService.
+     * Test of run method, of class RunRightFastVertxApplicationLauncher.
      */
     @Test
     public void testVersionOption() {
         System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testVersionOption -v", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
-        RunRightFastVertxApplicationService.run(() -> app, "-v");
+        RunRightFastVertxApplicationLauncher.run(() -> app, "-v");
         System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testVersionOption --version", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
-        RunRightFastVertxApplicationService.run(() -> app, "--version");
+        RunRightFastVertxApplicationLauncher.run(() -> app, "--version");
     }
 
     /**
-     * Test of run method, of class RunRightFastVertxApplicationService.
+     * Test of run method, of class RunRightFastVertxApplicationLauncher.
      */
     @Test
     public void testConfigOption() {
         System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testConfigOption -v", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
-        RunRightFastVertxApplicationService.run(() -> app, "-c");
+        RunRightFastVertxApplicationLauncher.run(() -> app, "-c");
         System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testConfigOption --version", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
-        RunRightFastVertxApplicationService.run(() -> app, "--config");
+        RunRightFastVertxApplicationLauncher.run(() -> app, "--config");
     }
 
     @Test
     public void testRunApp() throws Exception {
-        ForkJoinPool.commonPool().execute(() -> RunRightFastVertxApplicationService.run(() -> app));
+        ForkJoinPool.commonPool().execute(() -> RunRightFastVertxApplicationLauncher.run(() -> app));
 
         final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
         final CompletableFuture future = new CompletableFuture();
