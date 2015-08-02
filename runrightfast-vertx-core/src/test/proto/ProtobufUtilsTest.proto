@@ -40,6 +40,8 @@ message ProtobufUtilsToJsonTestMessage {
     repeated ApplicationInstance repeated_msg_field = 16;
 
     map<string,ApplicationInstance> map_field = 17;
+
+    map<string,string> string_map = 18;
 }
 
 message ApplicationInstance {
