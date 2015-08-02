@@ -65,6 +65,15 @@ public final class RunRightFastVerticleId {
                 .build();
     }
 
+    /**
+     *
+     * @return JSON representation
+     */
+    @Override
+    public String toString() {
+        return toJson().toString();
+    }
+
     public boolean equalsVerticleId(final VerticleId id) {
         if (id == null) {
             return false;

@@ -109,8 +109,8 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     @Override
     public final void init(final Vertx vertx, final Context context) {
         super.init(vertx, context);
-        this.metricRegistry = SharedMetricRegistries.getOrCreate(context.deploymentID());
-        this.healthCheckRegistry = SharedHealthCheckRegistries.getOrCreate(context.deploymentID());
+        this.metricRegistry = SharedMetricRegistries.getOrCreate(getRunRightFastVerticleId().toString());
+        this.healthCheckRegistry = SharedHealthCheckRegistries.getOrCreate(getRunRightFastVerticleId().toString());
         this.instanceId = instanceSequence.incrementAndGet();
         log.logp(INFO, CLASS_NAME, "init", () -> lifeCycleMsg("initialized"));
     }

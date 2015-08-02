@@ -49,7 +49,7 @@ public interface JmxUtils {
     static String verticleJmxDomain(@NonNull final RunRightFastVerticleId verticleId, final String... subDomains) {
         final StringBuilder sb = new StringBuilder(80)
                 .append(RUNRIGHTFAST_JMX_DOMAIN)
-                .append(String.format("/%s-%s-%s",
+                .append(String.format(".vertx/%s-%s-%s",
                                 verticleId.getGroup(),
                                 verticleId.getName(),
                                 verticleId.getVersion()
