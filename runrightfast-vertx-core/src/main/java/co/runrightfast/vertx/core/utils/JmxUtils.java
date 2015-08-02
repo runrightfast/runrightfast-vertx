@@ -19,6 +19,7 @@ import co.runrightfast.core.ApplicationException;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.application.jmx.MBeanRegistration;
 import static com.google.common.base.Preconditions.checkArgument;
+import com.typesafe.config.Config;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -45,6 +46,18 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public interface JmxUtils {
 
     static final String RUNRIGHTFAST_JMX_DOMAIN = "co.runrightfast";
+
+    /**
+     * looks up the JMX domain at config path : runrightfast.jmx.default-domain
+     *
+     * If not found, then "co,runrightfast" is returned
+     *
+     * @param config Config
+     * @return application JMX domain
+     */
+    static String applicationJmxDomain(@NonNull final Config config) {
+        return ConfigUtils.getString(config, ConfigUtils.CONFIG_NAMESPACE, "jmx", "default-domain").orElse(RUNRIGHTFAST_JMX_DOMAIN);
+    }
 
     static String verticleJmxDomain(@NonNull final RunRightFastVerticleId verticleId, final String... subDomains) {
         final StringBuilder sb = new StringBuilder(80)

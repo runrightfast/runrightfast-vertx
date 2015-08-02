@@ -16,7 +16,7 @@
 package co.runrightfast.vertx.core.components;
 
 import co.runrightfast.vertx.core.application.RunRightFastApplication;
-import co.runrightfast.vertx.core.modules.ApplicationConfigModule;
+import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import dagger.Component;
 import javax.inject.Singleton;
 
@@ -26,7 +26,7 @@ import javax.inject.Singleton;
  */
 @Singleton
 @Component(
-        modules = {ApplicationConfigModule.class}
+        modules = {RunRightFastApplicationModule.class}
 )
 public interface ApplicationInfo {
 

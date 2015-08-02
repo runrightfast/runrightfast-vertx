@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.verticles.verticleManager;
 
+import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
@@ -162,6 +163,11 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                 .put(deployment, jmxReporter)
                 .build();
 
+    }
+
+    @Override
+    protected Set<RunRightFastHealthCheck> getHealthChecks() {
+        return ImmutableSet.of();
     }
 
 }

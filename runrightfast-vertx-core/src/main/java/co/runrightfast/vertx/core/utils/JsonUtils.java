@@ -21,11 +21,13 @@ import io.vertx.core.json.JsonObject;
 import java.io.StringReader;
 import java.util.List;
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -62,6 +64,18 @@ public interface JsonUtils {
         final JsonArrayBuilder json = Json.createArrayBuilder();
         stringList.forEach(json::add);
         return json.build();
+    }
+
+    static JsonArray toJsonArray(final String[] stringList) {
+        if (ArrayUtils.isEmpty(stringList)) {
+            return EMPTY_ARRAY;
+        }
+
+        final JsonArrayBuilder builder = Json.createArrayBuilder();
+        for (int i = 0; i < stringList.length; i++) {
+            builder.add(stringList[i]);
+        }
+        return builder.build();
     }
 
     static javax.json.JsonObject toJsonObject(final MultiMap map) {

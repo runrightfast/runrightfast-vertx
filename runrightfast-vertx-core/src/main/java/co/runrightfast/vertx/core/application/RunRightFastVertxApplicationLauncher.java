@@ -23,7 +23,7 @@ import co.runrightfast.vertx.core.components.ApplicationInfo;
 import co.runrightfast.vertx.core.components.DaggerApplicationInfo;
 import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
 import static co.runrightfast.vertx.core.eventbus.EventBusAddress.runrightfastEventBusAddress;
-import co.runrightfast.vertx.core.modules.ApplicationConfigModule;
+import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
@@ -115,7 +115,7 @@ public final class RunRightFastVertxApplicationLauncher extends AbstractIdleServ
      * RunRightFastVertxApplication interface, which includes the following modules:
      *
      * <ol>
-     * <li>{@link ApplicationConfigModule}
+     * <li>{@link RunRightFastApplicationModule}
      * <li>{@link VertxServiceModule}
      * </ol>
      *
@@ -235,6 +235,8 @@ public final class RunRightFastVertxApplicationLauncher extends AbstractIdleServ
         vertxService.addListener(vertxServiceShutdownListener, MoreExecutors.directExecutor());
         registerShutdownHook();
         registerApplicationMBean();
+        // In order for Dagger to create the service, it must be used first
+        app.healthChecksService();
         logConfig();
     }
 

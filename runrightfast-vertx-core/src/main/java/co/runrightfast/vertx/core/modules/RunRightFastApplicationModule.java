@@ -16,6 +16,10 @@
 package co.runrightfast.vertx.core.modules;
 
 import co.runrightfast.core.ConfigurationException;
+import co.runrightfast.core.application.event.AppEventLogger;
+import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
+import co.runrightfast.core.application.services.healthchecks.HealthChecksService;
+import co.runrightfast.core.application.services.healthchecks.impl.HealthChecksServiceImpl;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import co.runrightfast.vertx.core.application.RunRightFastApplication;
 import co.runrightfast.vertx.core.inject.qualifiers.ApplicationConfig;
@@ -24,6 +28,7 @@ import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.loadConfig;
+import static co.runrightfast.vertx.core.utils.JmxUtils.applicationJmxDomain;
 import com.typesafe.config.Config;
 import dagger.Module;
 import dagger.Provides;
@@ -34,7 +39,7 @@ import javax.inject.Singleton;
  * @author alfio
  */
 @Module
-public final class ApplicationConfigModule {
+public final class RunRightFastApplicationModule {
 
     @Provides
     @Singleton
@@ -71,6 +76,18 @@ public final class ApplicationConfigModule {
     @Singleton
     public RunRightFastApplication provideRunRightFastApplication(final ApplicationId applicationId, @ApplicationConfig final Config config) {
         return RunRightFastApplication.builder().applicationId(applicationId).config(config).build();
+    }
+
+    @Provides
+    @Singleton
+    public AppEventLogger provideAppEventLogger(final ApplicationId applicationId) {
+        return new AppEventJDKLogger(applicationId);
+    }
+
+    @Provides
+    @Singleton
+    public HealthChecksService provideHealthChecksService(final AppEventLogger appEventLogger, @ApplicationConfig final Config config) {
+        return new HealthChecksServiceImpl(appEventLogger, applicationJmxDomain(config));
     }
 
 }

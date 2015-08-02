@@ -15,8 +15,13 @@
  */
 package co.runrightfast.vertx.demo.verticles;
 
+import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
+import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
+import com.codahale.metrics.health.HealthCheck;
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import lombok.Getter;
 
 /**
@@ -39,6 +44,30 @@ public final class TestVerticle extends RunRightFastVerticle {
 
     @Override
     protected void shutDown() {
+    }
+
+    @Override
+    protected Set<RunRightFastHealthCheck> getHealthChecks() {
+        return ImmutableSet.of(
+                healthCheck1()
+        );
+    }
+
+    private RunRightFastHealthCheck healthCheck1() {
+        return RunRightFastHealthCheck.builder()
+                .config(healthCheckConfigBuilder()
+                        .name("healthcheck-1")
+                        .severity(FATAL)
+                        .build()
+                )
+                .healthCheck(new HealthCheck() {
+
+                    @Override
+                    protected HealthCheck.Result check() throws Exception {
+                        return HealthCheck.Result.healthy();
+                    }
+                })
+                .build();
     }
 
 }

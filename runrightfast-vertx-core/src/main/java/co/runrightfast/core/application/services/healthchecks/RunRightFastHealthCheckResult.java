@@ -13,22 +13,25 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.components;
+package co.runrightfast.core.application.services.healthchecks;
 
-import co.runrightfast.core.application.services.healthchecks.HealthChecksService;
-import co.runrightfast.vertx.core.VertxService;
-import co.runrightfast.vertx.core.application.RunRightFastApplication;
+import com.codahale.metrics.health.HealthCheck;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NonNull;
 
 /**
- * Applications extend this component interface and include the appropriate modules to provide the VertxService
  *
  * @author alfio
  */
-public interface RunRightFastVertxApplication {
+@Builder
+public final class RunRightFastHealthCheckResult {
 
-    RunRightFastApplication runRightFastApplication();
+    @NonNull
+    @Getter
+    private final HealthCheckConfig config;
 
-    HealthChecksService healthChecksService();
-
-    VertxService vertxService();
+    @NonNull
+    @Getter
+    private final HealthCheck.Result result;
 }

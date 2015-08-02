@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.impl;
 
+import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_METRIC_REGISTRY_NAME;
@@ -74,6 +75,11 @@ public class VertxServiceImplTest {
 
         @Override
         protected void shutDown() {
+        }
+
+        @Override
+        protected Set<RunRightFastHealthCheck> getHealthChecks() {
+            return ImmutableSet.of();
         }
 
     }

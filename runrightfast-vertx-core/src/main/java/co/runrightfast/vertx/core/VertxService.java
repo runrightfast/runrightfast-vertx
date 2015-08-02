@@ -15,13 +15,10 @@
  */
 package co.runrightfast.vertx.core;
 
-import static co.runrightfast.vertx.core.VertxConstants.VERTX_HEALTHCHECK_REGISTRY_NAME;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_METRIC_REGISTRY_NAME;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.codahale.metrics.health.HealthCheckRegistry;
-import com.codahale.metrics.health.SharedHealthCheckRegistries;
 import com.google.common.util.concurrent.Service;
 import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
@@ -57,7 +54,5 @@ public interface VertxService extends Service {
     Set<RunRightFastVerticleDeployment> deployments();
 
     static final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(VERTX_METRIC_REGISTRY_NAME);
-
-    static final HealthCheckRegistry healthCheckRegistry = SharedHealthCheckRegistries.getOrCreate(VERTX_HEALTHCHECK_REGISTRY_NAME);
 
 }

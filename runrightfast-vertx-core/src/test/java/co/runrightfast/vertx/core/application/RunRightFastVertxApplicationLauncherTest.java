@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.application;
 
+import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
@@ -22,7 +23,7 @@ import co.runrightfast.vertx.core.application.jmx.ApplicationMXBean;
 import co.runrightfast.vertx.core.components.DaggerRunRightFastVertxApplicationTest_TestApp;
 import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
-import co.runrightfast.vertx.core.modules.ApplicationConfigModule;
+import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.JmxUtils;
 import static co.runrightfast.vertx.core.utils.JmxUtils.applicationMBeanObjectName;
@@ -33,6 +34,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.codahale.metrics.MetricFilter;
+import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.ConfigFactory;
 import dagger.Component;
 import dagger.Module;
@@ -44,6 +46,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import java.lang.management.ManagementFactory;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +88,11 @@ public class RunRightFastVertxApplicationLauncherTest {
         protected void shutDown() {
         }
 
+        @Override
+        protected Set<RunRightFastHealthCheck> getHealthChecks() {
+            return ImmutableSet.of();
+        }
+
     }
 
     @Module
@@ -102,7 +110,7 @@ public class RunRightFastVertxApplicationLauncherTest {
 
     @Component(
             modules = {
-                ApplicationConfigModule.class,
+                RunRightFastApplicationModule.class,
                 VertxServiceModule.class,
                 RunRightFastVerticleDeploymentModule.class
             }

@@ -13,22 +13,15 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.components;
+package co.runrightfast.core.application.event;
 
-import co.runrightfast.core.application.services.healthchecks.HealthChecksService;
-import co.runrightfast.vertx.core.VertxService;
-import co.runrightfast.vertx.core.application.RunRightFastApplication;
+import java.util.function.Consumer;
 
 /**
- * Applications extend this component interface and include the appropriate modules to provide the VertxService
  *
  * @author alfio
  */
-public interface RunRightFastVertxApplication {
+@FunctionalInterface
+public interface AppEventLogger extends Consumer<AppEvent> {
 
-    RunRightFastApplication runRightFastApplication();
-
-    HealthChecksService healthChecksService();
-
-    VertxService vertxService();
 }

@@ -15,6 +15,8 @@
  */
 package co.runrightfast.vertx.core;
 
+import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
+import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_EXCEPTION;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_PROCESSING;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_SUCCESS;
@@ -45,6 +47,7 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.eventbus.MessageConsumer;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.INFO;
@@ -121,6 +124,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         try {
             metricRegistry.counter(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).inc();
             startUp();
+            registerHealthChecks();
         } finally {
             log.logp(INFO, CLASS_NAME, "start", () -> lifeCycleMsg("started"));
         }
@@ -130,11 +134,20 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     public final void stop() throws Exception {
         log.logp(INFO, CLASS_NAME, "stop", () -> lifeCycleMsg("stopping"));
         try {
+            unregisterhealthChecks();
             shutDown();
         } finally {
             metricRegistry.counter(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).dec();
             log.logp(INFO, CLASS_NAME, "stop", () -> lifeCycleMsg("stopped"));
         }
+    }
+
+    private void registerHealthChecks() {
+        getHealthChecks().stream().forEach(healthCheck -> healthCheckRegistry.register(healthCheck.getConfig().getName(), healthCheck.getHealthCheck()));
+    }
+
+    private void unregisterhealthChecks() {
+        getHealthChecks().stream().forEach(healthCheck -> healthCheckRegistry.unregister(healthCheck.getConfig().getName()));
     }
 
     private String lifeCycleMsg(final String state) {
@@ -316,6 +329,10 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         return EventBusAddress.eventBusAddress(getRunRightFastVerticleId(), path, paths);
     }
 
+    protected HealthCheckConfig.HealthCheckConfigBuilder healthCheckConfigBuilder() {
+        return HealthCheckConfig.builder().registryName(getRunRightFastVerticleId().toJson().toString());
+    }
+
     /**
      * Used to initialize the {@link #getRunRightFastVerticleId()} field.
      *
@@ -333,7 +350,10 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
      */
     protected abstract void shutDown();
 
+    protected abstract Set<RunRightFastHealthCheck> getHealthChecks();
+
     @Override
+
     public int hashCode() {
         return getRunRightFastVerticleId().hashCode();
     }

@@ -15,6 +15,8 @@
  */
 package co.runrightfast.vertx.core.components;
 
+import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
+import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.VertxService;
@@ -22,7 +24,7 @@ import static co.runrightfast.vertx.core.VertxService.metricRegistry;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import co.runrightfast.vertx.core.application.RunRightFastApplication;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
-import co.runrightfast.vertx.core.modules.ApplicationConfigModule;
+import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;
@@ -32,6 +34,8 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.health.HealthCheck;
+import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import dagger.Component;
@@ -43,6 +47,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +88,30 @@ public class RunRightFastVertxApplicationTest {
         protected void shutDown() {
         }
 
+        @Override
+        protected Set<RunRightFastHealthCheck> getHealthChecks() {
+            return ImmutableSet.of(
+                    healthCheck1()
+            );
+        }
+
+        private RunRightFastHealthCheck healthCheck1() {
+            return RunRightFastHealthCheck.builder()
+                    .config(healthCheckConfigBuilder()
+                            .name("healthcheck-1")
+                            .severity(FATAL)
+                            .build()
+                    )
+                    .healthCheck(new HealthCheck() {
+
+                        @Override
+                        protected HealthCheck.Result check() throws Exception {
+                            return HealthCheck.Result.healthy();
+                        }
+                    })
+                    .build();
+        }
+
     }
 
     @Module
@@ -100,7 +129,7 @@ public class RunRightFastVertxApplicationTest {
 
     @Component(
             modules = {
-                ApplicationConfigModule.class,
+                RunRightFastApplicationModule.class,
                 VertxServiceModule.class,
                 RunRightFastVerticleDeploymentModule.class
             }
