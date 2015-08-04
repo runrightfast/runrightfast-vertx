@@ -1,4 +1,15 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
+    }
+}
+
 apply plugin: 'application'
+apply plugin: 'docker'
 
 // Note: "common.gradle" in the root project contains additional initialization
 //   for this project. This initialization is applied in the "build.gradle"
@@ -22,10 +33,30 @@ applicationDefaultJvmArgs = [
     "-Xdebug",
     "-Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n",
     
+    "-Dcom.sun.management.jmxremote.authenticate=false",
+    "-Dcom.sun.management.jmxremote.ssl=false",
+    "-Dcom.sun.management.jmxremote.port=7410",
+    
     "-Dapp.log.dir=${buildDir}/app/logs",   
     "-Drunrightfast.app.version=${version}"
 ]
 
 dependencies {
    compile project(':runrightfast-vertx-core')
+}
+
+
+docker {
+    maintainer = 'Alfio Zappala <alfio.a.z.2@gamil.com>'
+    baseImage = 'java:8u45-jre'
+}
+
+task appDocker(type: Docker) {
+    dependsOn installDist
+    project.group = "runrightfast"
+    applicationName = "${project.name}"
+    entryPoint(["/runrightfast/apps/${project.name}/bin/${project.name}"])
+    exposePort 7410
+    exposePort 4000
+    addFile("${buildDir}/install/${project.name}", "/runrightfast/apps/${project.name}")
 }
