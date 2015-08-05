@@ -40,7 +40,6 @@ The demo features and key points
      - generates a Dockerfile - located within build/docker dir
      - creates a Docker image named : runrightfast/runrightfast-vertx-demo
      - requires Docker to be installed locally
-   - after the "appDocker" Gradle task is run, it 
    - to create a container and be able to run remote debug (port 4000) and connect to it via JMX (port 7410), run the following docker command
    
         docker create --name=runrightfast-vertx-demo -p 7410:7410 -p 4000:4000 <image_id>
