@@ -15,16 +15,23 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure.INTERNAL_SERVER_ERROR;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.Message;
+import java.util.Map;
 import java.util.Optional;
 import javax.json.Json;
 import javax.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  *
@@ -38,6 +45,7 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     public static final class Builder<REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> {
 
         private final MessageConsumerConfig config = new MessageConsumerConfig();
+        private ImmutableMap.Builder<Class<? extends Throwable>, Failure> exceptionFailureMap = ImmutableMap.builder();
 
         public Builder<REQUEST, RESPONSE> addressMessageMapping(final EventBusAddressMessageMapping mapping) {
             this.config.addressMessageMapping = mapping;
@@ -54,7 +62,7 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
             return this;
         }
 
-        public Builder<REQUEST, RESPONSE> handler(final Handler<Message<REQUEST>> handler) {
+        public Builder<REQUEST, RESPONSE> handler(@NonNull final Handler<Message<REQUEST>> handler) {
             this.config.handler = handler;
             return this;
         }
@@ -74,7 +82,13 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
             return this;
         }
 
+        public Builder<REQUEST, RESPONSE> addExceptionFailureMapping(@NonNull final Class<? extends Throwable> exceptionClass, @NonNull final Failure failure) {
+            this.exceptionFailureMap.put(exceptionClass, failure);
+            return this;
+        }
+
         public MessageConsumerConfig build() {
+            config.exceptionFailureMap = this.exceptionFailureMap.build();
             config.validate();
             return config;
         }
@@ -108,6 +122,9 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     @Getter
     private Optional<Handler<Throwable>> exceptionHandler = Optional.empty();
 
+    @Getter
+    private Map<Class<? extends Throwable>, Failure> exceptionFailureMap = ImmutableMap.of();
+
     private MessageConsumerConfig() {
     }
 
@@ -121,6 +138,21 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
         return addressMessageMapping.getAddress();
     }
 
+    public Failure toFailure(@NonNull final Throwable t) {
+        final Class<? extends Throwable> clazz = t.getClass();
+        final Failure failure = exceptionFailureMap.get(clazz);
+        if (failure != null) {
+            return new Failure(failure, t);
+        }
+
+        return new Failure(exceptionFailureMap.entrySet().stream()
+                .filter(entry -> entry.getClass().isAssignableFrom(clazz))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(INTERNAL_SERVER_ERROR), t);
+
+    }
+
     public JsonObject toJson() {
         return Json.createObjectBuilder()
                 .add("addressMessageMapping", addressMessageMapping.toJson())
@@ -132,6 +164,50 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     @Override
     public String toString() {
         return toJson().toString();
+    }
+
+    @lombok.Builder
+    public static final class Failure {
+
+        public static final Failure BAD_REQUEST = new Failure(400, "Invalid message");
+        public static final Failure UNAUTHORIZED = new Failure(401, "Unauthorized");
+        public static final Failure FORBIDDEN = new Failure(403, "Forbidden");
+        public static final Failure NOT_FOUND = new Failure(404, "Not found");
+        public static final Failure REQUEST_TIMEOUT = new Failure(408, "Timeout");
+        public static final Failure CONFLICT = new Failure(409, "Conflict");
+        public static final Failure PRECONDITION_FAILED = new Failure(412, "Precondition failed");
+        public static final Failure REQUEST_ENTITY_TOO_LARGE = new Failure(413, "Message too large");
+
+        public static final Failure INTERNAL_SERVER_ERROR = new Failure(500, "Unexpected server error");
+        public static final Failure NOT_IMPLEMENTED = new Failure(501, "Not supported");
+        public static final Failure SERVICE_UNAVAILABLE = new Failure(503, "Service unavailable");
+
+        @Getter
+        private final int code;
+
+        @Getter
+        private final String message;
+
+        public Failure(final int code, final String message) {
+            checkArgument(isNotBlank(message));
+            this.code = code;
+            this.message = message;
+        }
+
+        public Failure(@NonNull final Failure failure, @NonNull final Throwable t) {
+            this.code = failure.code;
+            if (StringUtils.isNotBlank(t.getMessage())) {
+                final String exceptionMessage = t.getMessage();
+                this.message = new StringBuilder(failure.message.length() + t.getMessage().length() + 3)
+                        .append(failure.message)
+                        .append(" : ")
+                        .append(exceptionMessage)
+                        .toString();
+            } else {
+                this.message = failure.message;
+            }
+        }
+
     }
 
 }

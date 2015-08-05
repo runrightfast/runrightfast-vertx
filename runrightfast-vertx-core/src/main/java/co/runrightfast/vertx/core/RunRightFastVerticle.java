@@ -28,6 +28,10 @@ import co.runrightfast.vertx.core.eventbus.MessageConsumerHandlerException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerRegistration;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
+import co.runrightfast.vertx.core.utils.LoggingUtils;
+import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newErrorLog;
+import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newInfoLog;
+import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newWarningLog;
 import static co.runrightfast.vertx.core.utils.ProtobufUtils.protobuMessageToJson;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
@@ -51,7 +55,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.INFO;
-import static java.util.logging.Level.SEVERE;
 import java.util.logging.Logger;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -87,6 +90,10 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     protected final String CLASS_NAME = getClass().getName();
     protected final Logger log = Logger.getLogger(CLASS_NAME);
 
+    protected final LoggingUtils.JsonLog info = newInfoLog(log, CLASS_NAME);
+    protected final LoggingUtils.JsonLog warning = newWarningLog(log, CLASS_NAME);
+    protected final LoggingUtils.JsonLog error = newErrorLog(log, CLASS_NAME);
+
     @Getter
     protected MetricRegistry metricRegistry;
 
@@ -115,30 +122,30 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         this.metricRegistry = SharedMetricRegistries.getOrCreate(getRunRightFastVerticleId().toString());
         this.healthCheckRegistry = SharedHealthCheckRegistries.getOrCreate(getRunRightFastVerticleId().toString());
         this.instanceId = instanceSequence.incrementAndGet();
-        log.logp(INFO, CLASS_NAME, "init", () -> lifeCycleMsg("initialized"));
+        info.log("init", () -> lifeCycleMsg("initialized"));
     }
 
     @Override
     public final void start() throws Exception {
-        log.logp(INFO, CLASS_NAME, "start", () -> lifeCycleMsg("starting"));
+        info.log("start", () -> lifeCycleMsg("starting"));
         try {
             metricRegistry.counter(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).inc();
             startUp();
             registerHealthChecks();
         } finally {
-            log.logp(INFO, CLASS_NAME, "start", () -> lifeCycleMsg("started"));
+            info.log("start", () -> lifeCycleMsg("started"));
         }
     }
 
     @Override
     public final void stop() throws Exception {
-        log.logp(INFO, CLASS_NAME, "stop", () -> lifeCycleMsg("stopping"));
+        info.log("stop", () -> lifeCycleMsg("stopping"));
         try {
             unregisterhealthChecks();
             shutDown();
         } finally {
             metricRegistry.counter(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).dec();
-            log.logp(INFO, CLASS_NAME, "stop", () -> lifeCycleMsg("stopped"));
+            info.log("stop", () -> lifeCycleMsg("stopped"));
         }
     }
 
@@ -150,13 +157,12 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         getHealthChecks().stream().forEach(healthCheck -> healthCheckRegistry.unregister(healthCheck.getConfig().getName()));
     }
 
-    private String lifeCycleMsg(final String state) {
+    private JsonObject lifeCycleMsg(final String state) {
         return Json.createObjectBuilder()
                 .add("verticleId", getRunRightFastVerticleId().toJson())
                 .add("instanceId", instanceId)
                 .add("state", state)
-                .build()
-                .toString();
+                .build();
     }
 
     /**
@@ -231,8 +237,8 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         });
     }
 
-    private <REQ extends Message, RESP extends Message> String messageConsumerLogInfo(final String address, final MessageConsumerConfig<REQ, RESP> config) {
-        return messageConsumerLogInfoAsJson(address, config).build().toString();
+    private <REQ extends Message, RESP extends Message> JsonObject messageConsumerLogInfo(final String address, final MessageConsumerConfig<REQ, RESP> config) {
+        return messageConsumerLogInfoAsJson(address, config).build();
     }
 
     private <REQ extends Message, RESP extends Message> JsonObjectBuilder messageConsumerLogInfoAsJson(final String address, final MessageConsumerConfig<REQ, RESP> config) {
@@ -244,9 +250,9 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     private <REQ extends Message, RESP extends Message> Handler<AsyncResult<Void>> messageConsumerCompletionHandler(final String address, final Optional<Handler<AsyncResult<Void>>> handler, final MessageConsumerConfig<REQ, RESP> config) {
         return (AsyncResult<Void> result) -> {
             if (result.succeeded()) {
-                log.logp(INFO, CLASS_NAME, "messageConsumerCompletionHandler.succeeded", () -> messageConsumerLogInfo(address, config));
+                info.log("messageConsumerCompletionHandler.succeeded", () -> messageConsumerLogInfo(address, config));
             } else {
-                log.logp(SEVERE, CLASS_NAME, "messageConsumerCompletionHandler.failed", messageConsumerLogInfo(address, config), result.cause());
+                error.log("messageConsumerCompletionHandler.failed", () -> messageConsumerLogInfo(address, config), result.cause());
             }
             handler.ifPresent(h -> h.handle(result));
         };
@@ -254,7 +260,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     private <REQ extends Message, RESP extends Message> Handler<Void> messageConsumerEndHandler(final String address, final Optional<Handler<Void>> handler, final MessageConsumerConfig<REQ, RESP> config) {
         final Handler<Void> defaultHandler = result -> {
-            log.logp(INFO, CLASS_NAME, "messageConsumerEndHandler", () -> messageConsumerLogInfo(address, config));
+            info.log("messageConsumerEndHandler", () -> messageConsumerLogInfo(address, config));
         };
 
         return handler.map(h -> {
@@ -276,13 +282,14 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
                         .add("body", protobuMessageToJson(messageConsumerHandlerException.getFailedMessage().body()))
                         .build();
 
-                log.logp(SEVERE, CLASS_NAME, "messageConsumerExceptionHandler", messageConsumerLogInfoAsJson(address, config).add("message", message).toString(), exception);
+                error.log("messageConsumerExceptionHandler", () -> messageConsumerLogInfoAsJson(address, config).add("message", message).build(), exception);
+
+                // TODO: fail the message if the config indicates that there is a response message
+                // TODO: map exceptions to failure codes in the config
             } else {
-                log.logp(SEVERE, CLASS_NAME, "messageConsumerExceptionHandler", messageConsumerLogInfo(address, config), exception);
+                error.log("messageConsumerExceptionHandler", () -> messageConsumerLogInfo(address, config), exception);
             }
 
-            // TODO: fail the message if the config indicates that there is a response message
-            // TODO: map exceptions to failure codes in the config
         };
 
         return handler.map(h -> {
@@ -294,6 +301,18 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         }).orElse(defaultHandler);
     }
 
+    /**
+     * Wraps the handler to perform the following:
+     * <ul>
+     * <li>Collects metrics
+     * <li>Logs info about the message
+     * </ul>
+     *
+     * @param <REQ> Request message type
+     * @param <RESP> Response message type
+     * @param config MessageConsumerConfig
+     * @return handler
+     */
     private <REQ extends Message, RESP extends Message> Handler<io.vertx.core.eventbus.Message<REQ>> messageConsumerHandler(final MessageConsumerConfig<REQ, RESP> config) {
         final Counter messageTotalCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_TOTAL.metricName, config.getAddressMessageMapping().getAddress()));
         final Counter messageProcessingCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_PROCESSING.metricName, config.getAddressMessageMapping().getAddress()));
