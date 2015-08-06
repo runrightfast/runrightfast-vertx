@@ -42,10 +42,44 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @EqualsAndHashCode(of = {"addressMessageMapping"})
 public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> {
 
+    /**
+     * Automatically maps the following exceptions
+     *
+     * <ol>
+     * <li>{@link InvalidMessageException} -&gt; {@link Failure#BAD_REQUEST}
+     * <li>{@link UnauthorizedException} -&gt; {@link Failure#UNAUTHORIZED}
+     * <li>{@link ForbiddenException} -&gt; {@link Failure#FORBIDDEN}
+     * <li>{@link ResourceNotFoundException} -&gt; {@link Failure#NOT_FOUND}
+     * <li>{@link RequestTimeoutException} -&gt; {@link Failure#REQUEST_TIMEOUT}
+     * <li>{@link ResourceConflictException} -&gt; {@link Failure#CONFLICT}
+     * <li>{@link PreconditionFailedException} -&gt; {@link Failure#REQUEST_ENTITY_TOO_LARGE}
+     * <li>{@link MessageTooLargeException} -&gt; {@link Failure#BAD_REQUEST}
+     * <li>{@link NotImplementedException} -&gt; {@link Failure#NOT_IMPLEMENTED}
+     * <li>{@link ServiceNotAvailableException} -&gt; {@link Failure#SERVICE_UNAVAILABLE}
+     * </ol>
+     *
+     * Any unmapped exception is mapped to {@link Failure#INTERNAL_SERVER_ERROR}
+     *
+     * @param <REQUEST>
+     * @param <RESPONSE>
+     */
     public static final class Builder<REQUEST extends com.google.protobuf.Message, RESPONSE extends com.google.protobuf.Message> {
 
         private final MessageConsumerConfig config = new MessageConsumerConfig();
-        private ImmutableMap.Builder<Class<? extends Throwable>, Failure> exceptionFailureMap = ImmutableMap.builder();
+        private ImmutableMap.Builder<Class<? extends Throwable>, Failure> exceptionFailureMap = ImmutableMap.<Class<? extends Throwable>, Failure>builder()
+                .put(InvalidMessageException.class, Failure.BAD_REQUEST)
+                .put(UnauthorizedException.class, Failure.UNAUTHORIZED)
+                .put(ForbiddenException.class, Failure.FORBIDDEN)
+                .put(ResourceNotFoundException.class, Failure.NOT_FOUND)
+                .put(RequestTimeoutException.class, Failure.REQUEST_TIMEOUT)
+                .put(ResourceConflictException.class, Failure.CONFLICT)
+                .put(PreconditionFailedException.class, Failure.PRECONDITION_FAILED)
+                .put(MessageTooLargeException.class, Failure.REQUEST_ENTITY_TOO_LARGE)
+                .put(NotImplementedException.class, Failure.NOT_IMPLEMENTED)
+                .put(ServiceNotAvailableException.class, Failure.SERVICE_UNAVAILABLE);
+
+        private Builder() {
+        }
 
         public Builder<REQUEST, RESPONSE> addressMessageMapping(final EventBusAddressMessageMapping mapping) {
             this.config.addressMessageMapping = mapping;

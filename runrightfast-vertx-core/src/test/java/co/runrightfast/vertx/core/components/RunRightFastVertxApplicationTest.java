@@ -15,8 +15,10 @@
  */
 package co.runrightfast.vertx.core.components;
 
+import co.runrightfast.core.ApplicationException;
 import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
+import co.runrightfast.protobuf.test.RunRightFastVertxApplicationTestMessage;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.VertxService;
@@ -24,6 +26,9 @@ import static co.runrightfast.vertx.core.VertxService.metricRegistry;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import co.runrightfast.vertx.core.application.RunRightFastApplication;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
+import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
+import co.runrightfast.vertx.core.eventbus.InvalidMessageException;
+import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
@@ -47,6 +52,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.ReplyException;
+import java.time.Instant;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -55,11 +62,14 @@ import java.util.concurrent.TimeoutException;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
 import javax.inject.Singleton;
+import javax.json.Json;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.java.Log;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.AfterClass;
+import static org.junit.Assert.fail;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -72,16 +82,52 @@ public class RunRightFastVertxApplicationTest {
 
     static class TestVerticle extends RunRightFastVerticle {
 
-        @Getter
-        private final RunRightFastVerticleId runRightFastVerticleId
-                = RunRightFastVerticleId.builder()
+        static final RunRightFastVerticleId VERTICLE_ID = RunRightFastVerticleId.builder()
                 .group(RunRightFastVerticleId.RUNRIGHTFAST_GROUP)
-                .name(getClass().getSimpleName())
+                .name(TestVerticle.class.getSimpleName())
                 .version("1.0.0")
                 .build();
 
+        @Getter
+        private final RunRightFastVerticleId runRightFastVerticleId = VERTICLE_ID;
+
         @Override
         protected void startUp() {
+            registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig());
+        }
+
+        private MessageConsumerConfig<RunRightFastVertxApplicationTestMessage.Request, RunRightFastVertxApplicationTestMessage.Response> runRightFastVertxApplicationTestMessageMessageConsumerConfig() {
+            return MessageConsumerConfig.<RunRightFastVertxApplicationTestMessage.Request, RunRightFastVertxApplicationTestMessage.Response>builder()
+                    .addressMessageMapping(EventBusAddressMessageMapping.builder()
+                            .address(eventBusAddress(RunRightFastVertxApplicationTestMessage.class.getSimpleName()))
+                            .requestDefaultInstance(RunRightFastVertxApplicationTestMessage.Request.getDefaultInstance())
+                            .responseDefaultInstance(RunRightFastVertxApplicationTestMessage.Response.getDefaultInstance())
+                            .build()
+                    )
+                    .handler(this::handleRunRightFastVertxApplicationTestMessageRequest)
+                    .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
+                    .build();
+        }
+
+        private void handleRunRightFastVertxApplicationTestMessageRequest(@NonNull final Message<RunRightFastVertxApplicationTestMessage.Request> message) {
+            final RunRightFastVertxApplicationTestMessage.Request request = message.body();
+            info.log("RunRightFastVertxApplicationTestMessage.Request.messageConsumerHandler", () -> Json.createObjectBuilder().add("message", request.getMessage()).build());
+            if (request.getMessage() != null) {
+                switch (request.getMessage()) {
+                    case "IllegalArgumentException":
+                        throw new IllegalArgumentException();
+                    case "ApplicationException":
+                        throw new ApplicationException("request processing failed");
+                    case "IllegalStateException":
+                        throw new IllegalStateException();
+                    case "InvalidMessageException":
+                        throw new InvalidMessageException();
+                }
+            }
+            message.reply(RunRightFastVertxApplicationTestMessage.Response.newBuilder()
+                    .setMessage(String.format("Received message @ %s : %s", Instant.now(), request.getMessage()))
+                    .build()
+            );
         }
 
         @Override
@@ -199,7 +245,7 @@ public class RunRightFastVertxApplicationTest {
                 address,
                 GetVerticleDeployments.Request.newBuilder().build(),
                 new DeliveryOptions().setSendTimeout(2000L),
-                getVerticleDeploymentsResponseHandler(future)
+                responseHandler(future, GetVerticleDeployments.Response.class)
         );
         final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
     }
@@ -216,20 +262,70 @@ public class RunRightFastVertxApplicationTest {
                 address,
                 GetVerticleDeployments.Request.newBuilder().build(),
                 new DeliveryOptions().setSendTimeout(2000L),
-                getVerticleDeploymentsResponseHandler(future)
+                responseHandler(future, GetVerticleDeployments.Response.class)
         );
         final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
     }
 
-    private Handler<AsyncResult<Message<GetVerticleDeployments.Response>>> getVerticleDeploymentsResponseHandler(final CompletableFuture future) {
+    @Test
+    public void test_eventbus_RunRightFastVertxApplicationTestMessage() throws Exception {
+        log.info("test_eventbus_RunRightFastVertxApplicationTestMessage");
+        final Vertx vertx = vertxService.getVertx();
+        final CompletableFuture future = new CompletableFuture();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName());
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage("CIAO MUNDO!!!").build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void test_eventbus_RunRightFastVertxApplicationTestMessage_failure() throws Exception {
+        log.info("test_eventbus_RunRightFastVertxApplicationTestMessage_failure");
+        final Vertx vertx = vertxService.getVertx();
+        final CompletableFuture future = new CompletableFuture();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName());
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(IllegalArgumentException.class.getSimpleName()).build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        try {
+            final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+            fail("expected ReplyException");
+        } catch (final ExecutionException e) {
+            final ReplyException replyException = (ReplyException) e.getCause();
+            assertThat(replyException.failureCode(), is(MessageConsumerConfig.Failure.BAD_REQUEST.getCode()));
+        }
+
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(InvalidMessageException.class.getSimpleName()).build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        try {
+            final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+            fail("expected ReplyException");
+        } catch (final ExecutionException e) {
+            final ReplyException replyException = (ReplyException) e.getCause();
+            assertThat(replyException.failureCode(), is(MessageConsumerConfig.Failure.BAD_REQUEST.getCode()));
+        }
+    }
+
+    private <A extends com.google.protobuf.Message> Handler<AsyncResult<Message<A>>> responseHandler(final CompletableFuture future, final Class<A> messageType) {
         return result -> {
             if (result.succeeded()) {
-                log.logp(INFO, getClass().getName(), "test_vertx_default_options.success",
+                log.logp(INFO, getClass().getName(), String.format("responseHandler::%s", messageType.getName()),
                         JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(result.result().body())).encodePrettily()
                 );
                 future.complete(result.result().body());
             } else {
-                log.logp(SEVERE, getClass().getName(), "test_vertx_default_options.failure", "get-verticle-deployments failed", result.cause());
+                log.logp(SEVERE, getClass().getName(), String.format("responseHandler.failure::%s", messageType.getName()), "request failed", result.cause());
                 future.completeExceptionally(result.cause());
             }
         };
