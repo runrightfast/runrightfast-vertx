@@ -15,6 +15,11 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import io.vertx.core.eventbus.Message;
+import java.time.Instant;
+import java.util.Optional;
+import lombok.NonNull;
+
 /**
  *
  * @author alfio
@@ -24,12 +29,33 @@ public enum MessageHeader {
     MESSAGE_ID("rrf-msg-id"),
     MESSAGE_CORRELATION_ID("rrf-msg-correlation"),
     MESSAGE_TIMESTAMP("rrf-msg-ts"),
-    REPLY_TO_ADDRESS("rrf-reply-address"),;
+    REPLY_TO_ADDRESS("rrf-reply-address"),
+    FROM_ADDRESS("rrf-from-address");
 
     public final String header;
 
     private MessageHeader(final String header) {
         this.header = header;
+    }
+
+    public static Optional<String> getMessageId(@NonNull final Message message) {
+        return Optional.ofNullable(message.headers().get(MESSAGE_ID.header));
+    }
+
+    public static Optional<String> getCorrelationId(@NonNull final Message message) {
+        return Optional.ofNullable(message.headers().get(MESSAGE_CORRELATION_ID.header));
+    }
+
+    public static Optional<Instant> getMessageTimestamp(@NonNull final Message message) {
+        return Optional.ofNullable(message.headers().get(MESSAGE_TIMESTAMP.header)).map(Instant::parse);
+    }
+
+    public static Optional<String> getReplyToAddress(@NonNull final Message message) {
+        return Optional.ofNullable(message.headers().get(REPLY_TO_ADDRESS.header));
+    }
+
+    public static Optional<String> getFromAddress(@NonNull final Message message) {
+        return Optional.ofNullable(message.headers().get(FROM_ADDRESS.header));
     }
 
 }

@@ -23,10 +23,14 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.ME
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_TOTAL;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Timers.MESSAGE_CONSUMER_HANDLER;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
+import co.runrightfast.vertx.core.eventbus.EventBusUtils;
+import static co.runrightfast.vertx.core.eventbus.EventBusUtils.responseDeliveryOptions;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerHandlerException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerRegistration;
+import co.runrightfast.vertx.core.eventbus.MessageHeader;
+import static co.runrightfast.vertx.core.eventbus.MessageHeader.getReplyToAddress;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
 import co.runrightfast.vertx.core.utils.LoggingUtils;
@@ -48,6 +52,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.eventbus.MessageConsumer;
@@ -331,6 +336,34 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
             }
         };
 
+    }
+
+    /**
+     * Sets the standard headers.
+     *
+     * @param request
+     * @param response
+     * @see EventBusUtils#responseDeliveryOptions(io.vertx.core.eventbus.Message)
+     */
+    protected void reply(@NonNull final io.vertx.core.eventbus.Message request, @NonNull final Object response) {
+        reply(request, response, responseDeliveryOptions(request));
+    }
+
+    /**
+     * If the message has a {@link MessageHeader#REPLY_TO_ADDRESS} header, then send the reply back to that address. Otherwise, reply back using the built in
+     * Vertx Message reply mechanism.
+     *
+     * @param request
+     * @param response
+     * @param options
+     */
+    protected void reply(@NonNull final io.vertx.core.eventbus.Message request, @NonNull final Object response, @NonNull final DeliveryOptions options) {
+        final Optional<String> replyTo = getReplyToAddress(request);
+        if (replyTo.isPresent()) {
+            vertx.eventBus().send(replyTo.get(), response, options);
+        } else {
+            request.reply(response, options);
+        }
     }
 
     /**

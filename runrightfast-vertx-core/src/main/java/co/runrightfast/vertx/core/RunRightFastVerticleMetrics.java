@@ -89,6 +89,7 @@ public interface RunRightFastVerticleMetrics {
         MESSAGE_CONSUMER_MESSAGE_TOTAL("message-consumer", "message", "total"),
         MESSAGE_CONSUMER_MESSAGE_PROCESSING("message-consumer", "message", "processing"),
         MESSAGE_CONSUMER_MESSAGE_SUCCESS("message-consumer", "message", "success");
+        // END - the EventBus address will be appended to the metric name
 
         public final String metricName;
 

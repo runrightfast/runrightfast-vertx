@@ -109,7 +109,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                     .forEach(response::addDeployments);
         }
 
-        message.reply(response.build());
+        reply(message, response.build());
     }
 
     private boolean hasFilters(@NonNull final GetVerticleDeployments.Request request) {

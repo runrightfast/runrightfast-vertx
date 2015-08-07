@@ -1,11 +1,3 @@
-
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.sameInstance;
-import static org.hamcrest.MatcherAssert.assertThat;
-import org.junit.Test;
-
 /*
  Copyright 2015 Alfio Zappala
 
@@ -21,10 +13,22 @@ import org.junit.Test;
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import lombok.extern.java.Log;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.MatcherAssert.assertThat;
+import org.junit.Test;
+
 /**
  *
  * @author alfio
  */
+@Log
 public class QuickTest {
 
     @Test
@@ -35,6 +39,13 @@ public class QuickTest {
         final Meter m2 = metrics.meter("meter");
 
         assertThat(m1, is(sameInstance(m2)));
+    }
+
+    @Test
+    public void testISOInstantFormat() {
+        final String timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+        log.info(timestamp);
+        log.info(Instant.parse(timestamp).toString());
     }
 
 }

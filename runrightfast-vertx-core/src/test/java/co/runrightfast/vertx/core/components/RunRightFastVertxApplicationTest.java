@@ -29,17 +29,20 @@ import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.InvalidMessageException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
+import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.vertx.core.utils.VertxUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.health.HealthCheck;
+import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableSet;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -124,7 +127,7 @@ public class RunRightFastVertxApplicationTest {
                         throw new InvalidMessageException();
                 }
             }
-            message.reply(RunRightFastVertxApplicationTestMessage.Response.newBuilder()
+            reply(message, RunRightFastVertxApplicationTestMessage.Response.newBuilder()
                     .setMessage(String.format("Received message @ %s : %s", Instant.now(), request.getMessage()))
                     .build()
             );
@@ -320,10 +323,31 @@ public class RunRightFastVertxApplicationTest {
     private <A extends com.google.protobuf.Message> Handler<AsyncResult<Message<A>>> responseHandler(final CompletableFuture future, final Class<A> messageType) {
         return result -> {
             if (result.succeeded()) {
-                log.logp(INFO, getClass().getName(), String.format("responseHandler::%s", messageType.getName()),
-                        JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(result.result().body())).encodePrettily()
-                );
-                future.complete(result.result().body());
+                try {
+                    checkState(result.result().headers().contains(MessageHeader.FROM_ADDRESS.header));
+                    checkState(result.result().headers().contains(MessageHeader.MESSAGE_ID.header));
+                    checkState(result.result().headers().contains(MessageHeader.MESSAGE_TIMESTAMP.header));
+                    log.logp(INFO, getClass().getName(), String.format("responseHandler::%s::headers", messageType.getName()),
+                            String.format("result.result().headers().contains(MessageHeader.FROM_ADDRESS.header) =  %s", result.result().headers().contains(MessageHeader.FROM_ADDRESS.header))
+                    );
+                    log.logp(INFO, getClass().getName(), String.format("responseHandler::%s::headers", messageType.getName()),
+                            String.format("result.result().headers().contains(MessageHeader.MESSAGE_ID.header) =  %s", result.result().headers().contains(MessageHeader.MESSAGE_ID.header))
+                    );
+                    log.logp(INFO, getClass().getName(), String.format("responseHandler::%s::headers", messageType.getName()),
+                            String.format("result.result().headers().contains(MessageHeader.MESSAGE_TIMESTAMP.header) =  %s", result.result().headers().contains(MessageHeader.MESSAGE_TIMESTAMP.header))
+                    );
+                    log.logp(INFO, getClass().getName(), String.format("responseHandler::%s::headers", messageType.getName()),
+                            JsonUtils.toVertxJsonObject(VertxUtils.toJson(result.result().headers())).encodePrettily()
+                    );
+                    log.logp(INFO, getClass().getName(), String.format("responseHandler::%s::message", messageType.getName()),
+                            JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(result.result().body())).encodePrettily()
+                    );
+
+                    future.complete(result.result().body());
+                } catch (final Throwable e) {
+                    future.completeExceptionally(e);
+                }
+
             } else {
                 log.logp(SEVERE, getClass().getName(), String.format("responseHandler.failure::%s", messageType.getName()), "request failed", result.cause());
                 future.completeExceptionally(result.cause());
