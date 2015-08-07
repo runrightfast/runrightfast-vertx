@@ -110,35 +110,33 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     }
 
     private void logVertxOptions() {
-        if (!LOG.isLoggable(CONFIG)) {
-            return;
-        }
-        final JsonObject json = new JsonObject()
-                .put("BlockedThreadCheckInterval", vertxOptions.getBlockedThreadCheckInterval())
-                .put("ClusterHost", vertxOptions.getClusterHost())
-                .put("ClusterPingInterval", vertxOptions.getClusterPingInterval())
-                .put("ClusterPingReplyInterval", vertxOptions.getClusterPingReplyInterval())
-                .put("ClusterPort", vertxOptions.getClusterPort())
-                .put("EventLoopPoolSize", vertxOptions.getEventLoopPoolSize())
-                .put("HAGroup", vertxOptions.getHAGroup())
-                .put("InternalBlockingPoolSize", vertxOptions.getInternalBlockingPoolSize())
-                .put("MaxEventLoopExecuteTime", vertxOptions.getMaxEventLoopExecuteTime())
-                .put("MaxWorkerExecuteTime", vertxOptions.getMaxWorkerExecuteTime())
-                .put("QuorumSize", vertxOptions.getQuorumSize())
-                .put("WarningExceptionTime", vertxOptions.getWarningExceptionTime())
-                .put("WorkerPoolSize", vertxOptions.getWorkerPoolSize());
+        LOG.logp(CONFIG, getClass().getName(), "logVertxOptions", () -> {
+            final JsonObject json = new JsonObject()
+                    .put("BlockedThreadCheckInterval", vertxOptions.getBlockedThreadCheckInterval())
+                    .put("ClusterHost", vertxOptions.getClusterHost())
+                    .put("ClusterPingInterval", vertxOptions.getClusterPingInterval())
+                    .put("ClusterPingReplyInterval", vertxOptions.getClusterPingReplyInterval())
+                    .put("ClusterPort", vertxOptions.getClusterPort())
+                    .put("EventLoopPoolSize", vertxOptions.getEventLoopPoolSize())
+                    .put("HAGroup", vertxOptions.getHAGroup())
+                    .put("InternalBlockingPoolSize", vertxOptions.getInternalBlockingPoolSize())
+                    .put("MaxEventLoopExecuteTime", vertxOptions.getMaxEventLoopExecuteTime())
+                    .put("MaxWorkerExecuteTime", vertxOptions.getMaxWorkerExecuteTime())
+                    .put("QuorumSize", vertxOptions.getQuorumSize())
+                    .put("WarningExceptionTime", vertxOptions.getWarningExceptionTime())
+                    .put("WorkerPoolSize", vertxOptions.getWorkerPoolSize());
 
-        final ClusterManager clusterManager = vertxOptions.getClusterManager();
-        if (clusterManager != null) {
-            json.put("clusterManagerClass", clusterManager.getClass().getName());
-        }
+            final ClusterManager clusterManager = vertxOptions.getClusterManager();
+            if (clusterManager != null) {
+                json.put("clusterManagerClass", clusterManager.getClass().getName());
+            }
 
-        final MetricsOptions metricsOptions = vertxOptions.getMetricsOptions();
-        if (metricsOptions != null) {
-            json.put("MetricsOptions", toJsonObject(metricsOptions));
-        }
-
-        LOG.logp(CONFIG, getClass().getName(), "logVertxOptions", json.encodePrettily());
+            final MetricsOptions metricsOptions = vertxOptions.getMetricsOptions();
+            if (metricsOptions != null) {
+                json.put("MetricsOptions", toJsonObject(metricsOptions));
+            }
+            return json.encodePrettily();
+        });
     }
 
     private void initVertx() throws InterruptedException {

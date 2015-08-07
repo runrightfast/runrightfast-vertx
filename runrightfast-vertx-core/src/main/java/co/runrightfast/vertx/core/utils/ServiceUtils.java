@@ -68,11 +68,9 @@ public interface ServiceUtils {
                 case NEW:
                 case FAILED:
                 case TERMINATED:
-                    if (LOG.isLoggable(FINE)) {
-                        LOG.logp(FINE, ServiceUtils.class.getName(), "stop",
-                                "Service ({0}) is not running: {1}", new Object[]{service.getClass().getName(), service.state()}
-                        );
-                    }
+                    LOG.logp(FINE, ServiceUtils.class.getName(), "stop",
+                            () -> String.format("Service (%s) is not running: %s", service.getClass().getName(), service.state())
+                    );
             }
         }
     }
@@ -89,11 +87,10 @@ public interface ServiceUtils {
                 case NEW:
                 case FAILED:
                 case TERMINATED:
-                    if (LOG.isLoggable(FINE)) {
-                        LOG.logp(FINE, ServiceUtils.class.getName(), "stop",
-                                "Service ({0}) is not running: {1}", new Object[]{service.getClass().getName(), service.state()}
-                        );
-                    }
+                    LOG.logp(FINE, ServiceUtils.class.getName(), "stop",
+                            () -> String.format("Service (%s) is not running: %s", service.getClass().getName(), service.state())
+                    );
+
             }
         }
     }

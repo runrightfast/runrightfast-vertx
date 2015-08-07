@@ -59,12 +59,12 @@ public interface LoggingUtils {
             this.className = className;
         }
 
-        public void log(final String method, final Supplier<JsonObject> message) {
-            LoggingUtils.log(logger, level, className, method, message);
+        public void log(final String method, @NonNull final Supplier<JsonObject> message) {
+            logger.logp(level, className, method, () -> message.get().toString());
         }
 
-        public void log(final String method, final Supplier<JsonObject> message, final Throwable exception) {
-            LoggingUtils.log(logger, level, className, method, message, exception);
+        public void log(final String method, @NonNull final Supplier<JsonObject> message, @NonNull final Throwable exception) {
+            logger.logp(level, className, method, exception, () -> message.get().toString());
         }
     }
 
@@ -78,9 +78,7 @@ public interface LoggingUtils {
      * @param message
      */
     static void log(@NonNull final Logger logger, final Level level, final String className, final String method, @NonNull final Supplier<JsonObject> message) {
-        if (logger.isLoggable(level)) {
-            logger.logp(level, className, method, () -> message.get().toString());
-        }
+        logger.logp(level, className, method, () -> message.get().toString());
     }
 
     /**

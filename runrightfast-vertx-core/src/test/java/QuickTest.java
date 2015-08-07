@@ -1,7 +1,6 @@
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import java.util.logging.Logger;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,13 +27,7 @@ import org.junit.Test;
  */
 public class QuickTest {
 
-    private static final Logger LOG = Logger.getLogger(QuickTest.class.getName());
-
     @Test
-    public void testJoin() {
-        LOG.info("aaa");
-    }
-
     public void testCreatingMultipleMetersWithSameName() {
         final MetricRegistry metrics = new MetricRegistry();
 
@@ -42,7 +35,6 @@ public class QuickTest {
         final Meter m2 = metrics.meter("meter");
 
         assertThat(m1, is(sameInstance(m2)));
-
     }
 
 }

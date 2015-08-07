@@ -18,8 +18,12 @@ package co.runrightfast.core.application.event.impl;
 import co.runrightfast.core.application.event.AppEvent;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
-import static java.util.logging.Level.INFO;
+import co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog;
+import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newErrorLog;
+import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newInfoLog;
+import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newWarningLog;
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -36,13 +40,32 @@ public final class AppEventJDKLogger implements AppEventLogger {
     @NonNull
     private final ApplicationId applicationId;
 
-    private static final String CLASS_NAME = AppEventJDKLogger.class.getName();
+    private static final JsonLog info = newInfoLog(log, AppEventJDKLogger.class.getName());
+    private static final JsonLog warning = newWarningLog(log, AppEventJDKLogger.class.getName());
+    private static final JsonLog error = newErrorLog(log, AppEventJDKLogger.class.getName());
+
+    private static final String METHOD = "accept";
 
     @Override
     public void accept(@NonNull final AppEvent event) {
+        switch (event.getEventLevel()) {
+            case INFO:
+            case CLEAR:
+                info.log(METHOD, () -> build(event));
+                return;
+            case WARN:
+                warning.log(METHOD, () -> build(event));
+                return;
+            default:
+                error.log(METHOD, () -> build(event));
+        }
+
+    }
+
+    private JsonObject build(final AppEvent event) {
         final JsonObjectBuilder json = Json.createObjectBuilder().add("appId", applicationId.toJson());
         event.addEventInfo(json);
-        log.logp(INFO, CLASS_NAME, "accept", json.build().toString());
+        return json.build();
     }
 
 }
