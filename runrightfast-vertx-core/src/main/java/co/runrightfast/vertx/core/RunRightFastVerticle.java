@@ -31,6 +31,7 @@ import co.runrightfast.vertx.core.eventbus.MessageConsumerRegistration;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.getReplyToAddress;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
 import co.runrightfast.vertx.core.utils.LoggingUtils;
 import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newErrorLog;
@@ -374,6 +375,27 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         return HealthCheckConfig.builder().registryName(getRunRightFastVerticleId().toJson().toString());
     }
 
+    protected <A extends Message> ProtobufMessageProducer<A> newProtobufMessageProducer(final String address, final A messageDefaultInstance) {
+        return new ProtobufMessageProducer<>(vertx.eventBus(), address, messageDefaultInstance, metricRegistry);
+    }
+
+    @Override
+    public int hashCode() {
+        return getRunRightFastVerticleId().hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final RunRightFastVerticle other = (RunRightFastVerticle) obj;
+        return getRunRightFastVerticleId().equals(other.getRunRightFastVerticleId());
+    }
+
     /**
      * Used to initialize the {@link #getRunRightFastVerticleId()} field.
      *
@@ -392,23 +414,5 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     protected abstract void shutDown();
 
     protected abstract Set<RunRightFastHealthCheck> getHealthChecks();
-
-    @Override
-
-    public int hashCode() {
-        return getRunRightFastVerticleId().hashCode();
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final RunRightFastVerticle other = (RunRightFastVerticle) obj;
-        return getRunRightFastVerticleId().equals(other.getRunRightFastVerticleId());
-    }
 
 }
