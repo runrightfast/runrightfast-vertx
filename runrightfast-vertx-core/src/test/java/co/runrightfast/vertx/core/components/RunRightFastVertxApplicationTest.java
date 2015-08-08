@@ -30,6 +30,7 @@ import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.InvalidMessageException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
@@ -41,6 +42,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheck;
 import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableSet;
@@ -246,6 +248,28 @@ public class RunRightFastVertxApplicationTest {
         final String address = EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments");
         vertx.eventBus().send(
                 address,
+                GetVerticleDeployments.Request.newBuilder().build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, GetVerticleDeployments.Response.class)
+        );
+        final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void test_eventBus_GetVerticleDeployments_usingProtobufMessageProducer() throws InterruptedException, ExecutionException, TimeoutException {
+        log.info("test_eventBus_GetVerticleDeployments");
+        final Vertx vertx = vertxService.getVertx();
+
+        final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
+        final CompletableFuture future = new CompletableFuture();
+        final String address = EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments");
+
+        final ProtobufMessageProducer producer = new ProtobufMessageProducer(
+                vertx.eventBus(),
+                address,
+                GetVerticleDeployments.Response.getDefaultInstance(), SharedMetricRegistries.getOrCreate(getClass().getSimpleName())
+        );
+        producer.send(
                 GetVerticleDeployments.Request.newBuilder().build(),
                 new DeliveryOptions().setSendTimeout(2000L),
                 responseHandler(future, GetVerticleDeployments.Response.class)

@@ -108,4 +108,29 @@ public interface RunRightFastVerticleMetrics {
         }
     }
 
+    static enum Gauges {
+
+        MESSAGE_LAST_SENT_TS("message", "last-sent"),
+        MESSAGE_LAST_PUBLISHED_TS("message", "last-published");
+
+        public final String metricName;
+
+        private Gauges(final String name, final String... names) {
+            this.metricName = timerName(name, names);
+        }
+    }
+
+    static enum Meters {
+
+        // the EventBus address will be appended to the metric name
+        MESSAGE_SENT("message", "sent"),
+        MESSAGE_PUBLISHED("message", "published");
+
+        public final String metricName;
+
+        private Meters(final String name, final String... names) {
+            this.metricName = timerName(name, names);
+        }
+    }
+
 }

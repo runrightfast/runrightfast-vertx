@@ -43,3 +43,8 @@ The demo features and key points
    - to create a container and be able to run remote debug (port 4000) and connect to it via JMX (port 7410), run the following docker command
    
         docker create --name=runrightfast-vertx-demo -p 7410:7410 -p 4000:4000 <image_id>
+
+2015-08-08
+10. Added new DemoMXBean
+    - used to get deployed verticles, using a ProtobufMessageProducer
+    - metrics are available via JMX unser JMX domain DemoMXBean.metrics

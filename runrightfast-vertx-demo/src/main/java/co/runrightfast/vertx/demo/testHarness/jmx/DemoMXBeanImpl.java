@@ -15,40 +15,65 @@
  */
 package co.runrightfast.vertx.demo.testHarness.jmx;
 
-import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import static java.util.logging.Level.SEVERE;
-import lombok.RequiredArgsConstructor;
+import lombok.NonNull;
 import lombok.extern.java.Log;
 
 /**
  *
  * @author alfio
  */
-@RequiredArgsConstructor
 @Log
 public final class DemoMXBeanImpl implements DemoMXBean {
 
     private final Vertx vertx;
 
+    private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(DemoMXBean.class.getName());
+
+    final ProtobufMessageProducer getVerticleDeploymentsMessageSender;
+
+    public DemoMXBeanImpl(@NonNull final Vertx vertx) {
+        this.vertx = vertx;
+
+        final JmxReporter jmxReporter = JmxReporter.forRegistry(this.metricRegistry)
+                .inDomain(String.format("%s.metrics", DemoMXBean.class.getSimpleName()))
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .build();
+        jmxReporter.start();
+
+        getVerticleDeploymentsMessageSender = new ProtobufMessageProducer(
+                vertx.eventBus(),
+                EventBusAddress.eventBusAddress(RunRightFastVerticleManager.VERTICLE_ID, "get-verticle-deployments"),
+                GetVerticleDeployments.Response.getDefaultInstance(),
+                metricRegistry
+        );
+    }
+
     @Override
     public String getVerticleDeployments() {
-        final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
         final CompletableFuture<com.google.protobuf.Message> future = new CompletableFuture();
-        final String address = EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments");
-        vertx.eventBus().send(
-                address,
+
+        getVerticleDeploymentsMessageSender.send(
                 GetVerticleDeployments.Request.newBuilder().build(),
+                new DeliveryOptions().setSendTimeout(2000L),
                 responseHandler(future, GetVerticleDeployments.Response.class)
         );
 
