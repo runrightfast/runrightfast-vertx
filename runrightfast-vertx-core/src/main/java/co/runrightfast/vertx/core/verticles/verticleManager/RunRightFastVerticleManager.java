@@ -65,6 +65,8 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     private ImmutableMap<RunRightFastVerticleDeployment, JmxReporter> verticleJmxReporters = ImmutableMap.of();
 
+    private JmxReporter jmxReporter;
+
     @Inject
     public RunRightFastVerticleManager(final Set<RunRightFastVerticleDeployment> deployments) {
         super();
@@ -76,6 +78,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     protected void startUp() {
         deployments.stream().forEach(this::deployVerticle);
         registerGetVerticleDeploymentsMessageConsumer();
+        startJmxReporterForSelf();
     }
 
     private void registerGetVerticleDeploymentsMessageConsumer() {
@@ -122,6 +125,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
             reporter.stop();
             reporter.close();
         });
+        stopJmxReporterForSelf();
     }
 
     /**
@@ -162,10 +166,31 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                 .putAll(verticleJmxReporters)
                 .put(deployment, jmxReporter)
                 .build();
+    }
 
+    private void startJmxReporterForSelf() {
+        if (jmxReporter != null) {
+            return;
+        }
+        jmxReporter = JmxReporter.forRegistry(this.metricRegistry)
+                .inDomain(verticleJmxDomain(runRightFastVerticleId, "metrics"))
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .build();
+        jmxReporter.start();
+    }
+
+    private void stopJmxReporterForSelf() {
+        if (jmxReporter == null) {
+            return;
+        }
+        jmxReporter.stop();
+        jmxReporter.close();
+        jmxReporter = null;
     }
 
     @Override
+
     protected Set<RunRightFastHealthCheck> getHealthChecks() {
         return ImmutableSet.of();
     }

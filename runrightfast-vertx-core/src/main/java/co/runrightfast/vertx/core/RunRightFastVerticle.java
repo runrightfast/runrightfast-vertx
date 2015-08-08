@@ -17,10 +17,9 @@ package co.runrightfast.vertx.core;
 
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
-import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_EXCEPTION;
+import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_FAILURE;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_PROCESSING;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_SUCCESS;
-import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_TOTAL;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Timers.MESSAGE_CONSUMER_HANDLER;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusUtils;
@@ -274,10 +273,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         }).orElse(defaultHandler);
     }
 
-    private void incMessageConsumerExceptionCounter(final String address) {
-        metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_EXCEPTION.metricName, address)).inc();
-    }
-
     private void logMessageConsumerException(final Throwable exception, final String address, final MessageConsumerConfig config) {
         if (exception instanceof MessageConsumerHandlerException) {
             final MessageConsumerHandlerException messageConsumerHandlerException = (MessageConsumerHandlerException) exception;
@@ -312,13 +307,12 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
      * @return handler
      */
     private <REQ extends Message, RESP extends Message> Handler<io.vertx.core.eventbus.Message<REQ>> messageConsumerHandler(final MessageConsumerConfig<REQ, RESP> config) {
-        final Counter messageTotalCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_TOTAL.metricName, config.getAddressMessageMapping().getAddress()));
-        final Counter messageProcessingCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_PROCESSING.metricName, config.getAddressMessageMapping().getAddress()));
-        final Counter messageSuccessCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_SUCCESS.metricName, config.getAddressMessageMapping().getAddress()));
+        final Counter messageProcessingCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_PROCESSING.metricName, config.address()));
+        final Counter messageSuccessCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_SUCCESS.metricName, config.address()));
+        final Counter messageFailureCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_FAILURE.metricName, config.address()));
         final Timer timer = metricRegistry.timer(String.format("%s::%s", MESSAGE_CONSUMER_HANDLER.metricName, config.getAddressMessageMapping().getAddress()));
         final Handler<io.vertx.core.eventbus.Message<REQ>> handler = config.getHandler();
         return msg -> {
-            messageTotalCounter.inc();
             messageProcessingCounter.inc();
             log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);
             final Timer.Context timerCtx = timer.time();
@@ -326,7 +320,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
                 handler.handle(msg);
                 messageSuccessCounter.inc();
             } catch (final Throwable t) {
-                incMessageConsumerExceptionCounter(config.address());
+                messageFailureCounter.inc();
                 logMessageConsumerException(t, config.address(), config);
                 replyWithFailure(msg, t, config);
             } finally {
