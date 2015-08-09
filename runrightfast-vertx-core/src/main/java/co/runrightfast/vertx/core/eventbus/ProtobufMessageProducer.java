@@ -21,11 +21,11 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Meters.MESS
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Meters.MESSAGE_SENT;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_TIMESTAMP;
-import static co.runrightfast.vertx.core.utils.PreconditionsUtils.checkIsNotBlank;
 import static co.runrightfast.vertx.core.utils.UUIDUtils.uuid;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.protobuf.Message;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -39,6 +39,7 @@ import static java.util.logging.Level.FINE;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.java.Log;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  *
@@ -74,7 +75,7 @@ public final class ProtobufMessageProducer<A extends Message> {
      * @param metricRegistry used to register the 2 meters described above
      */
     public ProtobufMessageProducer(@NonNull final EventBus eventBus, final String address, @NonNull final A defaultInstance, @NonNull final MetricRegistry metricRegistry) {
-        checkIsNotBlank(address);
+        checkArgument(isNotBlank(address));
         this.eventBus = eventBus;
         this.address = address;
 
