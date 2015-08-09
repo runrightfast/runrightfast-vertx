@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.demo.verticles;
 
+import co.runrightfast.core.application.event.AppEventLogger;
 import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
@@ -37,6 +38,10 @@ public final class TestVerticle extends RunRightFastVerticle {
             .name(getClass().getSimpleName())
             .version("1.0.0")
             .build();
+
+    public TestVerticle(final AppEventLogger logger) {
+        super(logger);
+    }
 
     @Override
     protected void startUp() {

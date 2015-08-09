@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.demo.modules;
 
+import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.demo.verticles.TestVerticle;
 import dagger.Module;
@@ -31,10 +32,10 @@ public class RunRightFastVerticleDeploymentModule {
 
     @Provides(type = Provides.Type.SET)
     @Singleton
-    public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment() {
+    public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
         return RunRightFastVerticleDeployment.builder()
                 .deploymentOptions(new DeploymentOptions())
-                .verticle(new TestVerticle())
+                .verticle(new TestVerticle(logger))
                 .build();
     }
 }
