@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.core.components;
 
 import co.runrightfast.core.ApplicationException;
+import co.runrightfast.core.application.event.AppEventLogger;
 import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.protobuf.test.RunRightFastVertxApplicationTestMessage;
@@ -96,6 +97,10 @@ public class RunRightFastVertxApplicationTest {
         @Getter
         private final RunRightFastVerticleId runRightFastVerticleId = VERTICLE_ID;
 
+        public TestVerticle(AppEventLogger logger) {
+            super(logger);
+        }
+
         @Override
         protected void startUp() {
             registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig());
@@ -170,10 +175,10 @@ public class RunRightFastVertxApplicationTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment() {
+        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
             return RunRightFastVerticleDeployment.builder()
                     .deploymentOptions(new DeploymentOptions())
-                    .verticle(new TestVerticle())
+                    .verticle(new TestVerticle(logger))
                     .build();
         }
     }

@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.application;
 
+import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
@@ -72,6 +73,10 @@ public class RunRightFastVertxApplicationLauncherTest {
 
     static class TestVerticle extends RunRightFastVerticle {
 
+        public TestVerticle(AppEventLogger logger) {
+            super(logger);
+        }
+
         @Getter
         private final RunRightFastVerticleId runRightFastVerticleId
                 = RunRightFastVerticleId.builder()
@@ -100,10 +105,10 @@ public class RunRightFastVertxApplicationLauncherTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment() {
+        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
             return RunRightFastVerticleDeployment.builder()
                     .deploymentOptions(new DeploymentOptions())
-                    .verticle(new RunRightFastVertxApplicationLauncherTest.TestVerticle())
+                    .verticle(new RunRightFastVertxApplicationLauncherTest.TestVerticle(logger))
                     .build();
         }
     }

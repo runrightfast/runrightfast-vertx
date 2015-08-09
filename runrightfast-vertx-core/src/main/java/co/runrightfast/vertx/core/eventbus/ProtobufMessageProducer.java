@@ -23,7 +23,7 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.gaugeName;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.meterName;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_TIMESTAMP;
-import static co.runrightfast.vertx.core.utils.PreconditionsUtils.isNotBlank;
+import static co.runrightfast.vertx.core.utils.PreconditionsUtils.checkIsNotBlank;
 import static co.runrightfast.vertx.core.utils.UUIDUtils.uuid;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
@@ -76,7 +76,7 @@ public final class ProtobufMessageProducer<A extends Message> {
      * @param metricRegistry used to register the 2 meters described above
      */
     public ProtobufMessageProducer(@NonNull final EventBus eventBus, final String address, @NonNull final A defaultInstance, @NonNull final MetricRegistry metricRegistry) {
-        isNotBlank(address);
+        checkIsNotBlank(address);
         this.eventBus = eventBus;
         this.address = address;
 

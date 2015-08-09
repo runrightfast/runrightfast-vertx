@@ -22,8 +22,8 @@ import static co.runrightfast.core.application.event.AppEvent.AppEventLevel.INFO
 import static co.runrightfast.core.application.event.AppEvent.AppEventLevel.WARN;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.utils.JsonUtils;
+import static co.runrightfast.vertx.core.utils.PreconditionsUtils.checkIsNotBlank;
 import com.google.common.base.MoreObjects;
-import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,7 +35,6 @@ import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
 
@@ -152,7 +151,7 @@ public final class AppEvent {
     private JsonRepresentation data;
 
     private AppEvent(final String event, @NonNull final AppEventLevel eventLevel) {
-        checkArgument(isNotBlank(event));
+        checkIsNotBlank(event);
         this.timestampMillis = System.currentTimeMillis();
         this.event = event;
         this.eventLevel = eventLevel;

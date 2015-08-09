@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.verticles.verticleManager;
 
+import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
@@ -68,8 +69,8 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     private JmxReporter jmxReporter;
 
     @Inject
-    public RunRightFastVerticleManager(final Set<RunRightFastVerticleDeployment> deployments) {
-        super();
+    public RunRightFastVerticleManager(final AppEventLogger appEventLogger, final Set<RunRightFastVerticleDeployment> deployments) {
+        super(appEventLogger);
         checkArgument(CollectionUtils.isNotEmpty(deployments));
         this.deployments = ImmutableSet.copyOf(deployments);
     }

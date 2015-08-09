@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public interface PreconditionsUtils {
 
-    static void isNotBlank(final String s) {
+    static void checkIsNotBlank(final String s) {
         checkArgument(StringUtils.isNotBlank(s));
     }
 

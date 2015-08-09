@@ -15,12 +15,15 @@
  */
 package co.runrightfast.vertx.core.impl;
 
+import co.runrightfast.core.application.event.AppEventLogger;
+import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_METRIC_REGISTRY_NAME;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
+import co.runrightfast.vertx.core.application.ApplicationId;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
@@ -69,6 +72,10 @@ public class VertxServiceImplTest {
                 .version("1.0.0")
                 .build();
 
+        public TestVerticle(AppEventLogger logger) {
+            super(logger);
+        }
+
         @Override
         protected void startUp() {
         }
@@ -84,9 +91,15 @@ public class VertxServiceImplTest {
 
     }
 
+    private final AppEventLogger appEventLogger = new AppEventJDKLogger(ApplicationId.builder()
+            .group("co.runrightfast")
+            .name("VertxServiceImplTest")
+            .version("1.0.0").build()
+    );
+
     private Set<RunRightFastVerticleDeployment> deployments = ImmutableSet.of(RunRightFastVerticleDeployment.builder()
             .deploymentOptions(new DeploymentOptions())
-            .verticle(new TestVerticle())
+            .verticle(new TestVerticle(appEventLogger))
             .build()
     );
 
@@ -120,7 +133,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_default_options() {
         log.info("test_vertx_default_options");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-default")), deployments);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-default")), deployments, appEventLogger);
         ServiceUtils.start(service);
         final Vertx vertx = service.getVertx();
         assertThat(vertx.isClustered(), is(false));
@@ -130,7 +143,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_metrics_options() {
         log.info("test_vertx_metrics_options");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-with-metrics")), deployments);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-with-metrics")), deployments, appEventLogger);
         ServiceUtils.start(service);
         final Vertx vertx = service.getVertx();
         log.log(Level.INFO, "vertx.isClustered() = {0}", vertx.isClustered());
@@ -157,7 +170,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_custom_options() {
         log.info("test_vertx_custom_options");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-custom-non-clustered")), deployments);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-custom-non-clustered")), deployments, appEventLogger);
         ServiceUtils.start(service);
         final Vertx vertx = service.getVertx();
         assertThat(vertx.isClustered(), is(false));
@@ -185,7 +198,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_clustered() {
         log.info("test_vertx_clustered");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-1")), deployments);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-1")), deployments, appEventLogger);
         ServiceUtils.start(service);
         final Vertx vertx = service.getVertx();
         assertThat(vertx.isClustered(), is(true));
@@ -195,7 +208,7 @@ public class VertxServiceImplTest {
         final ClusterManager clusterManager1 = vertxOptions.getClusterManager();
         log.log(INFO, "clusterManager1.getNodeID() = {0}", clusterManager1.getNodeID());
 
-        final VertxService service2 = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-2")), deployments);
+        final VertxService service2 = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-2")), deployments, appEventLogger);
         ServiceUtils.start(service2);
         final Vertx vertx2 = service.getVertx();
         assertThat(vertx2.isClustered(), is(true));

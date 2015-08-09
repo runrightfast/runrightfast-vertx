@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core;
 
+import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_FAILURE;
@@ -67,6 +68,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Base class for verticles, which provides support for :
@@ -89,6 +91,7 @@ import lombok.NonNull;
  *
  * @author alfio
  */
+@RequiredArgsConstructor
 public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     private static final AtomicInteger instanceSequence = new AtomicInteger(0);
@@ -110,6 +113,9 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     protected ImmutableMap<String, MessageConsumerRegistration<?, ?>> messageConsumerRegistrations = ImmutableMap.of();
 
     protected int instanceId;
+
+    @NonNull
+    protected final AppEventLogger appEventLogger;
 
     /**
      * Performs the following:

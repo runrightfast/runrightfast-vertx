@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.impl;
 
+import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
@@ -65,10 +66,13 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
 
     private final RunRightFastVerticleManager verticleManager;
 
+    private final AppEventLogger appEventLogger;
+
     @Inject
-    public VertxServiceImpl(@NonNull @VertxServiceConfig final Config config, final Set<RunRightFastVerticleDeployment> deployments) {
+    public VertxServiceImpl(@NonNull @VertxServiceConfig final Config config, @NonNull final Set<RunRightFastVerticleDeployment> deployments, @NonNull final AppEventLogger appEventLogger) {
         this.config = config;
-        this.verticleManager = new RunRightFastVerticleManager(deployments);
+        this.appEventLogger = appEventLogger;
+        this.verticleManager = new RunRightFastVerticleManager(appEventLogger, deployments);
     }
 
     @Override

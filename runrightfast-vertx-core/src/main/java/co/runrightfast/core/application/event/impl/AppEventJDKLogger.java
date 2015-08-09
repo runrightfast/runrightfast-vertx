@@ -30,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 
 /**
+ * Appenders can be added to the JDK logger that can distribute the event, e.g., publish the event to the Vertx EventBus
  *
  * @author alfio
  */
