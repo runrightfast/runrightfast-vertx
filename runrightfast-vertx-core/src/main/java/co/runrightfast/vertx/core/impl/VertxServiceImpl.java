@@ -15,7 +15,13 @@
  */
 package co.runrightfast.vertx.core.impl;
 
+import co.runrightfast.core.application.event.AppEvent;
 import co.runrightfast.core.application.event.AppEventLogger;
+import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STARTED;
+import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_START_FAILED;
+import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOPPED;
+import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOPPING;
+import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOP_EXCEPTION;
 import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
@@ -28,6 +34,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.typesafe.config.Config;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonArray;
@@ -43,9 +50,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeoutException;
 import static java.util.logging.Level.CONFIG;
 import static java.util.logging.Level.INFO;
 import javax.inject.Inject;
@@ -105,12 +113,20 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
 
     @Override
     protected void startUp() throws Exception {
-        LOG.config(() -> ConfigUtils.renderConfig(config));
-        this.vertxOptions = createVertxOptions();
-        logVertxOptions();
-        initVertx();
-        deployVerticleManager();
-        LOG.logp(INFO, getClass().getName(), "startUp", "success");
+        try {
+            LOG.config(() -> ConfigUtils.renderConfig(config));
+            this.vertxOptions = createVertxOptions();
+            logVertxOptions();
+            initVertx();
+            deployVerticleManager();
+            appEventLogger.accept(AppEvent.info(APP_STARTED).build());
+        } catch (final Throwable t) {
+            appEventLogger.accept(AppEvent.error(APP_START_FAILED)
+                    .setException(t)
+                    .build()
+            );
+            throw t;
+        }
     }
 
     private void logVertxOptions() {
@@ -143,27 +159,27 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         });
     }
 
-    private void initVertx() throws InterruptedException {
+    private void initVertx() {
         if (this.vertxOptions.isClustered()) {
-            final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<Throwable> exception = new AtomicReference<>();
-            Vertx.clusteredVertx(vertxOptions, result -> {
+            final CompletableFuture<AsyncResult<Vertx>> clusteredVertxResult = new CompletableFuture<>();
+            Vertx.clusteredVertx(vertxOptions, clusteredVertxResult::complete);
+            while (true) {
                 try {
+                    final AsyncResult<Vertx> result = clusteredVertxResult.get(10, TimeUnit.SECONDS);
                     if (result.succeeded()) {
                         this.vertx = result.result();
                         LOG.logp(INFO, getClass().getName(), "initVertx", "Vertx clustered instance has been created");
                     } else {
-                        exception.set(result.cause());
+                        throw new RuntimeException("Failed to start a clustered Vertx instance", result.cause());
                     }
-                } finally {
-                    latch.countDown();
+                    break;
+                } catch (final ExecutionException ex) {
+                    throw new RuntimeException("Failed to start a clustered Vertx instance", ex);
+                } catch (final TimeoutException ex) {
+                    LOG.logp(INFO, getClass().getName(), "initVertx", "Waiting for Vertx to start");
+                } catch (final InterruptedException ex) {
+                    throw new RuntimeException(ex);
                 }
-            });
-            while (!latch.await(10, TimeUnit.SECONDS)) {
-                LOG.logp(INFO, getClass().getName(), "initVertx", "Waiting for Vertx to start");
-            }
-            if (exception.get() != null) {
-                throw new RuntimeException("Failed to start a clustered Vertx instance", exception.get());
             }
         } else {
             this.vertx = Vertx.vertx(vertxOptions);
@@ -172,24 +188,24 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     }
 
     private void deployVerticleManager() throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final AtomicReference<Throwable> exception = new AtomicReference<>();
-        vertx.deployVerticle(verticleManager, result -> {
+        final CompletableFuture<AsyncResult<String>> deployVerticleResult = new CompletableFuture<>();
+        vertx.deployVerticle(verticleManager, deployVerticleResult::complete);
+        while (true) {
             try {
+                final AsyncResult<String> result = deployVerticleResult.get(10, TimeUnit.SECONDS);
                 if (result.succeeded()) {
                     LOG.logp(INFO, getClass().getName(), "deployVerticleManager", result.result());
                 } else {
-                    exception.set(result.cause());
+                    throw new RuntimeException("Failed to deploy RunRightFastVerticleManager", result.cause());
                 }
-            } finally {
-                latch.countDown();
+                break;
+            } catch (final ExecutionException ex) {
+                throw new RuntimeException("Failed to deploy RunRightFastVerticleManager", ex);
+            } catch (final TimeoutException ex) {
+                LOG.logp(INFO, getClass().getName(), "deployVerticleManager", "Waiting for RunRightFastVerticleManager deployment to complete");
+            } catch (final InterruptedException ex) {
+                throw new RuntimeException(ex);
             }
-        });
-        while (!latch.await(10, TimeUnit.SECONDS)) {
-            LOG.logp(INFO, getClass().getName(), "initVertx", "Waiting for RunRightFastVerticleManager deployment to complete");
-        }
-        if (exception.get() != null) {
-            throw new RuntimeException("Failed to deploy RunRightFastVerticleManager", exception.get());
         }
     }
 
@@ -223,16 +239,29 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     }
 
     @Override
-    protected void shutDown() throws InterruptedException {
+    protected void shutDown() {
         if (vertx != null) {
-            final CountDownLatch latch = new CountDownLatch(1);
-            vertx.close(result -> latch.countDown());
-            while (!latch.await(10, TimeUnit.SECONDS)) {
-                LOG.info("Waiting for Vertx to shutdown");
+            appEventLogger.accept(AppEvent.info(APP_STOPPING).build());
+            final CompletableFuture<AsyncResult<Void>> closeResult = new CompletableFuture<>();
+            vertx.close(closeResult::complete);
+            while (true) {
+                try {
+                    closeResult.get(10, TimeUnit.SECONDS);
+                    LOG.info("Vertx shutdown is complete.");
+                    appEventLogger.accept(AppEvent.info(APP_STOPPED).build());
+                    vertx = null;
+                    vertxOptions = null;
+                    break;
+                } catch (final ExecutionException ex) {
+                    appEventLogger.accept(AppEvent.info(APP_STOP_EXCEPTION).setException(ex).build());
+                    throw new RuntimeException("shutdown failed", ex);
+                } catch (final TimeoutException ex) {
+                    LOG.logp(INFO, getClass().getName(), "shutDown", "Waiting for Vertx to shutdown");
+                } catch (final InterruptedException ex) {
+                    appEventLogger.accept(AppEvent.info(APP_STOP_EXCEPTION).setException(ex).build());
+                    throw new RuntimeException(ex);
+                }
             }
-            LOG.info("Vertx shutdown is complete.");
-            vertx = null;
-            vertxOptions = null;
         }
     }
 
