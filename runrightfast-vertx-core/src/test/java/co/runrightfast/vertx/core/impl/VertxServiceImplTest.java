@@ -85,7 +85,7 @@ public class VertxServiceImplTest {
         }
 
         @Override
-        protected Set<RunRightFastHealthCheck> getHealthChecks() {
+        public Set<RunRightFastHealthCheck> getHealthChecks() {
             return ImmutableSet.of();
         }
 

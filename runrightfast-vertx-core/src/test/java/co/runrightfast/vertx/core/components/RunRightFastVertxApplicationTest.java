@@ -145,7 +145,7 @@ public class RunRightFastVertxApplicationTest {
         }
 
         @Override
-        protected Set<RunRightFastHealthCheck> getHealthChecks() {
+        public Set<RunRightFastHealthCheck> getHealthChecks() {
             return ImmutableSet.of(
                     healthCheck1()
             );

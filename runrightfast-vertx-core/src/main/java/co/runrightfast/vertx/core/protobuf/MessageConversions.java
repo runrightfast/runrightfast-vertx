@@ -15,9 +15,12 @@
  */
 package co.runrightfast.vertx.core.protobuf;
 
+import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
+import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.DeploymentOptions;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.HealthCheck;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleType;
@@ -32,11 +35,46 @@ import org.apache.commons.lang3.StringUtils;
 public interface MessageConversions {
 
     static VerticleDeployment toVerticleDeployment(@NonNull final RunRightFastVerticleDeployment deployment) {
-        return VerticleDeployment.newBuilder()
+        final VerticleDeployment.Builder builder = VerticleDeployment.newBuilder()
                 .setVerticleClass(deployment.getVerticle().getClass().getName())
                 .setVerticleId(toVerticleId(deployment.getVerticle().getRunRightFastVerticleId()))
-                .setDeploymentOptions(toDeploymentOptions(deployment.getDeploymentOptions()))
-                .build();
+                .setDeploymentOptions(toDeploymentOptions(deployment.getDeploymentOptions()));
+
+        if (CollectionUtils.isNotEmpty(deployment.getVerticle().getHealthChecks())) {
+            deployment.getVerticle().getHealthChecks().stream()
+                    .map(healthCheck -> toHealthCheck(healthCheck, builder.getVerticleId()))
+                    .forEach(builder::addHealthChecks);
+        }
+
+        return builder.build();
+    }
+
+    static HealthCheck toHealthCheck(@NonNull final RunRightFastHealthCheck healthCheck, final VerticleId verticleId) {
+        final HealthCheckConfig config = healthCheck.getConfig();
+        final HealthCheck.Builder builder = HealthCheck.newBuilder()
+                .setVerticleId(verticleId)
+                .setHealthCheckName(config.getName())
+                .setHealthCheckClass(healthCheck.getHealthCheck().getClass().getName())
+                .setFailureSeverity(toFailureSeverity(config.getSeverity()));
+        if (CollectionUtils.isNotEmpty(config.getTags())) {
+            config.getTags().stream().forEach(builder::addTags);
+        }
+        return builder.build();
+    }
+
+    static HealthCheck.FailureSeverity toFailureSeverity(@NonNull final HealthCheckConfig.FailureSeverity severity) {
+        switch (severity) {
+            case LOW:
+                return HealthCheck.FailureSeverity.LOW;
+            case MEDIUM:
+                return HealthCheck.FailureSeverity.MEDIUM;
+            case HIGH:
+                return HealthCheck.FailureSeverity.HIGH;
+            case FATAL:
+                return HealthCheck.FailureSeverity.FATAL;
+            default:
+                throw new IllegalArgumentException("Uknown severity : " + severity.name());
+        }
     }
 
     static VerticleId toVerticleId(@NonNull final RunRightFastVerticleId id) {

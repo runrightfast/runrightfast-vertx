@@ -22,6 +22,20 @@ message GetVerticleDeployments {
 
 }
 
+message RunVerticleHealthChecks {
+    message Request {
+        // below are filters used to filter out what health checks are run
+        // if not filters are specified, then all healthchecks run
+        repeated VerticleId verticle_ids = 1;
+        repeated string groups = 2;
+        repeated string names = 3;
+    }
+
+    message Response {
+        repeated HealthCheckResult results = 1;
+    }
+}
+
 message VerticleId {
     string group = 1;
 
@@ -36,6 +50,8 @@ message VerticleDeployment {
     VerticleId verticle_id = 2;  
 
     DeploymentOptions deployment_options = 3;
+
+    repeated HealthCheck health_checks = 4;
 }
 
 message DeploymentOptions {
@@ -60,5 +76,35 @@ enum VerticleType {
     WORKER = 1;
 
     MULTITHREADED = 2;
+}
+
+message HealthCheck {
+
+    enum FailureSeverity {
+        LOW = 0;
+        MEDIUM = 1;
+        HIGH = 2;
+        FATAL = 3;
+    }
+
+    VerticleId verticle_id = 1;
+
+    string health_check_name = 2;
+
+    string health_check_class = 3;
+
+    FailureSeverity failure_severity = 4;
+
+    repeated string tags = 5;
+}
+
+message HealthCheckResult {
+    VerticleId verticle_id = 1;
+
+    string health_check_name = 2;
+
+    bool healthy = 3;
+
+    string message = 4;    
 }
 

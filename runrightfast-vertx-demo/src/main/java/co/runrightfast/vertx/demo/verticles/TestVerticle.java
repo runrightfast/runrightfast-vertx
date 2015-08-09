@@ -52,7 +52,7 @@ public final class TestVerticle extends RunRightFastVerticle {
     }
 
     @Override
-    protected Set<RunRightFastHealthCheck> getHealthChecks() {
+    public Set<RunRightFastHealthCheck> getHealthChecks() {
         return ImmutableSet.of(
                 healthCheck1()
         );

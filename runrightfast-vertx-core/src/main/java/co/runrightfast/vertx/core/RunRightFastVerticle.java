@@ -419,6 +419,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
      */
     protected abstract void shutDown();
 
-    protected abstract Set<RunRightFastHealthCheck> getHealthChecks();
+    public abstract Set<RunRightFastHealthCheck> getHealthChecks();
 
 }
