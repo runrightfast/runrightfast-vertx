@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.core.verticles.verticleManager;
 
 import co.runrightfast.core.application.event.AppEventLogger;
+import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
@@ -23,21 +24,29 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GRO
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.protobuf.MessageConversions;
+import static co.runrightfast.vertx.core.protobuf.MessageConversions.toVerticleId;
 import static co.runrightfast.vertx.core.utils.JmxUtils.verticleJmxDomain;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.HealthCheckResult;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleId;
 import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.health.HealthCheck;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.eventbus.Message;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -66,7 +75,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     private ImmutableMap<RunRightFastVerticleDeployment, JmxReporter> verticleJmxReporters = ImmutableMap.of();
 
-    private JmxReporter jmxReporter;
+    private JmxReporter jmxReporterForSelf;
 
     @Inject
     public RunRightFastVerticleManager(final AppEventLogger appEventLogger, final Set<RunRightFastVerticleDeployment> deployments) {
@@ -79,7 +88,61 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     protected void startUp() {
         deployments.stream().forEach(this::deployVerticle);
         registerGetVerticleDeploymentsMessageConsumer();
+        registerRunVerticleHealthChecksMessageConsumer();
         startJmxReporterForSelf();
+    }
+
+    private void registerRunVerticleHealthChecksMessageConsumer() {
+        registerMessageConsumer(MessageConsumerConfig.<RunVerticleHealthChecks.Request, RunVerticleHealthChecks.Response>builder()
+                .addressMessageMapping(EventBusAddressMessageMapping.builder()
+                        .address(eventBusAddress("run-verticle-healthchecks"))
+                        .requestDefaultInstance(RunVerticleHealthChecks.Request.getDefaultInstance())
+                        .responseDefaultInstance(RunVerticleHealthChecks.Response.getDefaultInstance())
+                        .build()
+                ).handler(this::handleRunVerticleHealthChecksMessage)
+                .build()
+        );
+    }
+
+    private void handleRunVerticleHealthChecksMessage(@NonNull final Message<RunVerticleHealthChecks.Request> message) {
+        final RunVerticleHealthChecks.Response.Builder response = RunVerticleHealthChecks.Response.newBuilder();
+        final RunVerticleHealthChecks.Request request = message.body();
+        if (hasFilters(request)) {
+            deployments.stream()
+                    .filter(deployment -> {
+                        final RunRightFastVerticleId id = deployment.getVerticle().getRunRightFastVerticleId();
+                        if (CollectionUtils.isEmpty(deployment.getVerticle().getHealthChecks())) {
+                            return false;
+                        }
+                        return request.getGroupsList().stream().filter(group -> group.equals(id.getGroup())).findFirst().isPresent()
+                        || request.getNamesList().stream().filter(name -> name.equals(id.getName())).findFirst().isPresent()
+                        || request.getVerticleIdsList().stream().filter(id::equalsVerticleId).findFirst().isPresent();
+                    })
+                    .map(this::runVerticleHealthChecks)
+                    .forEach(response::addAllResults);
+        } else {
+            deployments.stream()
+                    .map(this::runVerticleHealthChecks)
+                    .forEach(response::addAllResults);
+        }
+
+        reply(message, response.build());
+    }
+
+    private List<HealthCheckResult> runVerticleHealthChecks(final RunRightFastVerticleDeployment deployment) {
+        final VerticleId verticleId = toVerticleId(deployment.getVerticle().getRunRightFastVerticleId());
+        return deployment.getVerticle().getHealthChecks().stream().map(healthCheck -> {
+            final HealthCheckResult.Builder result = HealthCheckResult.newBuilder();
+            final HealthCheckConfig config = healthCheck.getConfig();
+            final HealthCheck.Result healthCheckResult = healthCheck.getHealthCheck().execute();
+            result.setHealthCheckName(config.getName());
+            result.setHealthy(healthCheckResult.isHealthy());
+            if (StringUtils.isNotBlank(healthCheckResult.getMessage())) {
+                result.setMessage(healthCheckResult.getMessage());
+            }
+            result.setVerticleId(verticleId);
+            return result.build();
+        }).collect(Collectors.toList());
     }
 
     private void registerGetVerticleDeploymentsMessageConsumer() {
@@ -117,6 +180,10 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     }
 
     private boolean hasFilters(@NonNull final GetVerticleDeployments.Request request) {
+        return request.getVerticleIdsCount() > 0 || request.getGroupsCount() > 0 || request.getNamesCount() > 0;
+    }
+
+    private boolean hasFilters(@NonNull final RunVerticleHealthChecks.Request request) {
         return request.getVerticleIdsCount() > 0 || request.getGroupsCount() > 0 || request.getNamesCount() > 0;
     }
 
@@ -170,24 +237,24 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     }
 
     private void startJmxReporterForSelf() {
-        if (jmxReporter != null) {
+        if (jmxReporterForSelf != null) {
             return;
         }
-        jmxReporter = JmxReporter.forRegistry(this.metricRegistry)
+        jmxReporterForSelf = JmxReporter.forRegistry(this.metricRegistry)
                 .inDomain(verticleJmxDomain(runRightFastVerticleId, "metrics"))
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .build();
-        jmxReporter.start();
+        jmxReporterForSelf.start();
     }
 
     private void stopJmxReporterForSelf() {
-        if (jmxReporter == null) {
+        if (jmxReporterForSelf == null) {
             return;
         }
-        jmxReporter.stop();
-        jmxReporter.close();
-        jmxReporter = null;
+        jmxReporterForSelf.stop();
+        jmxReporterForSelf.close();
+        jmxReporterForSelf = null;
     }
 
     @Override

@@ -32,6 +32,7 @@ import co.runrightfast.vertx.core.eventbus.InvalidMessageException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
+import static co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer.addRunRightFastHeaders;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
@@ -42,6 +43,8 @@ import co.runrightfast.vertx.core.utils.VertxUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheck;
@@ -67,6 +70,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
+import java.util.stream.Collectors;
 import javax.inject.Singleton;
 import javax.json.Json;
 import lombok.Getter;
@@ -249,7 +253,7 @@ public class RunRightFastVertxApplicationTest {
         final Vertx vertx = vertxService.getVertx();
 
         final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
-        final CompletableFuture future = new CompletableFuture();
+        final CompletableFuture<GetVerticleDeployments.Response> future = new CompletableFuture<>();
         final String address = EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments");
         vertx.eventBus().send(
                 address,
@@ -257,7 +261,35 @@ public class RunRightFastVertxApplicationTest {
                 new DeliveryOptions().setSendTimeout(2000L),
                 responseHandler(future, GetVerticleDeployments.Response.class)
         );
-        final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+        final GetVerticleDeployments.Response result = future.get(2000L, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void test_eventBus_RunVerticleHealthChecks() throws Exception {
+        log.info("test_eventBus_GetVerticleDeployments");
+        final Vertx vertx = vertxService.getVertx();
+
+        final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
+        final CompletableFuture<GetVerticleDeployments.Response> getVerticleDeploymentsFuture = new CompletableFuture<>();
+        vertx.eventBus().send(
+                EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments"),
+                GetVerticleDeployments.Request.newBuilder().build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(getVerticleDeploymentsFuture, GetVerticleDeployments.Response.class)
+        );
+        final GetVerticleDeployments.Response getVerticleDeploymentsResponse = getVerticleDeploymentsFuture.get(2000L, TimeUnit.MILLISECONDS);
+        final int totalHealthCheckCount = getVerticleDeploymentsResponse.getDeploymentsList().stream().collect(Collectors.summingInt(VerticleDeployment::getHealthChecksCount));
+
+        final CompletableFuture<RunVerticleHealthChecks.Response> future = new CompletableFuture<>();
+        vertx.eventBus().send(
+                EventBusAddress.eventBusAddress(verticleManagerId, "run-verticle-healthchecks"),
+                RunVerticleHealthChecks.Request.newBuilder().build(),
+                addRunRightFastHeaders(new DeliveryOptions().setSendTimeout(2000L)),
+                responseHandler(future, RunVerticleHealthChecks.Response.class)
+        );
+
+        final RunVerticleHealthChecks.Response response = future.get(2000L, TimeUnit.MILLISECONDS);
+        assertThat(response.getResultsCount(), is(totalHealthCheckCount));
     }
 
     @Test
@@ -288,7 +320,7 @@ public class RunRightFastVertxApplicationTest {
         final Vertx vertx = vertxService.getVertx();
 
         final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
-        final CompletableFuture future = new CompletableFuture();
+        final CompletableFuture<GetVerticleDeployments.Response> future = new CompletableFuture<>();
         final String address = EventBusAddress.toProcessSpecificEventBusAddress(EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments"));
         vertx.eventBus().send(
                 address,
@@ -296,14 +328,14 @@ public class RunRightFastVertxApplicationTest {
                 new DeliveryOptions().setSendTimeout(2000L),
                 responseHandler(future, GetVerticleDeployments.Response.class)
         );
-        final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+        final GetVerticleDeployments.Response result = future.get(2000L, TimeUnit.MILLISECONDS);
     }
 
     @Test
     public void test_eventbus_RunRightFastVertxApplicationTestMessage() throws Exception {
         log.info("test_eventbus_RunRightFastVertxApplicationTestMessage");
         final Vertx vertx = vertxService.getVertx();
-        final CompletableFuture future = new CompletableFuture();
+        final CompletableFuture<RunRightFastVertxApplicationTestMessage.Response> future = new CompletableFuture<>();
         final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName());
         vertx.eventBus().send(
                 address,
@@ -311,7 +343,7 @@ public class RunRightFastVertxApplicationTest {
                 new DeliveryOptions().setSendTimeout(2000L),
                 responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
         );
-        final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+        final RunRightFastVertxApplicationTestMessage.Response result = future.get(2000L, TimeUnit.MILLISECONDS);
     }
 
     @Test

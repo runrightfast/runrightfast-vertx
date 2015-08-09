@@ -134,7 +134,7 @@ public final class ProtobufMessageProducer<A extends Message> {
         this.messageLastPublished = Instant.now();
     }
 
-    private DeliveryOptions addRunRightFastHeaders(final DeliveryOptions options) {
+    public static DeliveryOptions addRunRightFastHeaders(final DeliveryOptions options) {
         final MultiMap headers = options.getHeaders();
         if (headers == null) {
             options.addHeader(MESSAGE_ID.header, uuid());
