@@ -116,7 +116,7 @@ public interface RunRightFastVerticleMetrics {
         public final String metricName;
 
         private Gauges(final String name, final String... names) {
-            this.metricName = timerName(name, names);
+            this.metricName = gaugeName(name, names);
         }
     }
 
@@ -129,7 +129,7 @@ public interface RunRightFastVerticleMetrics {
         public final String metricName;
 
         private Meters(final String name, final String... names) {
-            this.metricName = timerName(name, names);
+            this.metricName = meterName(name, names);
         }
     }
 

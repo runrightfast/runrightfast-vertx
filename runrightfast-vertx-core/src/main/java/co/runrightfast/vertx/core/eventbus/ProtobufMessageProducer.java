@@ -19,8 +19,6 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Gauges.MESS
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Gauges.MESSAGE_LAST_SENT_TS;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Meters.MESSAGE_PUBLISHED;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Meters.MESSAGE_SENT;
-import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.gaugeName;
-import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.meterName;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_TIMESTAMP;
 import static co.runrightfast.vertx.core.utils.PreconditionsUtils.checkIsNotBlank;
@@ -82,16 +80,16 @@ public final class ProtobufMessageProducer<A extends Message> {
 
         registerMessageCodec(defaultInstance);
 
-        this.messageSent = metricRegistry.meter(meterName(String.format("%s::%s", MESSAGE_SENT.metricName, address)));
-        this.messagePublished = metricRegistry.meter(meterName(String.format("%s::%s", MESSAGE_PUBLISHED.metricName, address)));
-        metricRegistry.register(gaugeName(String.format("%s::%s", MESSAGE_LAST_SENT_TS.metricName, address)), new Gauge<String>() {
+        this.messageSent = metricRegistry.meter(String.format("%s::%s", MESSAGE_SENT.metricName, address));
+        this.messagePublished = metricRegistry.meter(String.format("%s::%s", MESSAGE_PUBLISHED.metricName, address));
+        metricRegistry.register(String.format("%s::%s", MESSAGE_LAST_SENT_TS.metricName, address), new Gauge<String>() {
             @Override
             public String getValue() {
                 return messageLastSent != null ? DateTimeFormatter.ISO_INSTANT.format(messageLastSent) : null;
             }
         });
 
-        metricRegistry.register(gaugeName(String.format("%s::%s", MESSAGE_LAST_PUBLISHED_TS.metricName, address)), new Gauge<String>() {
+        metricRegistry.register(String.format("%s::%s", MESSAGE_LAST_PUBLISHED_TS.metricName, address), new Gauge<String>() {
             @Override
             public String getValue() {
                 return messageLastPublished != null ? DateTimeFormatter.ISO_INSTANT.format(messageLastPublished) : null;
