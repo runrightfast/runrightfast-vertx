@@ -149,6 +149,12 @@ dependencyManagement {
         dependencySet(group:'org.slf4j', version: '1.7.12') {
             entry 'slf4j-jdk14'
         }
+        
+        dependencySet(group:'org.apache.shiro', version: '1.2.4') {
+            entry 'shiro-core'
+            entry 'shiro-aspectj'
+            entry 'shiro-cas'
+        }
      }
 }
 
