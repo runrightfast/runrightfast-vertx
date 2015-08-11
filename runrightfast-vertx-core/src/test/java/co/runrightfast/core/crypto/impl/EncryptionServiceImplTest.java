@@ -108,7 +108,7 @@ public class EncryptionServiceImplTest {
     @Test
     public void testDefaultEncryptDecrypt_256KeySize() throws InvalidProtocolBufferException {
         final String METHOD = "testDefaultEncryptDecrypt_256KeySize";
-        final AesCipherService aes = aesCipherService(192);
+        final AesCipherService aes = aesCipherService(256);
         final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
                 .put("a", aes.generateNewKey())
                 .build();
