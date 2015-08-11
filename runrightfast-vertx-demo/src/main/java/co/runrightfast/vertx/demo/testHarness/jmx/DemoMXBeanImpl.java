@@ -87,7 +87,6 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     }
 
     private EncryptionService encryptionService(final String secretKey) {
-        final String METHOD = "testDefaultEncryptDecrypt_256KeySize";
         final AesCipherService aes = new AesCipherService();
         aes.setKeySize(256);
         final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
