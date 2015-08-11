@@ -23,13 +23,47 @@ import java.util.Set;
  */
 public interface EncryptionService {
 
+    /**
+     *
+     * @return secretKey keys
+     * @throws EncryptionServiceException
+     */
     Set<String> getEncryptionKeys() throws EncryptionServiceException;
 
-    byte[] encrypt(byte[] data, String encryptionKey) throws EncryptionServiceException;
+    /**
+     *
+     * @param data
+     * @param secretKey
+     * @return
+     * @throws EncryptionServiceException
+     * @throws IllegalArgumentException if any of the args are null, or if secretKey is blank, or if the secretKey is invalid
+     */
+    byte[] encrypt(byte[] data, String secretKey) throws EncryptionServiceException;
 
-    byte[] decrypt(byte[] data, String encryptionKey) throws EncryptionServiceException;
+    /**
+     *
+     * @param data
+     * @param secretKey
+     * @return
+     * @throws EncryptionServiceException
+     * @throws IllegalArgumentException if any of the args are null, or if secretKey is blank, or if the secretKey is invalid
+     */
+    byte[] decrypt(byte[] data, String secretKey) throws EncryptionServiceException;
 
-    Encryption encryption(String encryptionKey) throws EncryptionServiceException;
+    /**
+     *
+     * @param secretKey
+     * @return function that encrypts using the specified secretKey key
+     * @throws EncryptionServiceException
+     * @throws IllegalArgumentException if secretKey is blank, or if the secretKey is invalid
+     */
+    Encryption encryption(String secretKey) throws EncryptionServiceException;
 
-    Decryption decryption(String encryptionKey) throws EncryptionServiceException;
+    /**
+     *
+     * @param secretKey
+     * @return function that can be used to decrypts using the specified secretKey key
+     * @throws EncryptionServiceException
+     */
+    Decryption decryption(String secretKey) throws EncryptionServiceException;
 }

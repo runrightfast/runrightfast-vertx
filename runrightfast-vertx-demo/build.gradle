@@ -49,6 +49,7 @@ dependencies {
 docker {
     maintainer = 'Alfio Zappala <alfio.a.z.2@gamil.com>'
     baseImage = 'java:8u45-jre'
+    // baseImage = 'isuper/java-oracle:jre_8'
 }
 
 task appDocker(type: Docker) {
