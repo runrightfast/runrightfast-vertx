@@ -29,7 +29,7 @@
 7. JDK built in logging is used
 
 ### 2015-08-02
-8. First class citizen support added for HealthChecks
+1. First class citizen support added for HealthChecks
    - HealthChecks can be discovered and run via JMX
    - Each verticle has its owne HealthCheck registry
    - Each verticle is responsible for registering its own health checks
@@ -37,7 +37,7 @@
      - sub-classes must implement: abstract Set<RunRightFastHealthCheck> getHealthChecks() 
 
 ### 2015-08-04
-9. Integrated Docker plugin   
+1. Integrated Docker plugin   
    - appDocker Gradle task
      - generates a Dockerfile - located within build/docker dir
      - creates a Docker image named : runrightfast/runrightfast-vertx-demo
@@ -47,6 +47,6 @@
         docker create --name=runrightfast-vertx-demo -p 7410:7410 -p 4000:4000 <image_id>
 
 ### 2015-08-08
-10. Added new DemoMXBean
+1. Added new DemoMXBean
     - used to get deployed verticles, using a ProtobufMessageProducer
     - metrics are available via JMX unser JMX domain DemoMXBean.metrics
