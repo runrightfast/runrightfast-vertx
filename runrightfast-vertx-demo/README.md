@@ -1,6 +1,8 @@
-The demo features and key points
+# runrightfast-vertx-demo
 
-2015-08-01
+## The demo features and key points
+
+### 2015-08-01
 1. co.runrightfast.vertx.demo.VertxApp
     - main class
     - shows how easy it is to start a RunRightFast Vertx app
@@ -26,7 +28,7 @@ The demo features and key points
    - metrics are enabled by default and exposed via JMX under domain co.runrightfast.vertx.metrics
 7. JDK built in logging is used
 
-2015-08-02
+### 2015-08-02
 8. First class citizen support added for HealthChecks
    - HealthChecks can be discovered and run via JMX
    - Each verticle has its owne HealthCheck registry
@@ -34,7 +36,7 @@ The demo features and key points
      - this is supported by the RunRightFastVerticle base class
      - sub-classes must implement: abstract Set<RunRightFastHealthCheck> getHealthChecks() 
 
-2015-08-04
+### 2015-08-04
 9. Integrated Docker plugin   
    - appDocker Gradle task
      - generates a Dockerfile - located within build/docker dir
@@ -44,7 +46,7 @@ The demo features and key points
    
         docker create --name=runrightfast-vertx-demo -p 7410:7410 -p 4000:4000 <image_id>
 
-2015-08-08
+### 2015-08-08
 10. Added new DemoMXBean
     - used to get deployed verticles, using a ProtobufMessageProducer
     - metrics are available via JMX unser JMX domain DemoMXBean.metrics
