@@ -25,4 +25,8 @@ import javax.management.MXBean;
 public interface DemoMXBean {
 
     String getVerticleDeployments();
+
+    String encrypt(String data);
+
+    String decrypt(String data);
 }

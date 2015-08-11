@@ -15,6 +15,10 @@
  */
 package co.runrightfast.vertx.demo.testHarness.jmx;
 
+import co.runrightfast.core.crypto.Decryption;
+import co.runrightfast.core.crypto.Encryption;
+import co.runrightfast.core.crypto.EncryptionService;
+import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import co.runrightfast.vertx.core.utils.JsonUtils;
@@ -24,17 +28,23 @@ import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticle
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import java.security.Key;
+import java.util.Base64;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import static java.util.logging.Level.SEVERE;
 import lombok.NonNull;
 import lombok.extern.java.Log;
+import org.apache.shiro.crypto.AesCipherService;
 
 /**
  *
@@ -47,7 +57,11 @@ public final class DemoMXBeanImpl implements DemoMXBean {
 
     private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(DemoMXBean.class.getName());
 
-    final ProtobufMessageProducer getVerticleDeploymentsMessageSender;
+    private final ProtobufMessageProducer getVerticleDeploymentsMessageSender;
+
+    private final Encryption encryption;
+
+    private final Decryption decryption;
 
     public DemoMXBeanImpl(@NonNull final Vertx vertx) {
         this.vertx = vertx;
@@ -65,6 +79,21 @@ public final class DemoMXBeanImpl implements DemoMXBean {
                 GetVerticleDeployments.Response.getDefaultInstance(),
                 metricRegistry
         );
+
+        final String KEY = "DEFAULT";
+        final EncryptionService encryptionService = encryptionService(KEY);
+        encryption = encryptionService.encryption(KEY);
+        decryption = encryptionService.decryption(KEY);
+    }
+
+    private EncryptionService encryptionService(final String secretKey) {
+        final String METHOD = "testDefaultEncryptDecrypt_256KeySize";
+        final AesCipherService aes = new AesCipherService();
+        aes.setKeySize(256);
+        final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
+                .put(secretKey, aes.generateNewKey())
+                .build();
+        return new EncryptionServiceImpl(aes, keys);
     }
 
     @Override
@@ -95,6 +124,16 @@ public final class DemoMXBeanImpl implements DemoMXBean {
                 future.completeExceptionally(result.cause());
             }
         };
+    }
+
+    @Override
+    public String encrypt(@NonNull final String data) {
+        return Base64.getEncoder().encodeToString(encryption.apply(data.getBytes(UTF_8)));
+    }
+
+    @Override
+    public String decrypt(final @NonNull String data) {
+        return new String(decryption.apply(Base64.getDecoder().decode(data)), UTF_8);
     }
 
 }

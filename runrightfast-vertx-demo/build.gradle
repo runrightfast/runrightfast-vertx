@@ -48,7 +48,11 @@ dependencies {
 
 docker {
     maintainer = 'Alfio Zappala <alfio.a.z.2@gamil.com>'
-    baseImage = 'java:8u45-jre'
+    // OpenJDK
+    //baseImage = 'java:8u45-jre'
+    
+    // Oracle JDKs
+    baseImage = 'andreptb/oracle-java:8'
     // baseImage = 'isuper/java-oracle:jre_8'
 }
 
