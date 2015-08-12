@@ -15,18 +15,18 @@
  */
 package co.runrightfast.core.crypto.impl;
 
+import co.runrightfast.core.crypto.CipherFunctions;
 import co.runrightfast.core.crypto.Decryption;
 import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.core.crypto.EncryptionServiceException;
+import co.runrightfast.core.crypto.UnknownSecretKeyException;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableMap;
 import java.security.Key;
 import java.util.Map;
 import java.util.Set;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.shiro.crypto.CipherService;
 
@@ -34,15 +34,7 @@ import org.apache.shiro.crypto.CipherService;
  *
  * @author alfio
  */
-public class EncryptionServiceImpl implements EncryptionService {
-
-    @RequiredArgsConstructor
-    private static class CipherFunctions {
-
-        final Encryption encryption;
-
-        final Decryption decryption;
-    }
+public final class EncryptionServiceImpl implements EncryptionService {
 
     private final Map<String, CipherFunctions> cipherFunctions;
 
@@ -55,8 +47,20 @@ public class EncryptionServiceImpl implements EncryptionService {
         final ImmutableMap.Builder<String, CipherFunctions> map = ImmutableMap.builder();
         secretKeys.entrySet().stream().forEach(entry -> {
             final byte[] secretKey = entry.getValue().getEncoded();
-            final Encryption encryption = data -> cipherService.encrypt(data, secretKey).getBytes();
-            final Decryption decryption = data -> cipherService.decrypt(data, secretKey).getBytes();
+            final Encryption encryption = data -> {
+                try {
+                    return cipherService.encrypt(data, secretKey).getBytes();
+                } catch (final Exception e) {
+                    throw new EncryptionServiceException(e);
+                }
+            };
+            final Decryption decryption = data -> {
+                try {
+                    return cipherService.decrypt(data, secretKey).getBytes();
+                } catch (final Exception e) {
+                    throw new EncryptionServiceException(e);
+                }
+            };
             map.put(entry.getKey(), new CipherFunctions(encryption, decryption));
         });
 
@@ -69,36 +73,47 @@ public class EncryptionServiceImpl implements EncryptionService {
     }
 
     @Override
-    public Set<String> getEncryptionKeys() throws EncryptionServiceException {
+    public Set<String> getEncryptionKeys() {
         return cipherFunctions.keySet();
     }
 
     @Override
-    public byte[] encrypt(@NonNull final byte[] data, @NonNull final String secretKey) throws EncryptionServiceException {
+    public byte[] encrypt(@NonNull final byte[] data, @NonNull final String secretKey) {
         final CipherFunctions cipher = cipherFunctions.get(secretKey);
-        checkNotNull(cipher);
-        return cipher.encryption.apply(data);
+        checkExists(secretKey, cipher);
+        return cipher.getEncryption().apply(data);
+    }
+
+    private void checkExists(final String secretKey, final CipherFunctions cipher) {
+        if (cipher == null) {
+            throw new UnknownSecretKeyException(secretKey);
+        }
     }
 
     @Override
-    public byte[] decrypt(@NonNull final byte[] data, @NonNull final String secretKey) throws EncryptionServiceException {
+    public byte[] decrypt(@NonNull final byte[] data, @NonNull final String secretKey) {
         final CipherFunctions cipher = cipherFunctions.get(secretKey);
-        checkNotNull(cipher);
-        return cipher.decryption.apply(data);
+        checkExists(secretKey, cipher);
+        return cipher.getDecryption().apply(data);
     }
 
     @Override
-    public Encryption encryption(@NonNull final String secretKey) throws EncryptionServiceException {
+    public Encryption encryption(@NonNull final String secretKey) {
         final CipherFunctions cipher = cipherFunctions.get(secretKey);
-        checkNotNull(cipher);
-        return cipher.encryption;
+        checkExists(secretKey, cipher);
+        return cipher.getEncryption();
     }
 
     @Override
-    public Decryption decryption(@NonNull final String secretKey) throws EncryptionServiceException {
+    public Decryption decryption(@NonNull final String secretKey) {
+        return cipherFunctions(secretKey).getDecryption();
+    }
+
+    @Override
+    public CipherFunctions cipherFunctions(@NonNull final String secretKey) {
         final CipherFunctions cipher = cipherFunctions.get(secretKey);
-        checkNotNull(cipher);
-        return cipher.decryption;
+        checkExists(secretKey, cipher);
+        return cipher;
     }
 
 }

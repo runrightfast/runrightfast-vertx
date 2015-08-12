@@ -18,6 +18,8 @@ package co.runrightfast.core.crypto.impl;
 import co.runrightfast.core.crypto.Decryption;
 import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
+import co.runrightfast.core.crypto.EncryptionServiceException;
+import co.runrightfast.core.crypto.UnknownSecretKeyException;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.google.common.collect.ImmutableMap;
@@ -121,6 +123,67 @@ public class EncryptionServiceImplTest {
         log.logp(Level.INFO, getClass().getName(), METHOD, String.format("decrypted length = %d", requestBytes.length));
         final GetVerticleDeployments.Request request2 = GetVerticleDeployments.Request.parseFrom(decrypted);
         assertThat(request2, is(equalTo(request)));
+    }
+
+    @Test(expected = UnknownSecretKeyException.class)
+    public void testInvalidSecretKey_cipherFunctions() {
+        final AesCipherService aes = new AesCipherService();
+        final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
+                .put("a", aes.generateNewKey())
+                .build();
+        final EncryptionService service = new EncryptionServiceImpl(aes, keys);
+        service.cipherFunctions("b");
+    }
+
+    @Test(expected = UnknownSecretKeyException.class)
+    public void testInvalidSecretKey_encrypt() {
+        final AesCipherService aes = new AesCipherService();
+        final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
+                .put("a", aes.generateNewKey())
+                .build();
+        final EncryptionService service = new EncryptionServiceImpl(aes, keys);
+        service.encrypt("data".getBytes(), "b");
+    }
+
+    @Test(expected = UnknownSecretKeyException.class)
+    public void testInvalidSecretKey_encryption() {
+        final AesCipherService aes = new AesCipherService();
+        final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
+                .put("a", aes.generateNewKey())
+                .build();
+        final EncryptionService service = new EncryptionServiceImpl(aes, keys);
+        service.encryption("b");
+    }
+
+    @Test(expected = UnknownSecretKeyException.class)
+    public void testInvalidSecretKey_decrypt() {
+        final AesCipherService aes = new AesCipherService();
+        final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
+                .put("a", aes.generateNewKey())
+                .build();
+        final EncryptionService service = new EncryptionServiceImpl(aes, keys);
+        service.decrypt(service.encrypt("data".getBytes(), "a"), "b");
+    }
+
+    @Test(expected = UnknownSecretKeyException.class)
+    public void testInvalidSecretKey_decryption() {
+        final AesCipherService aes = new AesCipherService();
+        final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
+                .put("a", aes.generateNewKey())
+                .build();
+        final EncryptionService service = new EncryptionServiceImpl(aes, keys);
+        service.decryption("b");
+    }
+
+    @Test(expected = EncryptionServiceException.class)
+    public void testInvalidSecretKey_decrypt_with_wrong_key() {
+        final AesCipherService aes = new AesCipherService();
+        final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
+                .put("a", aes.generateNewKey())
+                .put("b", aes.generateNewKey())
+                .build();
+        final EncryptionService service = new EncryptionServiceImpl(aes, keys);
+        service.decrypt(service.encrypt("data".getBytes(), "a"), "b");
     }
 
 }

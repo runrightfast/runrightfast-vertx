@@ -46,7 +46,8 @@ public interface EncryptionService {
      * @param secretKey
      * @return
      * @throws EncryptionServiceException
-     * @throws IllegalArgumentException if any of the args are null, or if secretKey is blank, or if the secretKey is invalid
+     * @throws IllegalArgumentException if any of the args are null, or if secretKey is blank
+     * @throws UnknownSecretKeyException if secretKey is invalid
      */
     byte[] decrypt(byte[] data, String secretKey) throws EncryptionServiceException;
 
@@ -55,7 +56,8 @@ public interface EncryptionService {
      * @param secretKey
      * @return function that encrypts using the specified secretKey key
      * @throws EncryptionServiceException
-     * @throws IllegalArgumentException if secretKey is blank, or if the secretKey is invalid
+     * @throws IllegalArgumentException if secretKey is blank
+     * @throws UnknownSecretKeyException if secretKey is invalid
      */
     Encryption encryption(String secretKey) throws EncryptionServiceException;
 
@@ -64,6 +66,18 @@ public interface EncryptionService {
      * @param secretKey
      * @return function that can be used to decrypts using the specified secretKey key
      * @throws EncryptionServiceException
+     * @throws IllegalArgumentException if secretKey is blank
+     * @throws UnknownSecretKeyException if secretKey is invalid
      */
     Decryption decryption(String secretKey) throws EncryptionServiceException;
+
+    /**
+     *
+     * @param secretKey
+     * @return
+     * @throws EncryptionServiceException
+     * @throws IllegalArgumentException if secretKey is blank
+     * @throws UnknownSecretKeyException if secretKey is invalid
+     */
+    CipherFunctions cipherFunctions(String secretKey) throws EncryptionServiceException;
 }
