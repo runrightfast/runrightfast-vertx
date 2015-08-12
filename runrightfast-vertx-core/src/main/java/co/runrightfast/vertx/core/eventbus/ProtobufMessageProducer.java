@@ -15,12 +15,14 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import co.runrightfast.vertx.core.RunRightFastVerticleMetrics;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Gauges.MESSAGE_LAST_PUBLISHED_TS;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Gauges.MESSAGE_LAST_SENT_TS;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Meters.MESSAGE_PUBLISHED;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Meters.MESSAGE_SENT;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_TIMESTAMP;
+import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
 import static co.runrightfast.vertx.core.utils.UUIDUtils.uuid;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
@@ -63,39 +65,62 @@ public final class ProtobufMessageProducer<A extends Message> {
     private Instant messageLastPublished;
 
     /**
-     * Collects metrics on messages that are sent the following meters:
+     * Collects metrics on messages that are sent
      *
+     * <h3>Meters</h3>
      * <ol>
-     * <li>
+     * <li>{@link RunRightFastVerticleMetrics.Meters#MESSAGE_SENT}
+     * <li>{@link RunRightFastVerticleMetrics.Meters#MESSAGE_PUBLISHED}
+     * </ol>
+     *
+     * <h3>Gauges</h3>
+     * <ol>
+     * <li>{@link RunRightFastVerticleMetrics.Meters#MESSAGE_SENT}
+     * <li>{@link RunRightFastVerticleMetrics.Meters#MESSAGE_PUBLISHED}
      * </ol>
      *
      * @param eventBus
      * @param address
-     * @param defaultInstance used to register the message codec - {@link ProtobufMessageCodec}
+     * @param codec - used to register the message codec
      * @param metricRegistry used to register the 2 meters described above
      */
-    public ProtobufMessageProducer(@NonNull final EventBus eventBus, final String address, @NonNull final A defaultInstance, @NonNull final MetricRegistry metricRegistry) {
+    public ProtobufMessageProducer(
+            @NonNull final EventBus eventBus,
+            final String address,
+            @NonNull final ProtobufMessageCodec<A> codec,
+            @NonNull final MetricRegistry metricRegistry) {
         checkArgument(isNotBlank(address));
         this.eventBus = eventBus;
         this.address = address;
 
-        registerMessageCodec(defaultInstance);
+        registerMessageCodec(codec);
 
         this.messageSent = metricRegistry.meter(String.format("%s::%s", MESSAGE_SENT.metricName, address));
         this.messagePublished = metricRegistry.meter(String.format("%s::%s", MESSAGE_PUBLISHED.metricName, address));
-        metricRegistry.register(String.format("%s::%s", MESSAGE_LAST_SENT_TS.metricName, address), new Gauge<String>() {
-            @Override
-            public String getValue() {
-                return messageLastSent != null ? DateTimeFormatter.ISO_INSTANT.format(messageLastSent) : null;
-            }
+        metricRegistry.register(String.format("%s::%s", MESSAGE_LAST_SENT_TS.metricName, address), (Gauge<String>) () -> {
+            return messageLastSent != null ? DateTimeFormatter.ISO_INSTANT.format(messageLastSent) : null;
         });
 
-        metricRegistry.register(String.format("%s::%s", MESSAGE_LAST_PUBLISHED_TS.metricName, address), new Gauge<String>() {
-            @Override
-            public String getValue() {
-                return messageLastPublished != null ? DateTimeFormatter.ISO_INSTANT.format(messageLastPublished) : null;
-            }
+        metricRegistry.register(String.format("%s::%s", MESSAGE_LAST_PUBLISHED_TS.metricName, address), (Gauge<String>) () -> {
+            return messageLastPublished != null ? DateTimeFormatter.ISO_INSTANT.format(messageLastPublished) : null;
         });
+    }
+
+    /**
+     *
+     *
+     * @param eventBus
+     * @param address
+     * @param defaultInstance used to lookup the {@link ProtobufMessageCodec} via
+     * {@link ProtobufMessageCodec#getProtobufMessageCodec(com.google.protobuf.Message)}
+     * @param metricRegistry
+     */
+    public ProtobufMessageProducer(
+            @NonNull final EventBus eventBus,
+            final String address,
+            @NonNull final A defaultInstance,
+            @NonNull final MetricRegistry metricRegistry) {
+        this(eventBus, address, getProtobufMessageCodec(defaultInstance).get(), metricRegistry);
     }
 
     public void send(@NonNull final A msg) {
@@ -152,10 +177,9 @@ public final class ProtobufMessageProducer<A extends Message> {
         return options;
     }
 
-    private void registerMessageCodec(final A defaultInstance) {
+    private void registerMessageCodec(final ProtobufMessageCodec<A> codec) {
         try {
-            final MessageCodec codec = new ProtobufMessageCodec(defaultInstance);
-            eventBus.registerDefaultCodec(defaultInstance.getClass(), codec);
+            eventBus.registerDefaultCodec(codec.getDefaultInstance().getClass(), (MessageCodec) codec);
         } catch (final IllegalStateException e) {
             log.logp(FINE, "ProtobufMessageProducer", "registerMessageCodec", "failed to register codec for request message", e.getCause());
         }

@@ -20,6 +20,7 @@ import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
+import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
@@ -76,7 +77,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         getVerticleDeploymentsMessageSender = new ProtobufMessageProducer(
                 vertx.eventBus(),
                 EventBusAddress.eventBusAddress(RunRightFastVerticleManager.VERTICLE_ID, "get-verticle-deployments"),
-                GetVerticleDeployments.Response.getDefaultInstance(),
+                getProtobufMessageCodec(GetVerticleDeployments.Response.getDefaultInstance()).get(),
                 metricRegistry
         );
 

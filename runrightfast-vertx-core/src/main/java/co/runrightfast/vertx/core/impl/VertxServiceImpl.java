@@ -22,6 +22,7 @@ import static co.runrightfast.core.application.event.ApplicationEvents.Events.AP
 import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOPPED;
 import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOPPING;
 import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOP_EXCEPTION;
+import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
@@ -77,10 +78,14 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     private final AppEventLogger appEventLogger;
 
     @Inject
-    public VertxServiceImpl(@NonNull @VertxServiceConfig final Config config, @NonNull final Set<RunRightFastVerticleDeployment> deployments, @NonNull final AppEventLogger appEventLogger) {
+    public VertxServiceImpl(
+            @NonNull @VertxServiceConfig final Config config,
+            @NonNull final Set<RunRightFastVerticleDeployment> deployments,
+            @NonNull final AppEventLogger appEventLogger,
+            @NonNull final EncryptionService encryptionService) {
         this.config = config;
         this.appEventLogger = appEventLogger;
-        this.verticleManager = new RunRightFastVerticleManager(appEventLogger, deployments);
+        this.verticleManager = new RunRightFastVerticleManager(appEventLogger, encryptionService, deployments);
     }
 
     @Override

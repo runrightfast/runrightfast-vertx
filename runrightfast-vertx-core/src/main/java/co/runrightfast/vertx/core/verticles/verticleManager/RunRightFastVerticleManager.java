@@ -18,6 +18,7 @@ package co.runrightfast.vertx.core.verticles.verticleManager;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
+import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
@@ -78,8 +79,8 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     private JmxReporter jmxReporterForSelf;
 
     @Inject
-    public RunRightFastVerticleManager(final AppEventLogger appEventLogger, final Set<RunRightFastVerticleDeployment> deployments) {
-        super(appEventLogger);
+    public RunRightFastVerticleManager(final AppEventLogger appEventLogger, final EncryptionService encryptionService, final Set<RunRightFastVerticleDeployment> deployments) {
+        super(appEventLogger, encryptionService);
         checkArgument(CollectionUtils.isNotEmpty(deployments));
         this.deployments = ImmutableSet.copyOf(deployments);
     }
@@ -100,6 +101,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                         .responseDefaultInstance(RunVerticleHealthChecks.Response.getDefaultInstance())
                         .build()
                 ).handler(this::handleRunVerticleHealthChecksMessage)
+                .ciphers(cipherFunctions(RunVerticleHealthChecks.getDefaultInstance()))
                 .build()
         );
     }
@@ -153,6 +155,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                         .responseDefaultInstance(GetVerticleDeployments.Response.getDefaultInstance())
                         .build()
                 ).handler(this::handleGetVerticleDeploymentsMessage)
+                .ciphers(cipherFunctions(GetVerticleDeployments.getDefaultInstance()))
                 .build()
         );
     }

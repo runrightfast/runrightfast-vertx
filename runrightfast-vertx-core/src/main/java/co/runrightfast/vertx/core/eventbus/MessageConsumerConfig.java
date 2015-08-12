@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import co.runrightfast.core.crypto.CipherFunctions;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure.INTERNAL_SERVER_ERROR;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -121,6 +122,11 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
             return this;
         }
 
+        public Builder<REQUEST, RESPONSE> ciphers(@NonNull final CipherFunctions ciphers) {
+            this.config.ciphers = ciphers;
+            return this;
+        }
+
         public MessageConsumerConfig build() {
             config.exceptionFailureMap = this.exceptionFailureMap.build();
             config.validate();
@@ -159,12 +165,16 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     @Getter
     private Map<Class<? extends Throwable>, Failure> exceptionFailureMap = ImmutableMap.of();
 
+    @Getter
+    private CipherFunctions ciphers;
+
     private MessageConsumerConfig() {
     }
 
     public void validate() {
         checkNotNull(addressMessageMapping);
         checkNotNull(handler);
+        checkNotNull(ciphers);
         checkState(maxBufferedMessages >= 0);
     }
 

@@ -17,6 +17,8 @@ package co.runrightfast.vertx.core.application;
 
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
+import co.runrightfast.core.crypto.EncryptionService;
+import co.runrightfast.core.crypto.impl.EncryptionServiceWithDefaultCiphers;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
@@ -24,6 +26,7 @@ import co.runrightfast.vertx.core.application.jmx.ApplicationMXBean;
 import co.runrightfast.vertx.core.components.DaggerRunRightFastVertxApplicationTest_TestApp;
 import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.JmxUtils;
@@ -71,10 +74,17 @@ import org.junit.Test;
 @Log
 public class RunRightFastVertxApplicationLauncherTest {
 
+    private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
+
+    private static final ProtobufMessageCodec<GetVerticleDeployments.Response> getVerticleDeploymentsResponseCodec = new ProtobufMessageCodec(
+            GetVerticleDeployments.Response.getDefaultInstance(),
+            encryptionService.cipherFunctions(GetVerticleDeployments.getDescriptor().getFullName())
+    );
+
     static class TestVerticle extends RunRightFastVerticle {
 
-        public TestVerticle(AppEventLogger logger) {
-            super(logger);
+        public TestVerticle(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
+            super(appEventLogger, encryptionService);
         }
 
         @Getter
@@ -105,12 +115,19 @@ public class RunRightFastVertxApplicationLauncherTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
+        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
             return RunRightFastVerticleDeployment.builder()
                     .deploymentOptions(new DeploymentOptions())
-                    .verticle(new RunRightFastVertxApplicationLauncherTest.TestVerticle(logger))
+                    .verticle(new RunRightFastVertxApplicationLauncherTest.TestVerticle(logger, encryptionService))
                     .build();
         }
+
+        @Provides
+        @Singleton
+        public EncryptionService provideEncryptionService() {
+            return encryptionService;
+        }
+
     }
 
     @Component(

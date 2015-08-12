@@ -18,6 +18,8 @@ package co.runrightfast.vertx.core;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
+import co.runrightfast.core.crypto.CipherFunctions;
+import co.runrightfast.core.crypto.EncryptionService;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_FAILURE;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_PROCESSING;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_SUCCESS;
@@ -32,7 +34,6 @@ import co.runrightfast.vertx.core.eventbus.MessageConsumerRegistration;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.getReplyToAddress;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
-import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
 import co.runrightfast.vertx.core.utils.LoggingUtils;
 import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newErrorLog;
@@ -116,6 +117,9 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     @NonNull
     protected final AppEventLogger appEventLogger;
+
+    @NonNull
+    protected final EncryptionService encryptionService;
 
     /**
      * Performs the following:
@@ -220,6 +224,17 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     }
 
     /**
+     * The message's descriptor full name will be used as the key to retrieve the {@link CipherFunctions} from the {@link EncryptionService}
+     *
+     * @param msg
+     * @return
+     * @throws IllegalArgumentException if there is no registered ciphers with the {@link EncryptionService} for the message type
+     */
+    protected CipherFunctions cipherFunctions(@NonNull final Message msg) {
+        return encryptionService.cipherFunctions(msg.getDescriptorForType().getFullName());
+    }
+
+    /**
      * An IllegalStateException is thrown if a codec is already registered with the same name. Ignore the exception.
      *
      * @param <REQ>
@@ -229,7 +244,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     private <REQ extends Message, RESP extends Message> void registerMessageCodecs(final MessageConsumerConfig<REQ, RESP> config) {
         final EventBus eventBus = vertx.eventBus();
         try {
-            final MessageCodec codec = new ProtobufMessageCodec(config.getAddressMessageMapping().getRequestDefaultInstance());
+            final MessageCodec codec = new ProtobufMessageCodec(config.getAddressMessageMapping().getRequestDefaultInstance(), config.getCiphers());
             eventBus.registerDefaultCodec(config.getAddressMessageMapping().getRequestDefaultInstance().getClass(), codec);
         } catch (final IllegalStateException e) {
             log.logp(FINE, CLASS_NAME, "registerMessageCodecs", "failed to register codec for request message", e.getCause());
@@ -238,7 +253,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         config.getAddressMessageMapping().getResponseDefaultInstance().ifPresent(responseDefaultInstance -> {
             try {
                 // TODO: Investigate why Optional type is lost - forced to cast responseDefaultInstance to Message
-                final MessageCodec codec = new ProtobufMessageCodec((Message) responseDefaultInstance);
+                final MessageCodec codec = new ProtobufMessageCodec((Message) responseDefaultInstance, config.getCiphers());
                 eventBus.registerDefaultCodec(responseDefaultInstance.getClass(), codec);
             } catch (final IllegalStateException e) {
                 log.logp(FINE, CLASS_NAME, "registerMessageCodecs", "failed to register codec for response message", e.getCause());
@@ -379,10 +394,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     protected HealthCheckConfig.HealthCheckConfigBuilder healthCheckConfigBuilder() {
         return HealthCheckConfig.builder().registryName(getRunRightFastVerticleId().toJson().toString());
-    }
-
-    protected <A extends Message> ProtobufMessageProducer<A> newProtobufMessageProducer(final String address, final A messageDefaultInstance) {
-        return new ProtobufMessageProducer<>(vertx.eventBus(), address, messageDefaultInstance, metricRegistry);
     }
 
     @Override

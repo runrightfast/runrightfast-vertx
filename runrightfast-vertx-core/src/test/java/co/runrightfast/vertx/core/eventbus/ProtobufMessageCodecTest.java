@@ -15,9 +15,15 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import co.runrightfast.core.crypto.EncryptionService;
+import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleId;
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.buffer.Buffer;
+import java.security.Key;
+import java.util.Map;
 import lombok.extern.java.Log;
+import org.apache.shiro.crypto.AesCipherService;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.sameInstance;
@@ -31,13 +37,23 @@ import org.junit.Test;
 @Log
 public class ProtobufMessageCodecTest {
 
+    final AesCipherService aes = new AesCipherService();
+    final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
+            .put(VerticleId.getDescriptor().getFullName(), aes.generateNewKey())
+            .build();
+
+    final EncryptionService encryptionService = new EncryptionServiceImpl(aes, keys);
+
     private final VerticleId verticleId = VerticleId.newBuilder()
             .setGroup("runrightfast")
             .setName(getClass().getSimpleName())
             .setVersion("1.0.0")
             .build();
 
-    private final ProtobufMessageCodec<VerticleId> verticleIdMessageCodec = new ProtobufMessageCodec(VerticleId.getDefaultInstance());
+    private final ProtobufMessageCodec<VerticleId> verticleIdMessageCodec = new ProtobufMessageCodec(
+            VerticleId.getDefaultInstance(),
+            encryptionService.cipherFunctions(VerticleId.getDescriptor().getFullName())
+    );
 
     /**
      * Test of encodeToWire method, of class ProtobufMessageCodec.

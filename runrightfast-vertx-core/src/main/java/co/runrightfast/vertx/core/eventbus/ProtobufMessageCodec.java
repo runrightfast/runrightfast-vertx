@@ -16,35 +16,56 @@
 package co.runrightfast.vertx.core.eventbus;
 
 import co.runrightfast.core.ApplicationException;
+import co.runrightfast.core.crypto.CipherFunctions;
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 /**
  *
  * @author alfio
  * @param <MSG> Message payload type
  */
-@RequiredArgsConstructor
-public class ProtobufMessageCodec<MSG extends Message> implements MessageCodec<MSG, MSG> {
+@EqualsAndHashCode(of = "defaultInstance")
+public final class ProtobufMessageCodec<MSG extends Message> implements MessageCodec<MSG, MSG> {
 
-    @NonNull
+    private static ImmutableMap<String, ProtobufMessageCodec> protobufMessageCodecs = ImmutableMap.of();
+
+    public static Optional<ProtobufMessageCodec> getProtobufMessageCodec(@NonNull final Message msg) {
+        return Optional.ofNullable(protobufMessageCodecs.get(msg.getDescriptorForType().getFullName()));
+    }
+
     @Getter
     private final MSG defaultInstance;
 
+    private final CipherFunctions ciphers;
+
+    public ProtobufMessageCodec(@NonNull final MSG defaultInstance, @NonNull final CipherFunctions ciphers) {
+        this.defaultInstance = defaultInstance;
+        this.ciphers = ciphers;
+
+        final Map<String, ProtobufMessageCodec> temp = new HashMap<>(protobufMessageCodecs);
+        temp.put(defaultInstance.getDescriptorForType().getFullName(), this);
+        protobufMessageCodecs = ImmutableMap.copyOf(temp);
+    }
+
     @Override
     public void encodeToWire(final Buffer buffer, final MSG msg) {
-        buffer.appendBytes(msg.toByteArray());
+        buffer.appendBytes(ciphers.getEncryption().apply(msg.toByteArray()));
     }
 
     @Override
     public MSG decodeFromWire(final int pos, final Buffer buffer) {
         try {
-            return (MSG) defaultInstance.getParserForType().parseFrom(buffer.getBytes());
+            return (MSG) defaultInstance.getParserForType().parseFrom(ciphers.getDecryption().apply(buffer.getBytes()));
         } catch (final InvalidProtocolBufferException ex) {
             throw new ApplicationException(ex);
         }

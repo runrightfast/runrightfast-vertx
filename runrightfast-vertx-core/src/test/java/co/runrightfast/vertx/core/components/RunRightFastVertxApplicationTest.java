@@ -19,6 +19,8 @@ import co.runrightfast.core.ApplicationException;
 import co.runrightfast.core.application.event.AppEventLogger;
 import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
+import co.runrightfast.core.crypto.EncryptionService;
+import co.runrightfast.core.crypto.impl.EncryptionServiceWithDefaultCiphers;
 import co.runrightfast.protobuf.test.RunRightFastVertxApplicationTestMessage;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
@@ -31,6 +33,7 @@ import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.InvalidMessageException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer.addRunRightFastHeaders;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
@@ -90,6 +93,13 @@ import org.junit.Test;
 @Log
 public class RunRightFastVertxApplicationTest {
 
+    private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
+
+    private static final ProtobufMessageCodec<GetVerticleDeployments.Response> getVerticleDeploymentsResponseCodec = new ProtobufMessageCodec(
+            GetVerticleDeployments.Response.getDefaultInstance(),
+            encryptionService.cipherFunctions(GetVerticleDeployments.getDescriptor().getFullName())
+    );
+
     static class TestVerticle extends RunRightFastVerticle {
 
         static final RunRightFastVerticleId VERTICLE_ID = RunRightFastVerticleId.builder()
@@ -101,8 +111,8 @@ public class RunRightFastVertxApplicationTest {
         @Getter
         private final RunRightFastVerticleId runRightFastVerticleId = VERTICLE_ID;
 
-        public TestVerticle(AppEventLogger logger) {
-            super(logger);
+        public TestVerticle(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
+            super(appEventLogger, encryptionService);
         }
 
         @Override
@@ -120,6 +130,7 @@ public class RunRightFastVertxApplicationTest {
                     )
                     .handler(this::handleRunRightFastVertxApplicationTestMessageRequest)
                     .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
+                    .ciphers(cipherFunctions(RunRightFastVertxApplicationTestMessage.getDefaultInstance()))
                     .build();
         }
 
@@ -179,12 +190,19 @@ public class RunRightFastVertxApplicationTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
+        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
             return RunRightFastVerticleDeployment.builder()
                     .deploymentOptions(new DeploymentOptions())
-                    .verticle(new TestVerticle(logger))
+                    .verticle(new TestVerticle(logger, encryptionService))
                     .build();
         }
+
+        @Provides
+        @Singleton
+        public EncryptionService provideEncryptionService() {
+            return encryptionService;
+        }
+
     }
 
     @Component(
@@ -304,7 +322,8 @@ public class RunRightFastVertxApplicationTest {
         final ProtobufMessageProducer producer = new ProtobufMessageProducer(
                 vertx.eventBus(),
                 address,
-                GetVerticleDeployments.Response.getDefaultInstance(), SharedMetricRegistries.getOrCreate(getClass().getSimpleName())
+                getVerticleDeploymentsResponseCodec,
+                SharedMetricRegistries.getOrCreate(getClass().getSimpleName())
         );
         producer.send(
                 GetVerticleDeployments.Request.newBuilder().build(),

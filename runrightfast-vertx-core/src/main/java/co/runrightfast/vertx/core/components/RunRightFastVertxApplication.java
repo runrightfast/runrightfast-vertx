@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.core.components;
 
 import co.runrightfast.core.application.services.healthchecks.HealthChecksService;
+import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.VertxService;
 import co.runrightfast.vertx.core.application.RunRightFastApplication;
 
@@ -28,7 +29,18 @@ public interface RunRightFastVertxApplication {
 
     RunRightFastApplication runRightFastApplication();
 
+    VertxService vertxService();
+
     HealthChecksService healthChecksService();
 
-    VertxService vertxService();
+    /**
+     * Use cases:
+     *
+     * <ol>
+     * <li>To secure EventBus messages by encrypting the messages.
+     * </ol>
+     *
+     * @return
+     */
+    EncryptionService encryptionService();
 }

@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.demo.modules;
 
 import co.runrightfast.core.application.event.AppEventLogger;
+import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.demo.verticles.TestVerticle;
 import dagger.Module;
@@ -32,10 +33,16 @@ public class RunRightFastVerticleDeploymentModule {
 
     @Provides(type = Provides.Type.SET)
     @Singleton
-    public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
+    public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
         return RunRightFastVerticleDeployment.builder()
                 .deploymentOptions(new DeploymentOptions())
-                .verticle(new TestVerticle(logger))
+                .verticle(new TestVerticle(logger, encryptionService))
                 .build();
+    }
+
+    @Provides
+    @Singleton
+    public EncryptionService provideEncryptionService() {
+        return new EncryptionServiceWithDefaultCiphers();
     }
 }
