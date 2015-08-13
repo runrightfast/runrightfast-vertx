@@ -48,6 +48,14 @@ public final class ProtobufMessageCodec<MSG extends Message> implements MessageC
 
     private final CipherFunctions ciphers;
 
+    /**
+     * Each time an instance is created, it registers itself and becomes available via {@link ProtobufMessageCodec#getProtobufMessageCodec(com.google.protobuf.Message)
+     * }. If a ProtobufMessageCodec for the same {@link Message} type exists, then it will be overwritten.
+     *
+     *
+     * @param defaultInstance
+     * @param ciphers
+     */
     public ProtobufMessageCodec(@NonNull final MSG defaultInstance, @NonNull final CipherFunctions ciphers) {
         this.defaultInstance = defaultInstance;
         this.ciphers = ciphers;

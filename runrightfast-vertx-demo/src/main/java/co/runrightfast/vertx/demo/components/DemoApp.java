@@ -18,6 +18,7 @@ package co.runrightfast.vertx.demo.components;
 import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
+import co.runrightfast.vertx.demo.modules.EncryptionServiceModule;
 import co.runrightfast.vertx.demo.modules.RunRightFastVerticleDeploymentModule;
 import dagger.Component;
 import javax.inject.Singleton;
@@ -30,7 +31,8 @@ import javax.inject.Singleton;
         modules = {
             RunRightFastApplicationModule.class,
             VertxServiceModule.class,
-            RunRightFastVerticleDeploymentModule.class
+            RunRightFastVerticleDeploymentModule.class,
+            EncryptionServiceModule.class
         }
 )
 @Singleton

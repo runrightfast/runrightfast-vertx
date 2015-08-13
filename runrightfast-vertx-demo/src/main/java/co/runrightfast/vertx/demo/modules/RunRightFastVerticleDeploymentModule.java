@@ -39,10 +39,4 @@ public class RunRightFastVerticleDeploymentModule {
                 .verticle(new TestVerticle(logger, encryptionService))
                 .build();
     }
-
-    @Provides
-    @Singleton
-    public EncryptionService provideEncryptionService() {
-        return new EncryptionServiceWithDefaultCiphers();
-    }
 }
