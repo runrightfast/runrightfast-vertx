@@ -34,6 +34,10 @@ public class EncryptionServiceWithDefaultCiphers implements EncryptionService {
 
     final AesCipherService cipherService = new AesCipherService();
 
+    {
+        cipherService.setKeySize(256);
+    }
+
     private final EncryptionService encryptionService = new EncryptionServiceImpl(
             cipherService,
             ImmutableMap.of(GLOBAL, cipherService.generateNewKey())

@@ -26,6 +26,7 @@ import dagger.Module;
 import dagger.Provides;
 import java.util.Set;
 import javax.inject.Singleton;
+import lombok.NonNull;
 import org.apache.shiro.crypto.AesCipherService;
 
 /**
@@ -37,14 +38,16 @@ public class EncryptionServiceModule {
 
     private static final class EncryptionServiceWithDefaultCiphers implements EncryptionService {
 
-        final String GLOBAL = "GLOBAL";
+        private final String GLOBAL = "GLOBAL";
 
-        final AesCipherService cipherService = new AesCipherService();
+        private final EncryptionService encryptionService;
 
-        private final EncryptionService encryptionService = new EncryptionServiceImpl(
-                cipherService,
-                ImmutableMap.of(GLOBAL, cipherService.generateNewKey())
-        );
+        public EncryptionServiceWithDefaultCiphers(@NonNull final AesCipherService cipherService) {
+            encryptionService = new EncryptionServiceImpl(
+                    cipherService,
+                    ImmutableMap.of(GLOBAL, cipherService.generateNewKey())
+            );
+        }
 
         @Override
         public Set<String> getEncryptionKeys() throws EncryptionServiceException {
@@ -80,7 +83,7 @@ public class EncryptionServiceModule {
 
     @Provides
     @Singleton
-    public EncryptionService provideEncryptionService() {
-        return new EncryptionServiceWithDefaultCiphers();
+    public EncryptionService provideEncryptionService(final AesCipherService aes) {
+        return new EncryptionServiceWithDefaultCiphers(aes);
     }
 }
