@@ -38,6 +38,7 @@ import io.vertx.core.eventbus.MessageCodec;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import static java.util.logging.Level.FINE;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.java.Log;
@@ -49,6 +50,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * @param <A> message type
  */
 @Log
+@EqualsAndHashCode(of = "address")
 public final class ProtobufMessageProducer<A extends Message> {
 
     private final EventBus eventBus;

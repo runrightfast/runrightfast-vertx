@@ -34,6 +34,7 @@ import co.runrightfast.vertx.core.eventbus.MessageConsumerRegistration;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.getReplyToAddress;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
 import co.runrightfast.vertx.core.utils.LoggingUtils;
 import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newErrorLog;
@@ -48,6 +49,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codahale.metrics.health.SharedHealthCheckRegistries;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.Message;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -111,7 +113,11 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     protected HealthCheckRegistry healthCheckRegistry;
 
     // EventBus address -> MessageConsumerRegistration
+    @Getter
     protected ImmutableMap<String, MessageConsumerRegistration<?, ?>> messageConsumerRegistrations = ImmutableMap.of();
+
+    @Getter
+    protected ImmutableSet<ProtobufMessageProducer> messageProducers = ImmutableSet.of();
 
     protected int instanceId;
 
@@ -390,6 +396,10 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
      */
     protected String eventBusAddress(final String path, final String... paths) {
         return EventBusAddress.eventBusAddress(getRunRightFastVerticleId(), path, paths);
+    }
+
+    protected void registerProtobufMessageProducer(@NonNull final ProtobufMessageProducer messageProducer) {
+        this.messageProducers = ImmutableSet.<ProtobufMessageProducer>builder().addAll(messageProducers).add(messageProducer).build();
     }
 
     protected HealthCheckConfig.HealthCheckConfigBuilder healthCheckConfigBuilder() {

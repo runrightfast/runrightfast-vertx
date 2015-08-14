@@ -16,6 +16,9 @@
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import lombok.extern.java.Log;
@@ -46,6 +49,40 @@ public class QuickTest {
         final String timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
         log.info(timestamp);
         log.info(Instant.parse(timestamp).toString());
+    }
+
+    /**
+     * Shows that that when the 2 healthchecks with the same name are registered, then the latest one will replace the previous one.
+     */
+    @Test
+    public void testRegisteringSameHealthcheckMultipleTimes() {
+        final HealthCheckRegistry registry = new HealthCheckRegistry();
+        final String healthCheckName = "health-check";
+        final HealthCheck healthCheck1 = new HealthCheck() {
+
+            @Override
+            protected HealthCheck.Result check() throws Exception {
+                return HealthCheck.Result.healthy();
+            }
+        };
+        final HealthCheck healthCheck2 = new HealthCheck() {
+
+            @Override
+            protected HealthCheck.Result check() throws Exception {
+                return HealthCheck.Result.healthy();
+            }
+        };
+        registry.register(healthCheckName, healthCheck1);
+        registry.register(healthCheckName, healthCheck2);
+
+        assertThat(registry.getNames().size(), is(1));
+    }
+
+    @Test
+    public void testAddingDuplicateElementsToImmutableSet() {
+        final Object o = new Object();
+        final ImmutableSet set = ImmutableSet.builder().add(o).add(o).build();
+        assertThat(set.size(), is(1));
     }
 
 }
