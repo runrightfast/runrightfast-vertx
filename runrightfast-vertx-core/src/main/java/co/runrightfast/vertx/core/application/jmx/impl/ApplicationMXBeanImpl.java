@@ -28,7 +28,7 @@ public final class ApplicationMXBeanImpl extends MBeanSupport implements Applica
         super(ApplicationMXBean.class);
         this.appLauncher = appLauncher;
         this.verticleIds = appLauncher.getApp().vertxService().deployments().stream().map(deployment -> {
-            final RunRightFastVerticleId id = deployment.getVerticle().getRunRightFastVerticleId();
+            final RunRightFastVerticleId id = deployment.getRunRightFastVerticleId();
             return id.toJson().toString();
         }).toArray(String[]::new);
     }

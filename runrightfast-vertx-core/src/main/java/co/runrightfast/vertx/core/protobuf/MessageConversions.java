@@ -24,6 +24,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.messages.HealthCheck
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleType;
+import java.util.Set;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,12 +37,13 @@ public interface MessageConversions {
 
     static VerticleDeployment toVerticleDeployment(@NonNull final RunRightFastVerticleDeployment deployment) {
         final VerticleDeployment.Builder builder = VerticleDeployment.newBuilder()
-                .setVerticleClass(deployment.getVerticle().getClass().getName())
-                .setVerticleId(toVerticleId(deployment.getVerticle().getRunRightFastVerticleId()))
+                .setVerticleClass(deployment.getVerticleClass().getName())
+                .setVerticleId(toVerticleId(deployment.getRunRightFastVerticleId()))
                 .setDeploymentOptions(toDeploymentOptions(deployment.getDeploymentOptions()));
 
-        if (CollectionUtils.isNotEmpty(deployment.getVerticle().getHealthChecks())) {
-            deployment.getVerticle().getHealthChecks().stream()
+        final Set<RunRightFastHealthCheck> healthChecks = deployment.getHealthChecks();
+        if (CollectionUtils.isNotEmpty(healthChecks)) {
+            healthChecks.stream()
                     .map(healthCheck -> toHealthCheck(healthCheck, builder.getVerticleId()))
                     .forEach(builder::addHealthChecks);
         }

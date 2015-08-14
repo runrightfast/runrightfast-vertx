@@ -101,10 +101,12 @@ public class VertxServiceImplTest {
             .version("1.0.0").build()
     );
 
-    private final Set<RunRightFastVerticleDeployment> deployments = ImmutableSet.of(RunRightFastVerticleDeployment.builder()
-            .deploymentOptions(new DeploymentOptions())
-            .verticle(new TestVerticle(appEventLogger, encryptionService))
-            .build()
+    private final Set<RunRightFastVerticleDeployment> deployments = ImmutableSet.of(
+            new RunRightFastVerticleDeployment(
+                    () -> new TestVerticle(appEventLogger, encryptionService),
+                    TestVerticle.class,
+                    new DeploymentOptions()
+            )
     );
 
     private VertxService service;

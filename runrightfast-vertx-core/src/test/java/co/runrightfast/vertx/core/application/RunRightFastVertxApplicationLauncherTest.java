@@ -116,10 +116,11 @@ public class RunRightFastVertxApplicationLauncherTest {
         @Provides(type = Provides.Type.SET)
         @Singleton
         public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
-            return RunRightFastVerticleDeployment.builder()
-                    .deploymentOptions(new DeploymentOptions())
-                    .verticle(new RunRightFastVertxApplicationLauncherTest.TestVerticle(logger, encryptionService))
-                    .build();
+            return new RunRightFastVerticleDeployment(
+                    () -> new RunRightFastVertxApplicationLauncherTest.TestVerticle(logger, encryptionService),
+                    RunRightFastVertxApplicationLauncherTest.TestVerticle.class,
+                    new DeploymentOptions()
+            );
         }
 
         @Provides
