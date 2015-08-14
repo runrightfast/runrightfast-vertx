@@ -17,6 +17,7 @@ package co.runrightfast.vertx.core.verticles.verticleManager;
 
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
+import static com.google.common.base.Preconditions.checkArgument;
 import io.vertx.core.DeploymentOptions;
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -40,11 +41,23 @@ public final class RunRightFastVerticleDeployment {
     @NonNull
     private final DeploymentOptions deploymentOptions;
 
+    public RunRightFastVerticleDeployment(@NonNull final RunRightFastVerticle verticle, @NonNull DeploymentOptions deploymentOptions) {
+        this.verticle = verticle;
+        this.deploymentOptions = deploymentOptions;
+        validate();
+    }
+
     public JsonObject toJson() {
         return Json.createObjectBuilder()
                 .add("verticleClass", verticle.getClass().getName())
                 .add("verticleId", verticle.getRunRightFastVerticleId().toJson())
                 .add("deploymentOptions", toJsonObject(deploymentOptions.toJson()))
                 .build();
+    }
+
+    public void validate() {
+        checkArgument(deploymentOptions.getExtraClasspath() == null, "Can't specify extraClasspath for already created verticle");
+        checkArgument(deploymentOptions.getIsolationGroup() == null, "Can't specify isolationGroup for already created verticle");
+        checkArgument(deploymentOptions.getIsolatedClasses() == null, "Can't specify isolatedClasses for already created verticle");
     }
 }
