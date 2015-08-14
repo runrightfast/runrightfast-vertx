@@ -62,7 +62,7 @@ dependencyManagement {
         
         dependency group: 'org.projectlombok', name:'lombok', version:'1.16.4'
         
-        dependency group:'org.elasticsearch', name:'elasticsearch', version:'1.5.2'
+        dependency group:'org.elasticsearch', name:'elasticsearch', version:'1.7.1'
                 
         dependencySet(group:'com.hazelcast', version: '3.5') {
             entry 'hazelcast-client'
@@ -75,7 +75,7 @@ dependencyManagement {
             entry 'metrics-healthchecks'
         }
         
-        dependencySet(group:'com.fasterxml.jackson.core', version: '2.5.3') {
+        dependencySet(group:'com.fasterxml.jackson.core', version: '2.6.1') {
             entry 'jackson-databind'
             entry 'jackson-core'
             entry 'jackson-annotations'
@@ -86,12 +86,7 @@ dependencyManagement {
             entry 'dagger-compiler'
         }
         
-        dependencySet(group:'org.apache.kafka', version: '0.8.2.1') {
-            entry 'kafka-clients'
-            entry 'kafka_2.11'
-        }
-        
-        dependencySet(group:'com.orientechnologies', version: '2.1-rc3') {
+        dependencySet(group:'com.orientechnologies', version: '2.1.0') {
             entry 'orientdb-core'
             entry 'orientdb-client'
             entry 'orientdb-enterprise'            
@@ -118,7 +113,7 @@ dependencyManagement {
         
         dependency 'com.lmax:disruptor:3.3.2'
         
-        dependency 'io.reactivex:rxjava:1.0.12'
+        dependency 'io.reactivex:rxjava:1.0.14'
         
         dependencySet(group:'io.vertx', version: '3.0.0') {
             entry 'vertx-core'
@@ -138,7 +133,7 @@ dependencyManagement {
             entry 'vertx-mail-client'
         }
         
-        dependency group: 'org.hibernate', name:'hibernate-validator', version:'5.1.3.Final'
+        dependency group: 'org.hibernate', name:'hibernate-validator', version:'5.2.1.Final'
         dependency group: 'javax.el', name:'javax.el-api', version:'2.2.5'
         dependency group: 'org.glassfish.web', name:'javax.el', version:'2.2.6'
         
