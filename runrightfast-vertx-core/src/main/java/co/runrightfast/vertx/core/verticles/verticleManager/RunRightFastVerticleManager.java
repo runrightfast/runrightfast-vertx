@@ -208,38 +208,34 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
      */
     private void deployVerticle(@NonNull final RunRightFastVerticleDeployment deployment) {
         if (deployment.getDeploymentOptions().getInstances() == 1) {
-            vertx.deployVerticle(deployment.getVerticleInstance(), deployment.getDeploymentOptions(), result -> {
-                if (result.succeeded()) {
-                    this.deployedVerticles = ImmutableMap.<String, RunRightFastVerticleDeployment>builder()
-                            .putAll(deployedVerticles)
-                            .put(result.result(), deployment)
-                            .build();
-                    registerJmxReporter(deployment);
-                    log.logp(Level.INFO, CLASS_NAME, "deployVerticle", () -> deployment.toJson().toString());
-                } else {
-                    log.logp(Level.SEVERE, CLASS_NAME, "deployVerticle", result.cause(), () -> deployment.toJson().toString());
-                    // TODO: raise an alert if the deployment fails
-                }
-            });
+            deployVerticleInstance(deployment, deployment.getVerticleInstance(), deployment.getDeploymentOptions());
         } else {
             final DeploymentOptions deploymentOptions = new DeploymentOptions(deployment.getDeploymentOptions()).setInstances(1);
-            final RunRightFastVerticleDeployment deploymentWithNewVerticleInstance = deployment.withNewVerticleInstance();
             for (int i = 0; i < deployment.getDeploymentOptions().getInstances(); i++) {
-                vertx.deployVerticle(deploymentWithNewVerticleInstance.getVerticleInstance(), deploymentOptions, result -> {
-                    if (result.succeeded()) {
-                        this.deployedVerticles = ImmutableMap.<String, RunRightFastVerticleDeployment>builder()
-                                .putAll(deployedVerticles)
-                                .put(result.result(), deploymentWithNewVerticleInstance)
-                                .build();
-                        registerJmxReporter(deploymentWithNewVerticleInstance);
-                        log.logp(Level.INFO, CLASS_NAME, "deployVerticle", () -> deploymentWithNewVerticleInstance.toJson().toString());
-                    } else {
-                        log.logp(Level.SEVERE, CLASS_NAME, "deployVerticle", result.cause(), () -> deploymentWithNewVerticleInstance.toJson().toString());
-                        // TODO: raise an alert if the deployment fails
-                    }
-                });
+                final RunRightFastVerticleDeployment deploymentInstance = deployment.withNewVerticleInstance();
+                if (i == 0) {
+                    deployVerticleInstance(deployment, deployment.getVerticleInstance(), deploymentOptions);
+                } else {
+                    deployVerticleInstance(deploymentInstance, deploymentInstance.getVerticleInstance(), deploymentOptions);
+                }
             }
         }
+    }
+
+    private void deployVerticleInstance(@NonNull final RunRightFastVerticleDeployment deployment, @NonNull final RunRightFastVerticle verticle, final DeploymentOptions deploymentOptions) {
+        vertx.deployVerticle(verticle, deploymentOptions, result -> {
+            if (result.succeeded()) {
+                this.deployedVerticles = ImmutableMap.<String, RunRightFastVerticleDeployment>builder()
+                        .putAll(deployedVerticles)
+                        .put(result.result(), deployment)
+                        .build();
+                registerJmxReporter(deployment);
+                log.logp(Level.INFO, CLASS_NAME, "deployVerticle", () -> deployment.toJson().toString());
+            } else {
+                log.logp(Level.SEVERE, CLASS_NAME, "deployVerticle", result.cause(), () -> deployment.toJson().toString());
+                // TODO: raise an alert if the deployment fails
+            }
+        });
     }
 
     private void registerJmxReporter(@NonNull final RunRightFastVerticleDeployment deployment) {

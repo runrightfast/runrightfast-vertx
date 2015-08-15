@@ -24,6 +24,7 @@ import co.runrightfast.core.crypto.impl.EncryptionServiceWithDefaultCiphers;
 import co.runrightfast.protobuf.test.RunRightFastVertxApplicationTestMessage;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
+import co.runrightfast.vertx.core.RunRightFastVerticleMetrics;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
 import co.runrightfast.vertx.core.application.ApplicationId;
@@ -49,6 +50,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
 import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheck;
 import static com.google.common.base.Preconditions.checkState;
@@ -185,6 +187,91 @@ public class RunRightFastVertxApplicationTest {
 
     }
 
+    static class TestVerticle2 extends RunRightFastVerticle {
+
+        static final RunRightFastVerticleId VERTICLE_ID = RunRightFastVerticleId.builder()
+                .group(RunRightFastVerticleId.RUNRIGHTFAST_GROUP)
+                .name(TestVerticle2.class.getSimpleName())
+                .version("1.0.0")
+                .build();
+
+        @Getter
+        private final RunRightFastVerticleId runRightFastVerticleId = VERTICLE_ID;
+
+        public TestVerticle2(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
+            super(appEventLogger, encryptionService);
+        }
+
+        @Override
+        protected void startUp() {
+            registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig());
+        }
+
+        private MessageConsumerConfig<RunRightFastVertxApplicationTestMessage.Request, RunRightFastVertxApplicationTestMessage.Response> runRightFastVertxApplicationTestMessageMessageConsumerConfig() {
+            return MessageConsumerConfig.<RunRightFastVertxApplicationTestMessage.Request, RunRightFastVertxApplicationTestMessage.Response>builder()
+                    .addressMessageMapping(EventBusAddressMessageMapping.builder()
+                            .address(eventBusAddress(RunRightFastVertxApplicationTestMessage.class.getSimpleName()))
+                            .requestDefaultInstance(RunRightFastVertxApplicationTestMessage.Request.getDefaultInstance())
+                            .responseDefaultInstance(RunRightFastVertxApplicationTestMessage.Response.getDefaultInstance())
+                            .build()
+                    )
+                    .handler(this::handleRunRightFastVertxApplicationTestMessageRequest)
+                    .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
+                    .ciphers(cipherFunctions(RunRightFastVertxApplicationTestMessage.getDefaultInstance()))
+                    .build();
+        }
+
+        private void handleRunRightFastVertxApplicationTestMessageRequest(@NonNull final Message<RunRightFastVertxApplicationTestMessage.Request> message) {
+            final RunRightFastVertxApplicationTestMessage.Request request = message.body();
+            info.log("RunRightFastVertxApplicationTestMessage.Request.messageConsumerHandler", () -> Json.createObjectBuilder().add("message", request.getMessage()).build());
+            if (request.getMessage() != null) {
+                switch (request.getMessage()) {
+                    case "IllegalArgumentException":
+                        throw new IllegalArgumentException();
+                    case "ApplicationException":
+                        throw new ApplicationException("request processing failed");
+                    case "IllegalStateException":
+                        throw new IllegalStateException();
+                    case "InvalidMessageException":
+                        throw new InvalidMessageException();
+                }
+            }
+            reply(message, RunRightFastVertxApplicationTestMessage.Response.newBuilder()
+                    .setMessage(String.format("Received message @ %s : %s", Instant.now(), request.getMessage()))
+                    .build()
+            );
+        }
+
+        @Override
+        protected void shutDown() {
+        }
+
+        @Override
+        public Set<RunRightFastHealthCheck> getHealthChecks() {
+            return ImmutableSet.of(
+                    healthCheck1()
+            );
+        }
+
+        private RunRightFastHealthCheck healthCheck1() {
+            return RunRightFastHealthCheck.builder()
+                    .config(healthCheckConfigBuilder()
+                            .name("healthcheck-1")
+                            .severity(FATAL)
+                            .build()
+                    )
+                    .healthCheck(new HealthCheck() {
+
+                        @Override
+                        protected HealthCheck.Result check() throws Exception {
+                            return HealthCheck.Result.healthy();
+                        }
+                    })
+                    .build();
+        }
+
+    }
+
     @Module
     static class RunRightFastVerticleDeploymentModule {
 
@@ -195,6 +282,17 @@ public class RunRightFastVertxApplicationTest {
                     () -> new TestVerticle(logger, encryptionService),
                     TestVerticle.class,
                     new DeploymentOptions()
+            );
+
+        }
+
+        @Provides(type = Provides.Type.SET)
+        @Singleton
+        public RunRightFastVerticleDeployment provideTestVerticle2RunRightFastVerticleDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
+            return new RunRightFastVerticleDeployment(
+                    () -> new TestVerticle2(logger, encryptionService),
+                    TestVerticle2.class,
+                    new DeploymentOptions().setInstances(5)
             );
 
         }
@@ -259,12 +357,12 @@ public class RunRightFastVertxApplicationTest {
         assertThat(vertx.isClustered(), is(false));
         assertThat(vertx.isMetricsEnabled(), is(true));
 
-        assertThat(vertxService.deployments().size(), is(1));
+        assertThat(vertxService.deployments().size(), is(2));
         Thread.yield();
         vertxService.deployedVerticles().entrySet().stream().forEach(entry -> {
             log.logp(INFO, getClass().getName(), "test_vertx_default_options", String.format("%s -> %s", entry.getKey(), entry.getValue().toJson()));
         });
-        assertThat(vertxService.deployedVerticles().size(), is(vertxService.deployments().size()));
+        assertThat(vertxService.deployedVerticles().size(), is(6));
     }
 
     @Test
@@ -282,6 +380,13 @@ public class RunRightFastVertxApplicationTest {
                 responseHandler(future, GetVerticleDeployments.Response.class)
         );
         final GetVerticleDeployments.Response result = future.get(2000L, TimeUnit.MILLISECONDS);
+        assertThat(result.getDeploymentsCount(), is(2));
+
+        final MetricRegistry metricRegistryTestVerticle1 = SharedMetricRegistries.getOrCreate(TestVerticle.VERTICLE_ID.toString());
+        assertThat(metricRegistryTestVerticle1.getCounters().get(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).getCount(), is(1L));
+
+        final MetricRegistry metricRegistryTestVerticle2 = SharedMetricRegistries.getOrCreate(TestVerticle2.VERTICLE_ID.toString());
+        assertThat(metricRegistryTestVerticle2.getCounters().get(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).getCount(), is(5L));
     }
 
     @Test
