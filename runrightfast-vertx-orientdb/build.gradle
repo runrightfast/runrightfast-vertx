@@ -38,5 +38,9 @@ sourceSets {
 }
 
 dependencies {
-   compile 'org.apache.shiro:shiro-core'
+   compile project(':runrightfast-vertx-core')
+   compile 'com.orientechnologies:orientdb-graphdb'
+   compile 'com.orientechnologies:orientdb-server'
+   compile 'com.orientechnologies:orientdb-enterprise'
+   compile 'com.orientechnologies:orientdb-distributed'
 }

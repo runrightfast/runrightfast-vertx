@@ -89,7 +89,8 @@ dependencyManagement {
         dependencySet(group:'com.orientechnologies', version: '2.1.0') {
             entry 'orientdb-core'
             entry 'orientdb-client'
-            entry 'orientdb-enterprise'            
+            entry 'orientdb-enterprise'
+            entry 'orientdb-server'
             entry 'orientdb-graphdb'            
             entry 'orientdb-object'
             entry 'orientdb-distributed'
