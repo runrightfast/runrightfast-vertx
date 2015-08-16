@@ -170,7 +170,7 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
 
     @Test
     public void testLifeCycleListener() throws Exception {
-        try (final ODatabase db = server.openDatabase("document", "plocal:" + getClass().getSimpleName(), "root", "root")
+        try (final ODatabase db = server.openDatabase("document", getClass().getSimpleName(), "root", "root")
                 .registerHook(new SetCreatedOnAndUpdatedOn())
                 .activateOnCurrentThread()) {
             testSavingEventLogRecord(db, "testLifeCycleListener");
@@ -185,8 +185,8 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
         }
     }
 
-    private void testSavingEventLogRecord(final ODatabase db, final String testName) {
-        db.registerHook(new SetCreatedOnAndUpdatedOn()).activateOnCurrentThread();
+    private void testSavingEventLogRecord(final ODatabase db, final String testName) throws Exception {
+        db.registerHook(new SetCreatedOnAndUpdatedOn());
 
         Orient.instance().addDbLifecycleListener(new RunRightFastOrientDBLifeCycleListener());
 
