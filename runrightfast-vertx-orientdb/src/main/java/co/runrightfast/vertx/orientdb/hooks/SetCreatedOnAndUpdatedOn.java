@@ -15,9 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb.hooks;
 
-import static co.runrightfast.vertx.orientdb.StandardClass.TIMESTAMPED_RECORD;
-import static co.runrightfast.vertx.orientdb.StandardField.CREATED_ON;
-import static co.runrightfast.vertx.orientdb.StandardField.UPDATED_ON;
+import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import static com.orientechnologies.orient.core.hook.ORecordHook.DISTRIBUTED_EXECUTION_MODE.BOTH;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,7 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class SetCreatedOnAndUpdatedOn extends ODocumentHookAbstract {
 
-    private static final String CLASS = SetCreatedOnAndUpdatedOn.class.getName();
+    private static final String TIMESTAMPED_CLASS = Timestamped.class.getSimpleName();
 
     @Override
     public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -37,8 +35,8 @@ public class SetCreatedOnAndUpdatedOn extends ODocumentHookAbstract {
 
     @Override
     public RESULT onRecordBeforeUpdate(final ODocument doc) {
-        if (doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(TIMESTAMPED_RECORD.className)) {
-            doc.field(UPDATED_ON.field, System.currentTimeMillis());
+        if (doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(TIMESTAMPED_CLASS)) {
+            doc.field(Timestamped.Field.updated_on.name(), System.currentTimeMillis());
             return RESULT.RECORD_CHANGED;
         }
         return RESULT.RECORD_NOT_CHANGED;
@@ -46,10 +44,10 @@ public class SetCreatedOnAndUpdatedOn extends ODocumentHookAbstract {
 
     @Override
     public RESULT onRecordBeforeCreate(final ODocument doc) {
-        if (doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(TIMESTAMPED_RECORD.className)) {
+        if (doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(TIMESTAMPED_CLASS)) {
             final long createdOn = System.currentTimeMillis();
-            doc.field(CREATED_ON.field, createdOn);
-            doc.field(UPDATED_ON.field, createdOn);
+            doc.field(Timestamped.Field.created_on.name(), createdOn);
+            doc.field(Timestamped.Field.updated_on.name(), createdOn);
             return RESULT.RECORD_CHANGED;
         }
         return RESULT.RECORD_NOT_CHANGED;

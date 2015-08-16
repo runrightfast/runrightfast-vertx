@@ -38,10 +38,11 @@ sourceSets {
 }
 
 dependencies {
-   compile project(':runrightfast-vertx-core')
-   compile 'com.orientechnologies:orientdb-graphdb'
-   compile 'com.orientechnologies:orientdb-server'
+   compile project(':runrightfast-vertx-core')   
+   compile 'com.orientechnologies:orientdb-server'   
    compile 'com.orientechnologies:orientdb-enterprise'
    compile 'com.orientechnologies:orientdb-distributed'
+   compile 'com.orientechnologies:orientdb-client'
    compile 'com.orientechnologies:orientdb-lucene'
+   compile 'com.orientechnologies:orientdb-graphdb'
 }
