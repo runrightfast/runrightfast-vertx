@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -48,7 +49,6 @@ import org.apache.commons.io.FileUtils;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.notNullValue;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -80,6 +80,17 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
         server = createOServer();
         server.activate();
 
+        final String dbUrl = String.format("plocal:%s/databases/%s", orientdbHome.getAbsolutePath(), RunRightFastOrientDBLifeCycleListenerTest.class.getSimpleName());
+        try (final ODatabase db = new ODatabaseFactory().createDatabase("document", dbUrl).create()) {
+            log.logp(INFO, CLASS_NAME, "setUpClass", String.format("created db = %s", db.getName()));
+
+            final OClass timestampedClass = db.getMetadata().getSchema().createAbstractClass(TIMESTAMPED_RECORD.className);
+            timestampedClass.createProperty(CREATED_ON.field, OType.DATETIME);
+            timestampedClass.createProperty(UPDATED_ON.field, OType.DATETIME);
+
+            final OClass logRecordClass = db.getMetadata().getSchema().createClass(EVENT_LOG_RECORD.className).setSuperClasses(ImmutableList.of(timestampedClass));
+            logRecordClass.createProperty(NAME.field, OType.STRING);
+        }
     }
 
     private static OServer createOServer() throws Exception {
@@ -157,33 +168,27 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
         }
     }
 
-    ODatabase db;
-
-    @After
-    public void after() {
-        if (db != null) {
-            db.close();
+    @Test
+    public void testLifeCycleListener() throws Exception {
+        try (final ODatabase db = server.openDatabase("document", "plocal:" + getClass().getSimpleName(), "root", "root")
+                .registerHook(new SetCreatedOnAndUpdatedOn())
+                .activateOnCurrentThread()) {
+            testSavingEventLogRecord(db, "testLifeCycleListener");
         }
+
     }
 
     @Test
-    public void testLifeCycleListener() throws Exception {
-        final String dbUrl = String.format("plocal:%s/databases/%s", orientdbHome.getAbsolutePath(), getClass().getSimpleName());
+    public void testPooling() throws Exception {
+        try (final ODatabase db = new OPartitionedDatabasePoolFactory().get("plocal:" + getClass().getSimpleName(), "writer", "writer").acquire()) {
+            testSavingEventLogRecord(db, "testPooling");
+        }
+    }
 
-        new ODatabaseFactory().createDatabase("document", dbUrl).create().close();
-
-        db = server.openDatabase("document", "plocal:" + getClass().getSimpleName(), "root", "root")
-                .registerHook(new SetCreatedOnAndUpdatedOn())
-                .activateOnCurrentThread();
+    private void testSavingEventLogRecord(final ODatabase db, final String testName) {
+        db.registerHook(new SetCreatedOnAndUpdatedOn()).activateOnCurrentThread();
 
         Orient.instance().addDbLifecycleListener(new RunRightFastOrientDBLifeCycleListener());
-
-        final OClass timestampedClass = db.getMetadata().getSchema().createAbstractClass(TIMESTAMPED_RECORD.className);
-        timestampedClass.createProperty(CREATED_ON.field, OType.DATETIME);
-        timestampedClass.createProperty(UPDATED_ON.field, OType.DATETIME);
-
-        final OClass logRecordClass = db.getMetadata().getSchema().createClass(EVENT_LOG_RECORD.className).setSuperClasses(ImmutableList.of(timestampedClass));
-        logRecordClass.createProperty(NAME.field, OType.STRING);
 
         final ODocument doc = new ODocument(EVENT_LOG_RECORD.className);
         try {
@@ -196,12 +201,12 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
             throw e;
         }
 
-        log.logp(INFO, CLASS_NAME, "testLifeCycleListener", String.format("doc = %s", doc.toJSON()));
+        log.logp(INFO, CLASS_NAME, testName, String.format("doc = %s", doc.toJSON()));
         assertThat(doc.field(CREATED_ON.field), is(notNullValue()));
         assertThat(doc.field(UPDATED_ON.field), is(notNullValue()));
 
         final ODocument doc2 = (ODocument) db.load(doc);
-        log.logp(INFO, CLASS_NAME, "testLifeCycleListener", String.format("doc2 = %s", doc2.toJSON()));
+        log.logp(INFO, CLASS_NAME, testName, String.format("doc2 = %s", doc2.toJSON()));
         assertThat(doc2.field(CREATED_ON.field), is(notNullValue()));
         assertThat(doc2.field(UPDATED_ON.field), is(notNullValue()));
     }
