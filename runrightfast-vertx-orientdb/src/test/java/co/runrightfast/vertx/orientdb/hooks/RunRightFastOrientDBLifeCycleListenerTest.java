@@ -204,7 +204,6 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
         log.logp(INFO, CLASS_NAME, "testLifeCycleListener", String.format("doc2 = %s", doc2.toJSON()));
         assertThat(doc2.field(CREATED_ON.field), is(notNullValue()));
         assertThat(doc2.field(UPDATED_ON.field), is(notNullValue()));
-
     }
 
 }
