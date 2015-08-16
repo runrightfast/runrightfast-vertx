@@ -93,7 +93,9 @@ dependencyManagement {
             entry 'orientdb-server'
             entry 'orientdb-graphdb'            
             entry 'orientdb-object'
-            entry 'orientdb-distributed'
+            entry ('orientdb-distributed') {
+                exclude group: 'com.hazelcast', name: 'hazelcast-all'
+            }
             entry 'orientdb-jdbc'
             entry 'orientdb-etl'
             entry 'orientdb-tools'

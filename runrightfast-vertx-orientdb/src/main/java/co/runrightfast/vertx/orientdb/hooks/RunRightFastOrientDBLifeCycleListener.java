@@ -18,13 +18,10 @@ package co.runrightfast.vertx.orientdb.hooks;
 import co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import java.util.Set;
 import javax.json.Json;
 import lombok.Builder;
 import lombok.extern.java.Log;
-import org.apache.commons.collections4.CollectionUtils;
 
 /**
  *
@@ -33,8 +30,6 @@ import org.apache.commons.collections4.CollectionUtils;
 @Log
 @Builder
 public class RunRightFastOrientDBLifeCycleListener implements ODatabaseLifecycleListener {
-
-    private final Set<ORecordHook> databaseHooks;
 
     private final JsonLog info = JsonLog.newInfoLog(log, getClass().getName());
 
@@ -45,38 +40,58 @@ public class RunRightFastOrientDBLifeCycleListener implements ODatabaseLifecycle
 
     @Override
     public void onCreate(final ODatabaseInternal odi) {
-        info.log("onCreate", () -> Json.createObjectBuilder().add("db", odi.getName()).build());
+        info.log("onCreate", () -> Json.createObjectBuilder()
+                .add("db", odi.getName())
+                .add("action", "create")
+                .build()
+        );
     }
 
     @Override
     public void onOpen(final ODatabaseInternal odi) {
-        if (CollectionUtils.isNotEmpty(databaseHooks)) {
-            databaseHooks.stream().forEach(hook -> {
-                odi.getUnderlying().registerHook(hook);
-                info.log("onOpen", () -> Json.createObjectBuilder().add("db", odi.getName()).add("registerHook", hook.getClass().getName()).build());
-            });
-        }
-        info.log("onOpen", () -> Json.createObjectBuilder().add("db", odi.getName()).build());
+        info.log("onOpen", () -> Json.createObjectBuilder()
+                .add("db", odi.getName())
+                .add("action", "open")
+                .build()
+        );
     }
 
     @Override
     public void onClose(final ODatabaseInternal odi) {
-        info.log("onClose", () -> Json.createObjectBuilder().add("db", odi.getName()).build());
+        info.log("onClose", () -> Json.createObjectBuilder()
+                .add("db", odi.getName())
+                .add("action", "close")
+                .build()
+        );
     }
 
     @Override
     public void onDrop(final ODatabaseInternal odi) {
-        info.log("onDrop", () -> Json.createObjectBuilder().add("db", odi.getName()).build());
+        info.log("onDrop", () -> Json.createObjectBuilder()
+                .add("db", odi.getName())
+                .add("action", "drop")
+                .build()
+        );
     }
 
     @Override
     public void onCreateClass(final ODatabaseInternal odi, final OClass oclass) {
-        info.log("onCreateClass", () -> Json.createObjectBuilder().add("db", odi.getName()).add("class", oclass.getName()).build());
+        info.log("onCreateClass", () -> Json.createObjectBuilder()
+                .add("db", odi.getName())
+                .add("class", oclass.getName())
+                .add("action", "createClass")
+                .build()
+        );
     }
 
     @Override
     public void onDropClass(final ODatabaseInternal odi, final OClass oclass) {
-        info.log("onDropClass", () -> Json.createObjectBuilder().add("db", odi.getName()).add("class", oclass.getName()).build());
+        info.log("onDropClass", () -> Json.createObjectBuilder()
+                .add("db", odi.getName())
+                .add("class", oclass.getName())
+                .add("action", "dropClass")
+                .build()
+        );
     }
 
 }

@@ -43,4 +43,5 @@ dependencies {
    compile 'com.orientechnologies:orientdb-server'
    compile 'com.orientechnologies:orientdb-enterprise'
    compile 'com.orientechnologies:orientdb-distributed'
+   compile 'com.orientechnologies:orientdb-lucene'
 }

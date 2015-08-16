@@ -19,14 +19,15 @@ package co.runrightfast.vertx.orientdb;
  *
  * @author alfio
  */
-public enum StandardFields {
+public enum StandardField {
 
     CREATED_ON("created_on"),
-    UPDATED_ON("updated_on");
+    UPDATED_ON("updated_on"),
+    NAME("name");
 
     public final String field;
 
-    private StandardFields(final String field) {
+    private StandardField(final String field) {
         this.field = field;
     }
 }
