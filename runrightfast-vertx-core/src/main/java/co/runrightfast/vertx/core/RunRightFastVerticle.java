@@ -340,6 +340,75 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         final Counter messageFailureCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_FAILURE.metricName, config.address()));
         final Timer timer = metricRegistry.timer(String.format("%s::%s", MESSAGE_CONSUMER_HANDLER.metricName, config.getAddressMessageMapping().getAddress()));
         final Handler<io.vertx.core.eventbus.Message<REQ>> handler = config.getHandler();
+
+        switch (config.getExecutionMode()) {
+            case EVENT_LOOP:
+                return msg -> {
+                    messageProcessingCounter.inc();
+                    log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);
+                    final Timer.Context timerCtx = timer.time();
+                    try {
+                        handler.handle(msg);
+                        messageSuccessCounter.inc();
+                    } catch (final Throwable t) {
+                        messageFailureCounter.inc();
+                        logMessageConsumerException(t, config.address(), config);
+                        replyWithFailure(msg, t, config);
+                    } finally {
+                        timerCtx.stop();
+                        messageProcessingCounter.dec();
+                    }
+                };
+            case WORKER_POOL_SERIAL:
+                return msg -> {
+                    messageProcessingCounter.inc();
+                    log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);
+                    final Timer.Context timerCtx = timer.time();
+                    vertx.executeBlocking(future -> {
+                        handler.handle(msg);
+                    }, result -> {
+                        try {
+                            if (result.succeeded()) {
+                                messageSuccessCounter.inc();
+                            } else {
+                                messageFailureCounter.inc();
+                                logMessageConsumerException(result.cause(), config.address(), config);
+                                replyWithFailure(msg, result.cause(), config);
+                            }
+                        } finally {
+                            timerCtx.stop();
+                            messageProcessingCounter.dec();
+                        }
+                    });
+                };
+            case WORKER_POOL_PARALLEL:
+                return msg -> {
+                    messageProcessingCounter.inc();
+                    log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);
+                    final Timer.Context timerCtx = timer.time();
+                    vertx.executeBlocking(
+                            future -> {
+                                handler.handle(msg);
+                                future.complete();
+                            },
+                            false, // ordered = false
+                            result -> {
+                                try {
+                                    if (result.succeeded()) {
+                                        messageSuccessCounter.inc();
+                                    } else {
+                                        messageFailureCounter.inc();
+                                        logMessageConsumerException(result.cause(), config.address(), config);
+                                        replyWithFailure(msg, result.cause(), config);
+                                    }
+                                } finally {
+                                    timerCtx.stop();
+                                    messageProcessingCounter.dec();
+                                }
+                            });
+                };
+
+        }
         return msg -> {
             messageProcessingCounter.inc();
             log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);

@@ -33,6 +33,10 @@ import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.InvalidMessageException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
+import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode;
+import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.EVENT_LOOP;
+import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_PARALLEL;
+import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_SERIAL;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
@@ -119,13 +123,18 @@ public class RunRightFastVertxApplicationTest {
 
         @Override
         protected void startUp() {
-            registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig());
+            registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig(RunRightFastVertxApplicationTestMessage.class.getSimpleName(), EVENT_LOOP));
+            registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig(RunRightFastVertxApplicationTestMessage.class.getSimpleName() + "/" + WORKER_POOL_SERIAL.name(), WORKER_POOL_SERIAL));
+            registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig(RunRightFastVertxApplicationTestMessage.class.getSimpleName() + "/" + WORKER_POOL_PARALLEL, WORKER_POOL_PARALLEL));
         }
 
-        private MessageConsumerConfig<RunRightFastVertxApplicationTestMessage.Request, RunRightFastVertxApplicationTestMessage.Response> runRightFastVertxApplicationTestMessageMessageConsumerConfig() {
+        private MessageConsumerConfig<RunRightFastVertxApplicationTestMessage.Request, RunRightFastVertxApplicationTestMessage.Response> runRightFastVertxApplicationTestMessageMessageConsumerConfig(
+                @NonNull final String eventBusAddress,
+                @NonNull final ExecutionMode executionMode
+        ) {
             return MessageConsumerConfig.<RunRightFastVertxApplicationTestMessage.Request, RunRightFastVertxApplicationTestMessage.Response>builder()
                     .addressMessageMapping(EventBusAddressMessageMapping.builder()
-                            .address(eventBusAddress(RunRightFastVertxApplicationTestMessage.class.getSimpleName()))
+                            .address(eventBusAddress(eventBusAddress))
                             .requestDefaultInstance(RunRightFastVertxApplicationTestMessage.Request.getDefaultInstance())
                             .responseDefaultInstance(RunRightFastVertxApplicationTestMessage.Response.getDefaultInstance())
                             .build()
@@ -133,6 +142,7 @@ public class RunRightFastVertxApplicationTest {
                     .handler(this::handleRunRightFastVertxApplicationTestMessageRequest)
                     .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
                     .ciphers(cipherFunctions(RunRightFastVertxApplicationTestMessage.getDefaultInstance()))
+                    .executionMode(executionMode)
                     .build();
         }
 
@@ -473,11 +483,111 @@ public class RunRightFastVertxApplicationTest {
     }
 
     @Test
+    public void test_eventbus_RunRightFastVertxApplicationTestMessage_to_WORKER_POOL_SERIAL() throws Exception {
+        log.info("test_eventbus_RunRightFastVertxApplicationTestMessage");
+        final Vertx vertx = vertxService.getVertx();
+        final CompletableFuture<RunRightFastVertxApplicationTestMessage.Response> future = new CompletableFuture<>();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName() + "/" + WORKER_POOL_SERIAL.name());
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage("CIAO MUNDO!!!").build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        final RunRightFastVertxApplicationTestMessage.Response result = future.get(2000L, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void test_eventbus_RunRightFastVertxApplicationTestMessage_to_WORKER_POOL_PARALLEL() throws Exception {
+        log.info("test_eventbus_RunRightFastVertxApplicationTestMessage");
+        final Vertx vertx = vertxService.getVertx();
+        final CompletableFuture<RunRightFastVertxApplicationTestMessage.Response> future = new CompletableFuture<>();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName() + "/" + WORKER_POOL_PARALLEL.name());
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage("CIAO MUNDO!!!").build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        final RunRightFastVertxApplicationTestMessage.Response result = future.get(2000L, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
     public void test_eventbus_RunRightFastVertxApplicationTestMessage_failure() throws Exception {
         log.info("test_eventbus_RunRightFastVertxApplicationTestMessage_failure");
         final Vertx vertx = vertxService.getVertx();
         final CompletableFuture future = new CompletableFuture();
         final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName());
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(IllegalArgumentException.class.getSimpleName()).build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        try {
+            final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+            fail("expected ReplyException");
+        } catch (final ExecutionException e) {
+            final ReplyException replyException = (ReplyException) e.getCause();
+            assertThat(replyException.failureCode(), is(MessageConsumerConfig.Failure.BAD_REQUEST.getCode()));
+        }
+
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(InvalidMessageException.class.getSimpleName()).build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        try {
+            final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+            fail("expected ReplyException");
+        } catch (final ExecutionException e) {
+            final ReplyException replyException = (ReplyException) e.getCause();
+            assertThat(replyException.failureCode(), is(MessageConsumerConfig.Failure.BAD_REQUEST.getCode()));
+        }
+    }
+
+    @Test
+    public void test_eventbus_RunRightFastVertxApplicationTestMessage_failure_to_WORKER_POOL_SERIAL() throws Exception {
+        log.info("test_eventbus_RunRightFastVertxApplicationTestMessage_failure");
+        final Vertx vertx = vertxService.getVertx();
+        final CompletableFuture future = new CompletableFuture();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName() + "/" + WORKER_POOL_SERIAL.name());
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(IllegalArgumentException.class.getSimpleName()).build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        try {
+            final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+            fail("expected ReplyException");
+        } catch (final ExecutionException e) {
+            final ReplyException replyException = (ReplyException) e.getCause();
+            assertThat(replyException.failureCode(), is(MessageConsumerConfig.Failure.BAD_REQUEST.getCode()));
+        }
+
+        vertx.eventBus().send(
+                address,
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(InvalidMessageException.class.getSimpleName()).build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, RunRightFastVertxApplicationTestMessage.Response.class)
+        );
+        try {
+            final Object result = future.get(2000L, TimeUnit.MILLISECONDS);
+            fail("expected ReplyException");
+        } catch (final ExecutionException e) {
+            final ReplyException replyException = (ReplyException) e.getCause();
+            assertThat(replyException.failureCode(), is(MessageConsumerConfig.Failure.BAD_REQUEST.getCode()));
+        }
+    }
+
+    @Test
+    public void test_eventbus_RunRightFastVertxApplicationTestMessage_failure_to_WORKER_POOL_PARALLEL() throws Exception {
+        log.info("test_eventbus_RunRightFastVertxApplicationTestMessage_failure");
+        final Vertx vertx = vertxService.getVertx();
+        final CompletableFuture future = new CompletableFuture();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName() + "/" + WORKER_POOL_PARALLEL.name());
         vertx.eventBus().send(
                 address,
                 RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(IllegalArgumentException.class.getSimpleName()).build(),

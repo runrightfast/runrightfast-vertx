@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.core.eventbus;
 
 import co.runrightfast.core.crypto.CipherFunctions;
+import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.EVENT_LOOP;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure.INTERNAL_SERVER_ERROR;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -127,6 +128,11 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
             return this;
         }
 
+        public Builder<REQUEST, RESPONSE> executionMode(@NonNull final ExecutionMode executionMode) {
+            this.config.executionMode = executionMode;
+            return this;
+        }
+
         public MessageConsumerConfig build() {
             config.exceptionFailureMap = this.exceptionFailureMap.build();
             config.validate();
@@ -168,6 +174,9 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     @Getter
     private CipherFunctions ciphers;
 
+    @Getter
+    private ExecutionMode executionMode = EVENT_LOOP;
+
     private MessageConsumerConfig() {
     }
 
@@ -208,6 +217,23 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     @Override
     public String toString() {
         return toJson().toString();
+    }
+
+    public static enum ExecutionMode {
+
+        /**
+         * The Golden Rule - Don’t Block the Event Loop. If you do that, then that event loop will not be able to do anything else while it’s blocked. If you
+         * block all of the event loops in Vertx instance then your application will grind to a complete halt!
+         */
+        EVENT_LOOP,
+        /**
+         * Process messages serially using the worker pool
+         */
+        WORKER_POOL_SERIAL,
+        /**
+         * Process messages in parallel using the worker pool
+         */
+        WORKER_POOL_PARALLEL
     }
 
     @lombok.Builder
