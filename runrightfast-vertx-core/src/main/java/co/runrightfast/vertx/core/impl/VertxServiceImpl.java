@@ -17,11 +17,11 @@ package co.runrightfast.vertx.core.impl;
 
 import co.runrightfast.core.application.event.AppEvent;
 import co.runrightfast.core.application.event.AppEventLogger;
-import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STARTED;
-import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_START_FAILED;
-import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOPPED;
-import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOPPING;
-import static co.runrightfast.core.application.event.ApplicationEvents.Events.APP_STOP_EXCEPTION;
+import static co.runrightfast.core.application.event.ApplicationEvents.APP_STARTED;
+import static co.runrightfast.core.application.event.ApplicationEvents.APP_START_FAILED;
+import static co.runrightfast.core.application.event.ApplicationEvents.APP_STOPPED;
+import static co.runrightfast.core.application.event.ApplicationEvents.APP_STOPPING;
+import static co.runrightfast.core.application.event.ApplicationEvents.APP_STOP_EXCEPTION;
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;

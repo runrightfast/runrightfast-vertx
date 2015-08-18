@@ -13,8 +13,12 @@ import javax.json.JsonObject;
  */
 public interface JsonRepresentation {
 
+    /**
+     *
+     * @return Class's simple name
+     */
     default String getType() {
-        return getClass().getName();
+        return getClass().getSimpleName();
     }
 
     JsonObject toJson();

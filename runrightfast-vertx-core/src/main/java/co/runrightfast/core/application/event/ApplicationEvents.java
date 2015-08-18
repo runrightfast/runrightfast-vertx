@@ -32,27 +32,21 @@ import lombok.RequiredArgsConstructor;
  */
 public interface ApplicationEvents {
 
-    /**
-     * One stop shop for all application event names
-     */
-    public static interface Events {
+    static final String APP_STARTED = "app.started";
+    static final String APP_START_FAILED = "app.start.failed";
+    static final String APP_STOPPING = "app.stopping";
+    static final String APP_STOP_EXCEPTION = "app.stop.exception";
+    static final String APP_STOPPED = "app.stopped";
 
-        static final String APP_STARTED = "app.started";
-        static final String APP_START_FAILED = "app.start.failed";
-        static final String APP_STOPPING = "app.stopping";
-        static final String APP_STOP_EXCEPTION = "app.stop.exception";
-        static final String APP_STOPPED = "app.stopped";
+    static final String SERVICES_STOPPED = "services.stopped";
+    static final String SERVICES_HEALTHY = "services.healthy";
+    static final String SERVICES_FAILURE = "services.failure";
 
-        static final String SERVICES_STOPPED = "services.stopped";
-        static final String SERVICES_HEALTHY = "services.healthy";
-        static final String SERVICES_FAILURE = "services.failure";
-
-        static final String SERVICE_STARTING = "service.starting";
-        static final String SERVICE_RUNNING = "service.running";
-        static final String SERVICE_STOPPING = "service.stopping";
-        static final String SERVICE_TERMINATED = "service.terminated";
-        static final String SERVICE_FAILED = "service.failed";
-    }
+    static final String SERVICE_STARTING = "service.starting";
+    static final String SERVICE_RUNNING = "service.running";
+    static final String SERVICE_STOPPING = "service.stopping";
+    static final String SERVICE_TERMINATED = "service.terminated";
+    static final String SERVICE_FAILED = "service.failed";
 
     @RequiredArgsConstructor
     public static final class HealthCheckResult implements JsonRepresentation {
