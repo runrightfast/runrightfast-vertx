@@ -1,3 +1,10 @@
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import static java.util.logging.Level.INFO;
+import lombok.extern.java.Log;
+import org.junit.Test;
+
 /*
  Copyright 2015 Alfio Zappala
 
@@ -13,20 +20,18 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb;
-
-import com.google.common.util.concurrent.Service;
-import java.util.Optional;
-import java.util.Set;
-
 /**
  *
  * @author alfio
  */
-public interface OrientDBService extends Service {
+@Log
+public class QuickTest {
 
-    Set<String> getDatabaseNames();
-
-    Optional<ODatabaseDocumentTxSupplier> getODatabaseDocumentTxSupplier(String name);
+    @Test
+    public void testPath() {
+        final Path path = Paths.get("src", "main", "java");
+        log.logp(INFO, getClass().getName(), "testPath", "path = {0}", path);
+        log.logp(INFO, getClass().getName(), "testPath", "path.toAbsolutePath() = {0}", path.toAbsolutePath());
+    }
 
 }

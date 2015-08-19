@@ -127,6 +127,7 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
             new OServerEntryConfiguration("db.pool.min", "1"),
             new OServerEntryConfiguration("db.pool.max", "50")
         };
+
         server.startup(config);
         return server;
     }

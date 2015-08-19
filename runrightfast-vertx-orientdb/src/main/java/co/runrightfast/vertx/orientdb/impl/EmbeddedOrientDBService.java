@@ -15,41 +15,77 @@
  */
 package co.runrightfast.vertx.orientdb.impl;
 
+import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import co.runrightfast.vertx.orientdb.OrientDBService;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 
 /**
  *
  * @author alfio
  */
+@RequiredArgsConstructor
 public class EmbeddedOrientDBService extends AbstractIdleService implements OrientDBService {
 
     private OServer server;
 
-    private OPartitionedDatabasePool pool;
+    private ImmutableMap<String, OPartitionedDatabasePool> databasePools = ImmutableMap.of();
+    private final EmbeddedOrientDBServiceConfig config;
 
     @Override
     protected void startUp() throws Exception {
+        registerLifecycleListeners();
+        server = OServerMain.create(true);
+        server.setServerRootDirectory(config.getOrientDBRootDir().toAbsolutePath().toString());
+
+        final OServerConfiguration serverConfig = new OServerConfiguration();
+        registerHandlers(serverConfig);
+        serverConfig.network = config.getNetworkConfig();
 
     }
 
     @Override
     protected void shutDown() throws Exception {
         if (server != null) {
-            if (pool != null) {
-                pool.close();
+            if (databasePools != null) {
+                databasePools.values().stream().forEach(OPartitionedDatabasePool::close);
             }
             server.shutdown();
             server = null;
         }
     }
 
+    private void registerLifecycleListeners() throws Exception {
+        if (CollectionUtils.isNotEmpty(config.getLifecycleListeners())) {
+            final Orient orient = Orient.instance();
+            config.getLifecycleListeners().stream().forEach(orient::addDbLifecycleListener);
+        }
+    }
+
+    private void registerHandlers(final OServerConfiguration serverConfig) {
+        if (CollectionUtils.isNotEmpty(config.getHandlers())) {
+            serverConfig.handlers = config.getHandlers().stream().collect(Collectors.toList());
+        }
+    }
+
     @Override
-    public ODatabaseDocumentTx get() {
-        return pool.acquire();
+    public Set<String> getDatabaseNames() {
+        return databasePools.keySet();
+    }
+
+    @Override
+    public Optional<ODatabaseDocumentTxSupplier> getODatabaseDocumentTxSupplier(final String name) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

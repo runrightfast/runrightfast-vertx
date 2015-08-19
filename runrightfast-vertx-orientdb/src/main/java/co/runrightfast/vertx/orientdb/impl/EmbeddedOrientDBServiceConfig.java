@@ -15,21 +15,26 @@
  */
 package co.runrightfast.vertx.orientdb.impl;
 
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
+import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_EMPTY;
 import static com.google.common.base.Preconditions.checkArgument;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Set;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import org.apache.commons.collections4.CollectionUtils;
 
 /**
+ *
+ * TODO: research how to use OServerStorageConfiguration
  *
  * @author alfio
  */
@@ -38,14 +43,7 @@ public final class EmbeddedOrientDBServiceConfig {
 
     @NonNull
     @Getter
-    private final String userName;
-
-    @NonNull
-    @Getter
-    private final String password;
-
-    @Getter
-    private final int poolMaxSize;
+    private final Set<DatabasePoolConfig> databasePoolConfigs;
 
     @Getter
     @NonNull
@@ -60,10 +58,24 @@ public final class EmbeddedOrientDBServiceConfig {
     @Getter
     private final Set<ORecordHook> hooks;
 
+    @Getter
+    @NonNull
+    private final OServerNetworkConfiguration networkConfig;
+
+    /**
+     * The root user must be specified in order to administrate the database.
+     */
+    @Getter
+    @NonNull
+    private final Set<OServerUserConfiguration> users;
+
+    @Getter
+    private final Map<OGlobalConfiguration, String> properties;
+
     public void validate() {
-        checkArgument(isNotBlank(userName), MUST_NOT_BE_BLANK, "userName");
-        checkArgument(isNotBlank(password), MUST_NOT_BE_BLANK, "password");
-        checkArgument(poolMaxSize > 0, MUST_BE_GREATER_THAN_ZERO, "poolMaxSize");
+        checkArgument(CollectionUtils.isNotEmpty(databasePoolConfigs), MUST_NOT_BE_EMPTY, "databasePoolConfigs");
+        checkArgument(CollectionUtils.isNotEmpty(handlers), MUST_NOT_BE_EMPTY, "handlers");
+        checkArgument(CollectionUtils.isNotEmpty(users), MUST_NOT_BE_EMPTY, "users");
         if (Files.exists(orientDBRootDir)) {
             checkArgument(Files.isDirectory(orientDBRootDir), "%s is not a directory", orientDBRootDir);
             checkArgument(Files.isReadable(orientDBRootDir), "%s is not readable", orientDBRootDir);

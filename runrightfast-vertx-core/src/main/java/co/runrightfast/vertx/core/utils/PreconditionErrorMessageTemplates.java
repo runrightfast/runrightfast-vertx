@@ -27,4 +27,6 @@ public interface PreconditionErrorMessageTemplates {
 
     static String MUST_BE_GREATER_THAN = "'%s' must be greater than %d";
 
+    static String MUST_NOT_BE_EMPTY = "'%s' must not be empty";
+
 }
