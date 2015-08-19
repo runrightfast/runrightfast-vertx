@@ -15,8 +15,12 @@
  */
 package co.runrightfast.vertx.orientdb.hooks;
 
+import co.runrightfast.core.application.event.AppEventLogger;
+import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
+import co.runrightfast.vertx.core.application.ApplicationId;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
+import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -91,6 +95,7 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
     }
 
     private static OServer createOServer() throws Exception {
+        registerLifeCycleListener();
         server = OServerMain.create(true);
         server.setServerRootDirectory(orientdbHome.getAbsolutePath());
         final OServerConfiguration config = new OServerConfiguration();
@@ -122,7 +127,6 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
             new OServerEntryConfiguration("db.pool.min", "1"),
             new OServerEntryConfiguration("db.pool.max", "50")
         };
-
         server.startup(config);
         return server;
     }
@@ -185,8 +189,6 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
     private void testSavingEventLogRecord(final ODatabase db, final String testName) throws Exception {
         db.registerHook(new SetCreatedOnAndUpdatedOn());
 
-        Orient.instance().addDbLifecycleListener(new RunRightFastOrientDBLifeCycleListener());
-
         final EventLogRecord eventLogRecord = new EventLogRecord();
         try {
             db.begin();
@@ -201,6 +203,12 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
         log.logp(INFO, CLASS_NAME, testName, String.format("doc = %s", eventLogRecord.toJSON()));
         assertThat(eventLogRecord.getCreatedOn(), is(notNullValue()));
         assertThat(eventLogRecord.getUpdatedOn(), is(notNullValue()));
+    }
+
+    private static void registerLifeCycleListener() {
+        final ApplicationId appId = ApplicationId.builder().group("co.runrightfast").name("runrightfast-vertx-orientdb").version("1.0.0").build();
+        final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);
+        Orient.instance().addDbLifecycleListener(new RunRightFastOrientDBLifeCycleListener(appEventLogger));
     }
 
 }
