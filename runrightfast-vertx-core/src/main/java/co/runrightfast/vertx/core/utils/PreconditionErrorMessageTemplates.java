@@ -21,12 +21,20 @@ package co.runrightfast.vertx.core.utils;
  */
 public interface PreconditionErrorMessageTemplates {
 
-    static String MUST_NOT_BE_BLANK = "'%s' must not be blank";
+    // string validation
+    static final String MUST_NOT_BE_BLANK = "'%s' must not be blank";
 
-    static String MUST_BE_GREATER_THAN_ZERO = "'%s' must be greater than 0";
+    // numeric validation
+    static final String MUST_BE_GREATER_THAN_ZERO = "'%s' must be greater than 0";
+    static final String MUST_BE_GREATER_THAN = "'%s' must be greater than %d";
 
-    static String MUST_BE_GREATER_THAN = "'%s' must be greater than %d";
+    // collection validation
+    static final String MUST_NOT_BE_EMPTY = "'%s' must not be empty";
 
-    static String MUST_NOT_BE_EMPTY = "'%s' must not be empty";
+    // File / Dir validation
+    static final String PATH_DOES_NOT_EXIST = "'%s': path does not exist : %s";
+    static final String PATH_IS_NOT_A_DIRECTORY = "'%s': %s is not a directory";
+    static final String PATH_IS_NOT_READABLE = "'%s': %s is not readable";
+    static final String PATH_IS_NOT_WRITEABLE = "'%s': %s is not writable";
 
 }

@@ -16,6 +16,10 @@
 package co.runrightfast.vertx.orientdb.impl;
 
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_EMPTY;
+import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_DOES_NOT_EXIST;
+import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_A_DIRECTORY;
+import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_READABLE;
+import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_WRITEABLE;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -23,13 +27,16 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Singular;
 import org.apache.commons.collections4.CollectionUtils;
 
 /**
@@ -43,6 +50,7 @@ public final class EmbeddedOrientDBServiceConfig {
 
     @NonNull
     @Getter
+    @Singular
     private final Set<DatabasePoolConfig> databasePoolConfigs;
 
     @Getter
@@ -50,13 +58,19 @@ public final class EmbeddedOrientDBServiceConfig {
     private final Path orientDBRootDir;
 
     @Getter
+    @Singular
     private final Set<OServerHandlerConfiguration> handlers;
 
     @Getter
+    @Singular
     private final Set<ODatabaseLifecycleListener> lifecycleListeners;
 
+    /**
+     * The hook can only be created while an OrientDB database instance is active, i.e., set on the current thread
+     */
     @Getter
-    private final Set<ORecordHook> hooks;
+    @Singular
+    private final Set<Supplier<ORecordHook>> hooks;
 
     @Getter
     @NonNull
@@ -67,9 +81,11 @@ public final class EmbeddedOrientDBServiceConfig {
      */
     @Getter
     @NonNull
+    @Singular
     private final Set<OServerUserConfiguration> users;
 
     @Getter
+    @Singular
     private final Map<OGlobalConfiguration, String> properties;
 
     public void validate() {
@@ -77,10 +93,22 @@ public final class EmbeddedOrientDBServiceConfig {
         checkArgument(CollectionUtils.isNotEmpty(handlers), MUST_NOT_BE_EMPTY, "handlers");
         checkArgument(CollectionUtils.isNotEmpty(users), MUST_NOT_BE_EMPTY, "users");
         if (Files.exists(orientDBRootDir)) {
-            checkArgument(Files.isDirectory(orientDBRootDir), "%s is not a directory", orientDBRootDir);
-            checkArgument(Files.isReadable(orientDBRootDir), "%s is not readable", orientDBRootDir);
-            checkArgument(Files.isWritable(orientDBRootDir), "%s is not writable", orientDBRootDir);
+            checkOrientDBRootDir();
+        } else {
+            try {
+                Files.createDirectories(orientDBRootDir);
+            } catch (final IOException ex) {
+                throw new RuntimeException("Failed to create OrientDB root dir: " + orientDBRootDir, ex);
+            }
+            checkOrientDBRootDir();
         }
+    }
+
+    private void checkOrientDBRootDir() {
+        checkArgument(Files.exists(orientDBRootDir), PATH_DOES_NOT_EXIST, "orientDBRootDir", orientDBRootDir);
+        checkArgument(Files.isDirectory(orientDBRootDir), PATH_IS_NOT_A_DIRECTORY, "orientDBRootDir", orientDBRootDir);
+        checkArgument(Files.isReadable(orientDBRootDir), PATH_IS_NOT_READABLE, "orientDBRootDir", orientDBRootDir);
+        checkArgument(Files.isWritable(orientDBRootDir), PATH_IS_NOT_WRITEABLE, "orientDBRootDir", orientDBRootDir);
     }
 
 }

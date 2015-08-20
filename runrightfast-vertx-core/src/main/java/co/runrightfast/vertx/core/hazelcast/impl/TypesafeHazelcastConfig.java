@@ -142,7 +142,7 @@ public class TypesafeHazelcastConfig {
             partitionGroupConfig.stream().map(this::partitionConfig).forEach(_hazelcastConfig::setPartitionGroupConfig);
         });
 
-        // Application manages the lifecycle and registers a shutdown hook - we want to ensure this is the last service that this is the last service that is started
+        // Application manages the lifecycle and registers a shutdown hook - we want to ensure this is the last service that is stopped
         _hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
         // mapping hazelcast.jmx.enabled to hazelcast.jmx because using Typesafe typeSafeConfig, hazelcast.jmx is an object and cannot be set to a boolean
         ConfigUtils.getBoolean(typeSafeConfig, "properties", "hazelcast", "jmx", "enabled").ifPresent(jmxEnabled -> _hazelcastConfig.setProperty("hazelcast.jmx", Boolean.toString(jmxEnabled)));

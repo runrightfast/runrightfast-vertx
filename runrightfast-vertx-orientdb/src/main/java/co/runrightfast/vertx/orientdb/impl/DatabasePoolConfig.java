@@ -44,7 +44,10 @@ public class DatabasePoolConfig {
     @Getter
     private final int maxPoolSize;
 
-    public DatabasePoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize) {
+    @Getter
+    private final boolean createDatabase;
+
+    public DatabasePoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize, final boolean createDatabase) {
         checkArgument(isNotBlank(databaseName), MUST_NOT_BE_BLANK, databaseName);
         checkArgument(isNotBlank(databaseUrl), MUST_NOT_BE_BLANK, databaseUrl);
         checkArgument(isNotBlank(userName), MUST_NOT_BE_BLANK, userName);
@@ -55,6 +58,54 @@ public class DatabasePoolConfig {
         this.userName = userName.trim();
         this.password = password.trim();
         this.maxPoolSize = maxPoolSize;
+        this.createDatabase = createDatabase;
+    }
+
+    /**
+     * with createDatabase = false
+     *
+     * @param databaseName
+     * @param databaseUrl
+     * @param userName
+     * @param password
+     * @param maxPoolSize
+     */
+    public DatabasePoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize) {
+        this(databaseName, databaseUrl, userName, password, maxPoolSize, false);
+    }
+
+    /**
+     * with
+     * <ol>
+     * <li>createDatabase = false
+     * <li>databaseUrl = "plocal:" + databaseName - e.g., if databaseName = "config", then databaseUrl = "plocal:config". This assumes that the database is
+     * located underneath ${ORIENTDB_HOME}/databases/config.
+     * </ol>
+     *
+     * @param databaseName
+     * @param userName
+     * @param password
+     * @param maxPoolSize
+     */
+    public DatabasePoolConfig(final String databaseName, final String userName, final String password, final int maxPoolSize) {
+        this(databaseName, "plocal:" + databaseName, userName, password, maxPoolSize, false);
+    }
+
+    /**
+     * with
+     * <ol>
+     * <li>databaseUrl = "plocal:" + databaseName - e.g., if databaseName = "config", then databaseUrl = "plocal:config". This assumes that the database is
+     * located underneath ${ORIENTDB_HOME}/databases/config.
+     * </ol>
+     *
+     * @param databaseName
+     * @param userName
+     * @param password
+     * @param maxPoolSize
+     * @param createDatabase
+     */
+    public DatabasePoolConfig(final String databaseName, final String userName, final String password, final int maxPoolSize, final boolean createDatabase) {
+        this(databaseName, "plocal:" + databaseName, userName, password, maxPoolSize, createDatabase);
     }
 
 }
