@@ -33,6 +33,7 @@ import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import com.codahale.metrics.MetricFilter;
 import com.google.common.collect.ImmutableSet;
+import com.hazelcast.core.HazelcastInstance;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.vertx.core.DeploymentOptions;
@@ -44,6 +45,7 @@ import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import static java.util.logging.Level.INFO;
 import lombok.Getter;
@@ -141,6 +143,7 @@ public class VertxServiceImplTest {
         log.info("test_vertx_default_options");
         service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-default")), deployments, appEventLogger, encryptionService);
         ServiceUtils.start(service);
+        services.add(service);
         final Vertx vertx = service.getVertx();
         assertThat(vertx.isClustered(), is(false));
         assertThat(vertx.isMetricsEnabled(), is(false));
@@ -151,6 +154,7 @@ public class VertxServiceImplTest {
         log.info("test_vertx_metrics_options");
         service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-with-metrics")), deployments, appEventLogger, encryptionService);
         ServiceUtils.start(service);
+        services.add(service);
         final Vertx vertx = service.getVertx();
         log.log(Level.INFO, "vertx.isClustered() = {0}", vertx.isClustered());
         log.log(Level.INFO, "vertx.isMetricsEnabled() = {0}", vertx.isMetricsEnabled());
@@ -178,6 +182,7 @@ public class VertxServiceImplTest {
         log.info("test_vertx_custom_options");
         service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-custom-non-clustered")), deployments, appEventLogger, encryptionService);
         ServiceUtils.start(service);
+        services.add(service);
         final Vertx vertx = service.getVertx();
         assertThat(vertx.isClustered(), is(false));
         assertThat(vertx.isMetricsEnabled(), is(false));
@@ -206,6 +211,7 @@ public class VertxServiceImplTest {
         log.info("test_vertx_clustered");
         service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-1")), deployments, appEventLogger, encryptionService);
         ServiceUtils.start(service);
+        services.add(service);
         final Vertx vertx = service.getVertx();
         assertThat(vertx.isClustered(), is(true));
 
@@ -216,6 +222,7 @@ public class VertxServiceImplTest {
 
         final VertxService service2 = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-2")), deployments, appEventLogger, encryptionService);
         ServiceUtils.start(service2);
+        services.add(service2);
         final Vertx vertx2 = service.getVertx();
         assertThat(vertx2.isClustered(), is(true));
 
@@ -229,6 +236,13 @@ public class VertxServiceImplTest {
 
         assertThat(clusterManager1.getNodes().size(), is(2));
         assertThat(clusterManager2.getNodes().size(), is(2));
+
+        final HazelcastInstance hazelcast1 = service.getHazelcastInstance().get();
+        final HazelcastInstance hazelcast2 = service2.getHazelcastInstance().get();
+
+        final String counterId = UUID.randomUUID().toString();
+        hazelcast1.getAtomicLong(counterId).set(1L);
+        assertThat(hazelcast2.getAtomicLong(counterId).get(), is(1L));
 
     }
 

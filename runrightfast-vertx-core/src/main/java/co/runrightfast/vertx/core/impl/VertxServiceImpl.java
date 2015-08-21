@@ -34,6 +34,7 @@ import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.hazelcast.core.HazelcastInstance;
 import com.typesafe.config.Config;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
@@ -368,6 +369,20 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     @Override
     public Set<RunRightFastVerticleDeployment> deployments() {
         return this.verticleManager.getDeployments();
+    }
+
+    @Override
+    public Optional<HazelcastInstance> getHazelcastInstance() {
+        if (!this.vertx.isClustered()) {
+            return Optional.empty();
+        }
+
+        final ClusterManager clusterManager = this.vertxOptions.getClusterManager();
+        if (clusterManager != null && clusterManager instanceof HazelcastClusterManager) {
+            return Optional.of(((HazelcastClusterManager) clusterManager).getHazelcastInstance());
+        }
+
+        return Optional.empty();
     }
 
 }

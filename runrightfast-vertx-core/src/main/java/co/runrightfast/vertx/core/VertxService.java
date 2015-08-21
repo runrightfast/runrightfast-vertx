@@ -20,10 +20,12 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.util.concurrent.Service;
+import com.hazelcast.core.HazelcastInstance;
 import com.typesafe.config.Config;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -52,6 +54,12 @@ public interface VertxService extends Service {
     Map<String, RunRightFastVerticleDeployment> deployedVerticles();
 
     Set<RunRightFastVerticleDeployment> deployments();
+
+    /**
+     *
+     * @return HazelcastInstance that is being used by Vertx - or empty if Vertx is not clustered
+     */
+    Optional<HazelcastInstance> getHazelcastInstance();
 
     static final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(VERTX_METRIC_REGISTRY_NAME);
 
