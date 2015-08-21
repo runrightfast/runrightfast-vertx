@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.verticles.verticleManager;
 
+import co.runrightfast.core.JsonRepresentation;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
@@ -35,7 +36,7 @@ import lombok.NonNull;
  * @author alfio
  */
 @EqualsAndHashCode(of = "runRightFastVerticleId")
-public final class RunRightFastVerticleDeployment {
+public final class RunRightFastVerticleDeployment implements JsonRepresentation {
 
     @Getter
     private final Supplier<RunRightFastVerticle> verticle;
@@ -75,6 +76,7 @@ public final class RunRightFastVerticleDeployment {
 
     }
 
+    @Override
     public JsonObject toJson() {
         return Json.createObjectBuilder()
                 .add("verticleClass", verticle.getClass().getName())

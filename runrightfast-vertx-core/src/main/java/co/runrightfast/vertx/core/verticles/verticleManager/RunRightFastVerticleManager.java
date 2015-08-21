@@ -15,7 +15,10 @@
  */
 package co.runrightfast.vertx.core.verticles.verticleManager;
 
+import co.runrightfast.core.application.event.AppEvent;
 import co.runrightfast.core.application.event.AppEventLogger;
+import static co.runrightfast.core.application.event.ApplicationEvents.VERTICLE_DEPLOYMENT_FAILED;
+import static co.runrightfast.core.application.event.ApplicationEvents.VERTICLE_DEPLOYMENT_SUCCESS;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.core.crypto.EncryptionService;
@@ -41,7 +44,6 @@ import io.vertx.core.eventbus.Message;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.Getter;
@@ -230,10 +232,18 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                         .put(result.result(), deployment)
                         .build();
                 registerJmxReporter(deployment);
-                log.logp(Level.INFO, CLASS_NAME, "deployVerticle", () -> deployment.toJson().toString());
+                appEventLogger.accept(AppEvent.info(VERTICLE_DEPLOYMENT_SUCCESS)
+                        .setVerticleId(VERTICLE_ID)
+                        .setData(deployment)
+                        .build()
+                );
             } else {
-                log.logp(Level.SEVERE, CLASS_NAME, "deployVerticle", result.cause(), () -> deployment.toJson().toString());
-                // TODO: raise an alert if the deployment fails
+                appEventLogger.accept(AppEvent.error(VERTICLE_DEPLOYMENT_FAILED)
+                        .setVerticleId(VERTICLE_ID)
+                        .setData(deployment)
+                        .setException(result.cause())
+                        .build()
+                );
             }
         });
     }

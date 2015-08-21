@@ -32,7 +32,15 @@ public abstract class DocumentObject {
     protected final ODocument document;
 
     public DocumentObject() {
-        this.document = new ODocument(getClass().getSimpleName());
+        this.document = new ODocument(getDocumentClassName());
+    }
+
+    /**
+     *
+     * @return {@link Class#getSimpleName() }
+     */
+    public final String getDocumentClassName() {
+        return getClass().getSimpleName();
     }
 
     public void save() {

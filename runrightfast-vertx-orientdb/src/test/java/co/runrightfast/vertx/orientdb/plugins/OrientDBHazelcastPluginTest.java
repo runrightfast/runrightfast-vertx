@@ -19,7 +19,9 @@ import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory;
+import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
@@ -27,6 +29,7 @@ import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBService;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
+import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableList;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -193,6 +196,22 @@ public class OrientDBHazelcastPluginTest {
         try (final ODatabaseDocumentTx db = service.getODatabaseDocumentTxSupplier(CLASS_NAME).get().get()) {
             testSavingEventLogRecord(db, "testGetODatabaseDocumentTxSupplier");
         }
+
+        testODatabaseDocumentTxHealthCheck();
+    }
+
+    @Test
+    public void testODatabaseDocumentTxHealthCheck() {
+        final ODatabaseDocumentTxHealthCheck healthcheck = ODatabaseDocumentTxHealthCheck.builder()
+                .oDatabaseDocumentTxSupplier(service.getODatabaseDocumentTxSupplier(CLASS_NAME).get())
+                .documentObject(EventLogRecord.class)
+                .documentObject(Timestamped.class)
+                .build();
+
+        final HealthCheck.Result result = healthcheck.execute();
+        log.logp(INFO, CLASS_NAME, "testODatabaseDocumentTxHealthCheck", result.getMessage());
+        JsonUtils.parse(result.getMessage());
+        assertThat(result.isHealthy(), is(true));
     }
 
     private void testSavingEventLogRecord(final ODatabase db, final String testName) throws Exception {

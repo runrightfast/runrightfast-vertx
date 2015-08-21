@@ -48,6 +48,9 @@ public interface ApplicationEvents {
     static final String SERVICE_TERMINATED = "service.terminated";
     static final String SERVICE_FAILED = "service.failed";
 
+    static final String VERTICLE_DEPLOYMENT_SUCCESS = "verticle.deployment.success";
+    static final String VERTICLE_DEPLOYMENT_FAILED = "verticle.deployment.failed";
+
     @RequiredArgsConstructor
     public static final class HealthCheckResult implements JsonRepresentation {
 
