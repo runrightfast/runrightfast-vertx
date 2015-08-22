@@ -120,6 +120,8 @@ public final class DemoMXBeanImpl implements DemoMXBean {
             }
         });
 
+        registerMessageConsumer();
+
     }
 
     void handleEchoRequest(final Message<String> request) {
