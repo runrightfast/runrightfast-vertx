@@ -268,21 +268,22 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         });
     }
 
-    private <REQ extends Message, RESP extends Message> JsonObject messageConsumerLogInfo(final MessageConsumerConfig<REQ, RESP> config) {
-        return messageConsumerLogInfoAsJson(config).build();
+    private <REQ extends Message, RESP extends Message> JsonObject messageConsumerLogInfo(final String address, final MessageConsumerConfig<REQ, RESP> config) {
+        return messageConsumerLogInfoAsJson(address, config).build();
     }
 
-    private <REQ extends Message, RESP extends Message> JsonObjectBuilder messageConsumerLogInfoAsJson(final MessageConsumerConfig<REQ, RESP> config) {
+    private <REQ extends Message, RESP extends Message> JsonObjectBuilder messageConsumerLogInfoAsJson(final String address, final MessageConsumerConfig<REQ, RESP> config) {
         return Json.createObjectBuilder()
+                .add("address", address)
                 .add("config", config.toJson());
     }
 
     private <REQ extends Message, RESP extends Message> Handler<AsyncResult<Void>> messageConsumerCompletionHandler(final String address, final Optional<Handler<AsyncResult<Void>>> handler, final MessageConsumerConfig<REQ, RESP> config) {
         return (AsyncResult<Void> result) -> {
             if (result.succeeded()) {
-                info.log("messageConsumerCompletionHandler.succeeded", () -> messageConsumerLogInfo(config));
+                info.log("messageConsumerCompletionHandler.succeeded", () -> messageConsumerLogInfo(address, config));
             } else {
-                error.log("messageConsumerCompletionHandler.failed", () -> messageConsumerLogInfo(config), result.cause());
+                error.log("messageConsumerCompletionHandler.failed", () -> messageConsumerLogInfo(address, config), result.cause());
             }
             handler.ifPresent(h -> h.handle(result));
         };
@@ -290,7 +291,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     private <REQ extends Message, RESP extends Message> Handler<Void> messageConsumerEndHandler(final String address, final Optional<Handler<Void>> handler, final MessageConsumerConfig<REQ, RESP> config) {
         final Handler<Void> defaultHandler = result -> {
-            info.log("messageConsumerEndHandler", () -> messageConsumerLogInfo(config));
+            info.log("messageConsumerEndHandler", () -> messageConsumerLogInfo(address, config));
         };
 
         return handler.map(h -> {
@@ -312,9 +313,9 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
                     .add("body", protobuMessageToJson(failedMessage.body()))
                     .build();
 
-            error.log("logMessageConsumerException", () -> messageConsumerLogInfoAsJson(config).add("message", message).build(), exception);
+            error.log("logMessageConsumerException", () -> messageConsumerLogInfoAsJson(address, config).add("message", message).build(), exception);
         } else {
-            error.log("logMessageConsumerException", () -> messageConsumerLogInfo(config), exception);
+            error.log("logMessageConsumerException", () -> messageConsumerLogInfo(address, config), exception);
         }
     }
 

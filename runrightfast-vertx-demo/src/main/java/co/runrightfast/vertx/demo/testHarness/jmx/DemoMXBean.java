@@ -28,9 +28,15 @@ public interface DemoMXBean {
 
     void getVerticleDeploymentsAcrossCluster();
 
-    void publshMessage(final String message);
-
     String encrypt(String data);
 
     String decrypt(String data);
+
+    void publishMessage(final String message);
+
+    void registerMessageConsumer();
+
+    void unregisterMessageConsumer();
+
+    boolean isMessagConsumerRegistered();
 }

@@ -38,6 +38,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.MessageConsumer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.security.Key;
 import java.time.Instant;
@@ -78,6 +79,8 @@ public final class DemoMXBeanImpl implements DemoMXBean {
 
     private final String ECHO_REPLY_TO_ADDRESS = "DemoMXBean/ECHO_REPLY_TO_ADDRESS/" + UUID.randomUUID().toString();
 
+    private MessageConsumer<String> echoMessageConsumer;
+
     public DemoMXBeanImpl(@NonNull final Vertx vertx) {
         this.vertx = vertx;
 
@@ -107,7 +110,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
                     } else {
                         log.log(Level.INFO, "Registration failed : {0}", GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS);
                     }
-                });;
+                });
 
         this.vertx.eventBus().consumer(ECHO_REPLY_TO_ADDRESS, this::handleEchoResponse).completionHandler(res -> {
             if (res.succeeded()) {
@@ -115,15 +118,8 @@ public final class DemoMXBeanImpl implements DemoMXBean {
             } else {
                 log.log(Level.INFO, "Registration failed : {0}", ECHO_REPLY_TO_ADDRESS);
             }
-        });;
-
-        this.vertx.eventBus().consumer(ECHO_ADDRESS, this::handleEchoRequest).completionHandler(res -> {
-            if (res.succeeded()) {
-                log.log(Level.INFO, "The handler registration has reached all nodes: {0}", ECHO_ADDRESS);
-            } else {
-                log.log(Level.INFO, "Registration failed : {0}", ECHO_ADDRESS);
-            }
         });
+
     }
 
     void handleEchoRequest(final Message<String> request) {
@@ -204,8 +200,41 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     }
 
     @Override
-    public void publshMessage(@NonNull final String message) {
+    public void publishMessage(@NonNull final String message) {
         vertx.eventBus().publish(ECHO_ADDRESS, message, EventBusUtils.withReplyToAddress(deliveryOptions(), ECHO_REPLY_TO_ADDRESS));
+    }
+
+    @Override
+    public synchronized void registerMessageConsumer() {
+        if (!isMessagConsumerRegistered()) {
+            this.echoMessageConsumer = this.vertx.eventBus().consumer(ECHO_ADDRESS, this::handleEchoRequest);
+            this.echoMessageConsumer.completionHandler(res -> {
+                if (res.succeeded()) {
+                    log.log(Level.INFO, "The handler registration has reached all nodes: {0}", ECHO_ADDRESS);
+                } else {
+                    log.log(Level.INFO, "Registration failed : {0}", ECHO_ADDRESS);
+                }
+            });
+        }
+    }
+
+    @Override
+    public synchronized void unregisterMessageConsumer() {
+        if (echoMessageConsumer != null) {
+            echoMessageConsumer.unregister(res -> {
+                if (res.succeeded()) {
+                    log.info("The handler un-registration has reached all nodes");
+                } else {
+                    log.info("Un-registration failed!");
+                }
+            });
+            echoMessageConsumer = null;
+        }
+    }
+
+    @Override
+    public boolean isMessagConsumerRegistered() {
+        return this.echoMessageConsumer != null;
     }
 
 }
