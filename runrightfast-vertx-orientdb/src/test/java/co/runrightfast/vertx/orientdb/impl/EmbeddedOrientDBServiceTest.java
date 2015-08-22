@@ -80,15 +80,15 @@ public class EmbeddedOrientDBServiceTest {
 
         final EmbeddedOrientDBServiceConfig config = EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(orientdbHome.toPath())
-                .handler(oGraphServerHandler())
-                .handler(oHazelcastPlugin())
-                .handler(oServerSideScriptInterpreter())
+                .handler(EmbeddedOrientDBServiceTest::oGraphServerHandler)
+                .handler(EmbeddedOrientDBServiceTest::oHazelcastPlugin)
+                .handler(EmbeddedOrientDBServiceTest::oServerSideScriptInterpreter)
                 .networkConfig(oServerNetworkConfiguration())
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                 .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "admin", "admin", 10, true))
-                .lifecycleListener(new RunRightFastOrientDBLifeCycleListener(appEventLogger))
+                .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
 

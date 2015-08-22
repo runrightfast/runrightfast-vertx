@@ -27,6 +27,7 @@ import io.vertx.core.VertxOptions;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -36,6 +37,11 @@ import java.util.logging.Logger;
 public interface VertxService extends Service {
 
     static final Logger LOG = Logger.getLogger(VertxService.class.getName());
+
+    /**
+     * Use case: When Vertx is clustered, verticles can retrieve the HazelcastInstance that the Vertx cluster is using.
+     */
+    static final Map<Vertx, Optional<HazelcastInstance>> hazelcastInstances = new ConcurrentHashMap<>(1);
 
     Vertx getVertx();
 

@@ -96,6 +96,15 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
         startJmxReporterForSelf();
     }
 
+    @Override
+    protected void shutDown() {
+        verticleJmxReporters.values().forEach(reporter -> {
+            reporter.stop();
+            reporter.close();
+        });
+        stopJmxReporterForSelf();
+    }
+
     private void registerRunVerticleHealthChecksMessageConsumer() {
         registerMessageConsumer(MessageConsumerConfig.<RunVerticleHealthChecks.Request, RunVerticleHealthChecks.Response>builder()
                 .addressMessageMapping(EventBusAddressMessageMapping.builder()
@@ -192,15 +201,6 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     private boolean hasFilters(@NonNull final RunVerticleHealthChecks.Request request) {
         return request.getVerticleIdsCount() > 0 || request.getGroupsCount() > 0 || request.getNamesCount() > 0;
-    }
-
-    @Override
-    protected void shutDown() {
-        verticleJmxReporters.values().forEach(reporter -> {
-            reporter.stop();
-            reporter.close();
-        });
-        stopJmxReporterForSelf();
     }
 
     /**

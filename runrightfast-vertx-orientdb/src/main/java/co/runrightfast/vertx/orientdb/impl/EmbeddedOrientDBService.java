@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import static java.util.logging.Level.INFO;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -92,13 +93,13 @@ public class EmbeddedOrientDBService extends AbstractIdleService implements Orie
     private void registerLifecycleListeners() throws Exception {
         if (CollectionUtils.isNotEmpty(config.getLifecycleListeners())) {
             final Orient orient = Orient.instance();
-            config.getLifecycleListeners().stream().forEach(orient::addDbLifecycleListener);
+            config.getLifecycleListeners().stream().map(Supplier::get).forEach(orient::addDbLifecycleListener);
         }
     }
 
     private void registerHandlers(final OServerConfiguration serverConfig) {
         if (CollectionUtils.isNotEmpty(config.getHandlers())) {
-            serverConfig.handlers = config.getHandlers().stream().collect(Collectors.toList());
+            serverConfig.handlers = config.getHandlers().stream().map(Supplier::get).collect(Collectors.toList());
         }
     }
 
@@ -158,7 +159,7 @@ public class EmbeddedOrientDBService extends AbstractIdleService implements Orie
 
     private void registerDatabaseLifeCycleListeners() {
         if (CollectionUtils.isNotEmpty(config.getLifecycleListeners())) {
-            config.getLifecycleListeners().forEach(l -> Orient.instance().addDbLifecycleListener(l));
+            config.getLifecycleListeners().forEach(l -> Orient.instance().addDbLifecycleListener(l.get()));
         }
     }
 

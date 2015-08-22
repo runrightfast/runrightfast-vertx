@@ -27,7 +27,6 @@ import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer.addRunRightFastHeaders;
-import co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.JsonUtils;
@@ -43,14 +42,12 @@ import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
-import co.runrightfast.vertx.orientdb.plugins.OrientDBHazelcastPlugin;
+import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
 import co.runrightfast.vertx.testSupport.EncryptionServiceWithDefaultCiphers;
 import com.codahale.metrics.MetricFilter;
 import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -142,15 +139,7 @@ public class OrientDBVerticleTest {
 
         @Provides
         @Singleton
-        public HazelcastInstance providesHazelcastInstance(final Config typesafeConfig) {
-            return Hazelcast.newHazelcastInstance(HazelcastConfigFactory.hazelcastConfigFactory("OrientDB").apply(typesafeConfig.getConfig("hazelcast")));
-        }
-
-        @Provides
-        @Singleton
-        public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig(final HazelcastInstance hazelcast) {
-            OrientDBHazelcastPlugin.HAZELCAST_INSTANCE = hazelcast;
-
+        public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig() {
             orientdbHome.mkdirs();
             try {
                 FileUtils.cleanDirectory(orientdbHome);
@@ -174,15 +163,15 @@ public class OrientDBVerticleTest {
 
             return EmbeddedOrientDBServiceConfig.builder()
                     .orientDBRootDir(orientdbHome.toPath())
-                    .handler(oGraphServerHandler())
-                    .handler(oHazelcastPlugin())
-                    .handler(oServerSideScriptInterpreter())
+                    .handler(this::oGraphServerHandler)
+                    .handler(this::oHazelcastPlugin)
+                    .handler(this::oServerSideScriptInterpreter)
                     .networkConfig(oServerNetworkConfiguration())
                     .user(new OServerUserConfiguration("root", "root", "*"))
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                     .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "admin", "admin", 10, true))
-                    .lifecycleListener(new RunRightFastOrientDBLifeCycleListener(appEventLogger))
+                    .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                     .hook(() -> new SetCreatedOnAndUpdatedOn())
                     .build();
         }
@@ -215,7 +204,7 @@ public class OrientDBVerticleTest {
 
         private OServerHandlerConfiguration oHazelcastPlugin() {
             final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
-            config.clazz = OrientDBHazelcastPlugin.class.getName();
+            config.clazz = OrientDBPluginWithProvidedHazelcastInstance.class.getName();
             config.parameters = new OServerParameterConfiguration[]{
                 new OServerParameterConfiguration("enabled", "true"),
                 new OServerParameterConfiguration("configuration.db.default", new File(orientdbHome, "config/default-distributed-db-config.json").getAbsolutePath()),};

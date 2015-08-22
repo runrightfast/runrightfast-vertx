@@ -124,6 +124,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             this.vertxOptions = createVertxOptions();
             logVertxOptions();
             initVertx();
+            hazelcastInstances.put(vertx, getHazelcastInstance());
             deployVerticleManager();
             appEventLogger.accept(AppEvent.info(APP_STARTED).build());
         } catch (final Throwable t) {

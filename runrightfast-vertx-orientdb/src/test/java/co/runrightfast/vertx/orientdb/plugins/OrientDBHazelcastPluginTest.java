@@ -81,7 +81,7 @@ public class OrientDBHazelcastPluginTest {
         ConfigFactory.invalidateCaches();
         final Config typesafeConfig = ConfigFactory.load();
         hazelcast = Hazelcast.newHazelcastInstance(HazelcastConfigFactory.hazelcastConfigFactory("OrientDB").apply(typesafeConfig.getConfig("hazelcast")));
-        OrientDBHazelcastPlugin.HAZELCAST_INSTANCE = hazelcast;
+        OrientDBPluginWithProvidedHazelcastInstance.HAZELCAST_INSTANCE = () -> hazelcast;
 
         orientdbHome.mkdirs();
         FileUtils.cleanDirectory(orientdbHome);
@@ -98,15 +98,15 @@ public class OrientDBHazelcastPluginTest {
 
         final EmbeddedOrientDBServiceConfig config = EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(orientdbHome.toPath())
-                .handler(oGraphServerHandler())
-                .handler(oHazelcastPlugin())
-                .handler(oServerSideScriptInterpreter())
+                .handler(OrientDBHazelcastPluginTest::oGraphServerHandler)
+                .handler(OrientDBHazelcastPluginTest::oHazelcastPlugin)
+                .handler(OrientDBHazelcastPluginTest::oServerSideScriptInterpreter)
                 .networkConfig(oServerNetworkConfiguration())
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                 .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "admin", "admin", 10, true))
-                .lifecycleListener(new RunRightFastOrientDBLifeCycleListener(appEventLogger))
+                .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
 
@@ -162,7 +162,7 @@ public class OrientDBHazelcastPluginTest {
 
     private static OServerHandlerConfiguration oHazelcastPlugin() {
         final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
-        config.clazz = OrientDBHazelcastPlugin.class.getName();
+        config.clazz = OrientDBPluginWithProvidedHazelcastInstance.class.getName();
         config.parameters = new OServerParameterConfiguration[]{
             new OServerParameterConfiguration("enabled", "true"),
             new OServerParameterConfiguration("configuration.db.default", new File(orientdbHome, "config/default-distributed-db-config.json").getAbsolutePath()),};

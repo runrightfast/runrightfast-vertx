@@ -59,11 +59,11 @@ public final class EmbeddedOrientDBServiceConfig {
 
     @Getter
     @Singular
-    private final Set<OServerHandlerConfiguration> handlers;
+    private final Set<Supplier<OServerHandlerConfiguration>> handlers;
 
     @Getter
     @Singular
-    private final Set<ODatabaseLifecycleListener> lifecycleListeners;
+    private final Set<Supplier<ODatabaseLifecycleListener>> lifecycleListeners;
 
     /**
      * The hook can only be created while an OrientDB database instance is active, i.e., set on the current thread

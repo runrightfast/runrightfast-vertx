@@ -51,6 +51,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.Message;
+import com.hazelcast.core.HazelcastInstance;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -473,6 +474,10 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     protected HealthCheckConfig.HealthCheckConfigBuilder healthCheckConfigBuilder() {
         return HealthCheckConfig.builder().registryName(getRunRightFastVerticleId().toJson().toString());
+    }
+
+    protected Optional<HazelcastInstance> hazelcast() {
+        return VertxService.hazelcastInstances.getOrDefault(vertx, Optional.empty());
     }
 
     @Override

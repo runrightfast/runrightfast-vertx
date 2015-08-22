@@ -15,25 +15,26 @@
  */
 package co.runrightfast.vertx.orientdb.plugins;
 
+import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
+import static co.runrightfast.vertx.core.hazelcast.HazelcastInstanceWithNoopShutdown.hazelcastInstanceWithNoopShutdown;
+import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import java.util.function.Supplier;
 
 /**
  *
  * @author alfio
  */
-public final class OrientDBHazelcastPlugin extends OHazelcastPlugin {
+public class HazelcastInstanceWithNoopShutdownSupplier implements Supplier<HazelcastInstance> {
 
-    /**
-     * OrientDB requires that the plugin instance be created by OrientDB using the default constructor. Thus, we need to "inject" the HazelcastInstance.
-     *
-     * The purpose is to be able to share the HazelcastInstance
-     */
-    public static HazelcastInstance HAZELCAST_INSTANCE;
+    private HazelcastInstance hazelcast;
 
     @Override
-    protected HazelcastInstance configureHazelcast() {
-        return HAZELCAST_INSTANCE;
+    public HazelcastInstance get() {
+        if (hazelcast == null) {
+            this.hazelcast = hazelcastInstanceWithNoopShutdown(Hazelcast.getHazelcastInstanceByName(VERTX_HAZELCAST_INSTANCE_ID));
+        }
+        return hazelcast;
     }
 
 }
