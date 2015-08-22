@@ -26,6 +26,10 @@ public interface DemoMXBean {
 
     String getVerticleDeployments();
 
+    void getVerticleDeploymentsAcrossCluster();
+
+    void publshMessage(final String message);
+
     String encrypt(String data);
 
     String decrypt(String data);

@@ -26,11 +26,19 @@ import static co.runrightfast.vertx.core.VertxConstants.VERTX_METRIC_REGISTRY_NA
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
 import co.runrightfast.vertx.core.application.ApplicationId;
+import co.runrightfast.vertx.core.eventbus.EventBusAddress;
+import co.runrightfast.vertx.core.eventbus.EventBusUtils;
+import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import co.runrightfast.vertx.core.utils.JsonUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
+import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
+import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.codahale.metrics.MetricFilter;
 import com.google.common.collect.ImmutableSet;
 import com.hazelcast.core.HazelcastInstance;
@@ -39,6 +47,7 @@ import com.typesafe.config.ConfigFactory;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
@@ -46,8 +55,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import static java.util.logging.Level.INFO;
+import javax.json.Json;
+import javax.json.JsonObject;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import static org.hamcrest.CoreMatchers.is;
@@ -207,7 +219,7 @@ public class VertxServiceImplTest {
      * Test of getVertx method, of class VertxServiceImpl.
      */
     @Test
-    public void test_vertx_clustered() {
+    public void test_vertx_clustered() throws InterruptedException {
         log.info("test_vertx_clustered");
         service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-1")), deployments, appEventLogger, encryptionService);
         ServiceUtils.start(service);
@@ -243,6 +255,36 @@ public class VertxServiceImplTest {
         final String counterId = UUID.randomUUID().toString();
         hazelcast1.getAtomicLong(counterId).set(1L);
         assertThat(hazelcast2.getAtomicLong(counterId).get(), is(1L));
+
+        final ProtobufMessageProducer getVerticleDeploymentsMessageSender = new ProtobufMessageProducer(
+                vertx.eventBus(),
+                EventBusAddress.eventBusAddress(RunRightFastVerticleManager.VERTICLE_ID, "get-verticle-deployments"),
+                getProtobufMessageCodec(GetVerticleDeployments.Request.getDefaultInstance()).get(),
+                metricRegistry
+        );
+
+        final String GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS = "test_vertx_clustered/" + UUID.randomUUID().toString();
+
+        final CountDownLatch latch = new CountDownLatch(2);
+        vertx.eventBus().consumer(GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS, (final Message<GetVerticleDeployments.Response> responseMessage) -> {
+            try {
+                final GetVerticleDeployments.Response response = responseMessage.body();
+                final JsonObject json = Json.createObjectBuilder()
+                        .add("headers", JsonUtils.toJsonObject(responseMessage.headers()))
+                        .add("body", ProtobufUtils.protobuMessageToJson(response))
+                        .build();
+                log.info(JsonUtils.toVertxJsonObject(json).encodePrettily());
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        getVerticleDeploymentsMessageSender.publish(
+                GetVerticleDeployments.Request.newBuilder().build(),
+                EventBusUtils.withReplyToAddress(EventBusUtils.deliveryOptions(), GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS)
+        );
+
+        latch.await();
 
     }
 

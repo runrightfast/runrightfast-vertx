@@ -20,6 +20,9 @@ import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
+import co.runrightfast.vertx.core.eventbus.EventBusUtils;
+import static co.runrightfast.vertx.core.eventbus.EventBusUtils.deliveryOptions;
+import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import co.runrightfast.vertx.core.utils.JsonUtils;
@@ -37,12 +40,17 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.security.Key;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import static java.util.logging.Level.SEVERE;
+import javax.json.Json;
+import javax.json.JsonObject;
 import lombok.NonNull;
 import lombok.extern.java.Log;
 import org.apache.shiro.crypto.AesCipherService;
@@ -64,6 +72,12 @@ public final class DemoMXBeanImpl implements DemoMXBean {
 
     private final Decryption decryption;
 
+    private final String GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS = "DemoMXBean/GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS/" + UUID.randomUUID().toString();
+
+    private final String ECHO_ADDRESS = "DemoMXBean/ECHO";
+
+    private final String ECHO_REPLY_TO_ADDRESS = "DemoMXBean/ECHO_REPLY_TO_ADDRESS/" + UUID.randomUUID().toString();
+
     public DemoMXBeanImpl(@NonNull final Vertx vertx) {
         this.vertx = vertx;
 
@@ -77,7 +91,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         getVerticleDeploymentsMessageSender = new ProtobufMessageProducer(
                 vertx.eventBus(),
                 EventBusAddress.eventBusAddress(RunRightFastVerticleManager.VERTICLE_ID, "get-verticle-deployments"),
-                getProtobufMessageCodec(GetVerticleDeployments.Response.getDefaultInstance()).get(),
+                getProtobufMessageCodec(GetVerticleDeployments.Request.getDefaultInstance()).get(),
                 metricRegistry
         );
 
@@ -85,6 +99,51 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         final EncryptionService encryptionService = encryptionService(KEY);
         encryption = encryptionService.encryption(KEY);
         decryption = encryptionService.decryption(KEY);
+
+        this.vertx.eventBus().consumer(GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS, this::handleGetVerticleDeploymentsResponse)
+                .completionHandler(res -> {
+                    if (res.succeeded()) {
+                        log.log(Level.INFO, "The handler registration has reached all nodes: {0}", GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS);
+                    } else {
+                        log.log(Level.INFO, "Registration failed : {0}", GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS);
+                    }
+                });;
+
+        this.vertx.eventBus().consumer(ECHO_REPLY_TO_ADDRESS, this::handleEchoResponse).completionHandler(res -> {
+            if (res.succeeded()) {
+                log.log(Level.INFO, "The handler registration has reached all nodes: {0}", ECHO_REPLY_TO_ADDRESS);
+            } else {
+                log.log(Level.INFO, "Registration failed : {0}", ECHO_REPLY_TO_ADDRESS);
+            }
+        });;
+
+        this.vertx.eventBus().consumer(ECHO_ADDRESS, this::handleEchoRequest).completionHandler(res -> {
+            if (res.succeeded()) {
+                log.log(Level.INFO, "The handler registration has reached all nodes: {0}", ECHO_ADDRESS);
+            } else {
+                log.log(Level.INFO, "Registration failed : {0}", ECHO_ADDRESS);
+            }
+        });
+    }
+
+    void handleEchoRequest(final Message<String> request) {
+        log.info("*** RECIEVED MESSAGE : " + request.body());
+        MessageHeader.getReplyToAddress(request).ifPresent(replyTo -> {
+            vertx.eventBus().send(replyTo, String.format("%s: RECEIVED MESSAGE: %s", Instant.now(), request.body()));
+        });
+    }
+
+    void handleEchoResponse(final Message<String> responseMessage) {
+        log.info(responseMessage.body());
+    }
+
+    void handleGetVerticleDeploymentsResponse(final Message<GetVerticleDeployments.Response> responseMessage) {
+        final GetVerticleDeployments.Response response = responseMessage.body();
+        final JsonObject json = Json.createObjectBuilder()
+                .add("headers", JsonUtils.toJsonObject(responseMessage.headers()))
+                .add("body", ProtobufUtils.protobuMessageToJson(response))
+                .build();
+        log.info(JsonUtils.toVertxJsonObject(json).encodePrettily());
     }
 
     private EncryptionService encryptionService(final String secretKey) {
@@ -115,6 +174,14 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         return JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(response)).encodePrettily();
     }
 
+    @Override
+    public void getVerticleDeploymentsAcrossCluster() {
+        getVerticleDeploymentsMessageSender.publish(
+                GetVerticleDeployments.Request.newBuilder().build(),
+                EventBusUtils.withReplyToAddress(EventBusUtils.deliveryOptions(), GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS)
+        );
+    }
+
     private <A extends com.google.protobuf.Message> Handler<AsyncResult<Message<A>>> responseHandler(final CompletableFuture future, final Class<A> messageType) {
         return result -> {
             if (result.succeeded()) {
@@ -134,6 +201,11 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     @Override
     public String decrypt(final @NonNull String data) {
         return new String(decryption.apply(Base64.getDecoder().decode(data)), UTF_8);
+    }
+
+    @Override
+    public void publshMessage(@NonNull final String message) {
+        vertx.eventBus().publish(ECHO_ADDRESS, message, EventBusUtils.withReplyToAddress(deliveryOptions(), ECHO_REPLY_TO_ADDRESS));
     }
 
 }

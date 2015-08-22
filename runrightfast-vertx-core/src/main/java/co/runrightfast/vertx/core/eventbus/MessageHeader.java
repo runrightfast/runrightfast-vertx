@@ -29,8 +29,9 @@ public enum MessageHeader {
     MESSAGE_ID("rrf-msg-id"),
     MESSAGE_CORRELATION_ID("rrf-msg-correlation"),
     MESSAGE_TIMESTAMP("rrf-msg-ts"),
-    REPLY_TO_ADDRESS("rrf-reply-address"),
-    FROM_ADDRESS("rrf-from-address");
+    REPLY_TO_ADDRESS("rrf-reply-address"), // event bus address
+    FROM_ADDRESS("rrf-from-address"), // event bus address
+    FROM("rrf-from");
 
     public final String header;
 

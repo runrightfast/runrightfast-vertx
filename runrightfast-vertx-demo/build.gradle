@@ -30,18 +30,18 @@ mainClassName = 'co.runrightfast.vertx.demo.VertxApp'
 
 applicationDefaultJvmArgs = [    
     // enable remote debugging
-    "-Xdebug",
-    "-Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n",
+//    "-Xdebug",
+//    "-Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n",
     
-    "-Dcom.sun.management.jmxremote.authenticate=false",
-    "-Dcom.sun.management.jmxremote.ssl=false",
-    "-Dcom.sun.management.jmxremote.port=7410",
+//    "-Dcom.sun.management.jmxremote.authenticate=false",
+//    "-Dcom.sun.management.jmxremote.ssl=false",
+//    "-Dcom.sun.management.jmxremote.port=7410",
     
     "-Dapp.log.dir=${buildDir}/app/logs",   
     "-Drunrightfast.app.version=${version}",
     
-    "-Dvertx.cluster.public.host=192.168.0.100",
-    "-Dvertx.cluster.public.port=60558"
+    "-Dvertx.cluster.public.host=192.168.0.100"
+    //"-Dvertx.cluster.public.port=60558"
 ]
 
 dependencies {
@@ -64,9 +64,13 @@ task appDocker(type: Docker) {
     project.group = "runrightfast"
     applicationName = "${project.name}"
     entryPoint(["/runrightfast/apps/${project.name}/bin/${project.name}"])
+    // JMX port
     exposePort 7410
+    // Remote debug port
     exposePort 4000
+    // Hazelcast port
     exposePort 5701
+    // Vertx EventBus port
     exposePort 9123
     addFile("${buildDir}/install/${project.name}", "/runrightfast/apps/${project.name}")
 }

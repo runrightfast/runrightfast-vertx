@@ -73,7 +73,7 @@ public final class ProtobufMessageCodec<MSG extends Message> implements MessageC
     @Override
     public MSG decodeFromWire(final int pos, final Buffer buffer) {
         try {
-            return (MSG) defaultInstance.getParserForType().parseFrom(ciphers.getDecryption().apply(buffer.getBytes()));
+            return (MSG) defaultInstance.getParserForType().parseFrom(ciphers.getDecryption().apply(buffer.getBytes(pos, buffer.length())));
         } catch (final InvalidProtocolBufferException ex) {
             throw new ApplicationException(ex);
         }

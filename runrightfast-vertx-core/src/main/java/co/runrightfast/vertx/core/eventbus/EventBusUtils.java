@@ -15,12 +15,14 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import static co.runrightfast.vertx.core.eventbus.MessageHeader.FROM;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.FROM_ADDRESS;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_CORRELATION_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_TIMESTAMP;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.REPLY_TO_ADDRESS;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.getMessageId;
+import static co.runrightfast.vertx.core.utils.JvmProcess.JVM_ID;
 import static co.runrightfast.vertx.core.utils.UUIDUtils.uuid;
 import static com.google.common.base.Preconditions.checkArgument;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -50,6 +52,7 @@ public interface EventBusUtils {
         final DeliveryOptions options = new DeliveryOptions();
         options.addHeader(MESSAGE_ID.header, uuid());
         options.addHeader(MESSAGE_TIMESTAMP.header, DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+        options.addHeader(FROM.header, JVM_ID);
         return options;
     }
 
