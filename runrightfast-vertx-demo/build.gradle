@@ -38,7 +38,10 @@ applicationDefaultJvmArgs = [
     "-Dcom.sun.management.jmxremote.port=7410",
     
     "-Dapp.log.dir=${buildDir}/app/logs",   
-    "-Drunrightfast.app.version=${version}"
+    "-Drunrightfast.app.version=${version}",
+    
+    "-Dvertx.cluster.public.host=192.168.0.100",
+    "-Dvertx.cluster.public.port=60558"
 ]
 
 dependencies {
@@ -63,5 +66,7 @@ task appDocker(type: Docker) {
     entryPoint(["/runrightfast/apps/${project.name}/bin/${project.name}"])
     exposePort 7410
     exposePort 4000
+    exposePort 5701
+    exposePort 9123
     addFile("${buildDir}/install/${project.name}", "/runrightfast/apps/${project.name}")
 }

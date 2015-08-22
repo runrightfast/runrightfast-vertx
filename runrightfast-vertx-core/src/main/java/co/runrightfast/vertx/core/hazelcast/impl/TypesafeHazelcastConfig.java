@@ -278,6 +278,7 @@ public class TypesafeHazelcastConfig {
                 .setReuseAddress(ConfigUtils.getBoolean(config, "reuse-address").orElse(true))
                 .setPort(ConfigUtils.getInt(config, "port").orElse(5701));
 
+        ConfigUtils.getString(config, "public-address").ifPresent(networkConfig::setPublicAddress);
         ConfigUtils.getInt(config, "port-count").ifPresent(networkConfig::setPortCount);
         ConfigUtils.getBoolean(config, "port-auto-increment").ifPresent(networkConfig::setPortAutoIncrement);
         ConfigUtils.getStringList(config, "outbound-port-definitions").ifPresent(outboundPortDefinitions -> {
