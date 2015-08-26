@@ -69,3 +69,15 @@
         4. application.conf - set port to 5702
         5. build the docker image using gradle
         6. `docker create --name=runrightfast-vertx-demo-2 -p 7411:7410 -p 4001:4000 -p 9124:9124 <image_id_5702_9124>`
+
+### 2015-08-25 - How to run a Vertx Cluster using [Weave](http://weave.works/)
+- Hazelcast multicast works out of the box.
+- To get the Vertx event bus working in the cluster, the Vertx **clusterHost** config option needs to be set to the ip address assigned by Weave, e.g.
+
+                docker run -d --name=runrightfast-vertx-demo-1 -p 7410:7410 -e VERTX_CLUSTER_HOST=10.128.0.2 56a4a44853cf
+                docker run -d --name=runrightfast-vertx-demo-2 -p 7411:7410 -e VERTX_CLUSTER_HOST=10.128.0.3 56a4a44853cf
+
+- to get the weave assigned IP address from within the container, run the following command: 
+
+                hostname -I | cut -f 2 -d ' '
+

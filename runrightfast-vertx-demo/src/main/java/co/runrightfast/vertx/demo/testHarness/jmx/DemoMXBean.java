@@ -39,4 +39,10 @@ public interface DemoMXBean {
     void unregisterMessageConsumer();
 
     boolean isMessagConsumerRegistered();
+
+    String lookupIPAddress(String dnsServer, String host);
+
+    String[] getIPAddresses(final String host);
+
+    String[] getHostNameAndHostAddress();
 }

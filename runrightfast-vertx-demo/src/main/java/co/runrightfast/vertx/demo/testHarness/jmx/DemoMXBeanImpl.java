@@ -26,6 +26,7 @@ import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import co.runrightfast.vertx.core.utils.JsonUtils;
+import co.runrightfast.vertx.core.utils.JvmProcess;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
@@ -36,12 +37,16 @@ import com.google.common.collect.ImmutableMap;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.dns.DnsClient;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.security.Key;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
@@ -237,6 +242,39 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     @Override
     public boolean isMessagConsumerRegistered() {
         return this.echoMessageConsumer != null;
+    }
+
+    @Override
+    public String lookupIPAddress(final String dnsServer, final String host) {
+        final DnsClient client = vertx.createDnsClient(53, dnsServer);
+        final CompletableFuture<String> future = new CompletableFuture<>();
+        client.lookup("vertx.io", result -> {
+            if (result.succeeded()) {
+                future.complete(result.result());
+            } else {
+                future.completeExceptionally(result.cause());
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (final InterruptedException | ExecutionException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public String[] getIPAddresses(final String host) {
+        try {
+            return Arrays.stream(InetAddress.getAllByName(host)).map(InetAddress::getHostAddress).toArray(String[]::new);
+        } catch (UnknownHostException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public String[] getHostNameAndHostAddress() {
+        return new String[]{JvmProcess.HOST, JvmProcess.HOST_ADDRESS};
     }
 
 }

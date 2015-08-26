@@ -22,19 +22,25 @@ public final class JvmProcess {
 
     public static final String HOST;
 
+    public static final String HOST_ADDRESS;
+
     public static final String JVM_ID = ManagementFactory.getRuntimeMXBean().getName();
 
     static {
-        String _host = "UNKNOWN";
+        String host = "UNKNOWN";
+        String hostAddress = "UNKNOWN";
         try {
-            _host = InetAddress.getLocalHost().getHostName();
+            host = InetAddress.getLocalHost().getHostName();
+            hostAddress = InetAddress.getByName(host).getHostAddress();
         } catch (final UnknownHostException ex) {
             try {
-                _host = InetAddress.getLocalHost().getHostAddress();
+                host = InetAddress.getLocalHost().getHostAddress();
+                hostAddress = host;
             } catch (final UnknownHostException ex2) {
                 Logger.getLogger(JvmProcess.class.getSimpleName()).logp(Level.SEVERE, JvmProcess.class.getName(), "static-initializer", "failed to get host name", ex2);
             }
         }
-        HOST = _host;
+        HOST = host;
+        HOST_ADDRESS = hostAddress;
     }
 }

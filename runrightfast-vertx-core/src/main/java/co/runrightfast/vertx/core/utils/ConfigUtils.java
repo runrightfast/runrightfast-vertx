@@ -198,7 +198,7 @@ public interface ConfigUtils {
     }
 
     /**
-     * Injects the following property before the config is loaded as a JVM system property: HOSTNAME
+     * Injects the following properties before the config is loaded as a JVM system property: HOSTNAME
      *
      * @param invalidateCaches if true, then the config caches are cleared
      * @return Config
@@ -211,14 +211,18 @@ public interface ConfigUtils {
         return ConfigFactory.load();
     }
 
+    /**
+     *
+     * Injects the following properties before the config is loaded as a JVM system property: HOSTNAME, config.resource
+     *
+     * @param configResource used to set JVM system property : 'config.resource'
+     * @param invalidateCaches if true, then the config caches are cleared
+     * @return Config
+     */
     static Config loadConfig(final String configResource, final boolean invalidateCaches) {
         checkArgument(StringUtils.isNotBlank(configResource));
         System.setProperty("config.resource", configResource);
-        System.setProperty("HOSTNAME", HOST);
-        if (invalidateCaches) {
-            ConfigFactory.invalidateCaches();
-        }
-        return ConfigFactory.load();
+        return loadConfig(invalidateCaches);
     }
 
     static Properties toProperties(final Config config) {
