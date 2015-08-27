@@ -9,7 +9,9 @@
         <name must-exist="yes">build</name>
         <name must-exist="yes">appDocker</name>
       </task-names>
-      <task-args/>
+      <task-args>
+        <arg>--info</arg>
+      </task-args>
       <task-jvm-args/>
     </task>
   </common-tasks>

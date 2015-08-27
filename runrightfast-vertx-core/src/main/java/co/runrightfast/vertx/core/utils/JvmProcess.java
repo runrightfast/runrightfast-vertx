@@ -31,7 +31,7 @@ public final class JvmProcess {
         String hostAddress = "UNKNOWN";
         try {
             host = InetAddress.getLocalHost().getHostName();
-            hostAddress = InetAddress.getByName(host).getHostAddress();
+            hostAddress = InetAddress.getLocalHost().getHostAddress();
         } catch (final UnknownHostException ex) {
             try {
                 host = InetAddress.getLocalHost().getHostAddress();

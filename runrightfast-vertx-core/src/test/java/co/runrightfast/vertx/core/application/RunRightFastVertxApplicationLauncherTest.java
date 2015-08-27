@@ -39,6 +39,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.codahale.metrics.MetricFilter;
 import com.google.common.collect.ImmutableSet;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import dagger.Component;
 import dagger.Module;
@@ -49,6 +50,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -184,10 +188,22 @@ public class RunRightFastVertxApplicationLauncherTest {
      * Test of run method, of class RunRightFastVertxApplicationLauncher.
      */
     @Test
-    public void testConfigOption() {
-        System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testConfigOption -v", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
-        RunRightFastVertxApplicationLauncher.run(() -> app, "-c");
-        System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testConfigOption --version", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
+    public void testConfigOption() throws UnsupportedEncodingException {
+        System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testConfigOption -c", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
+
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final PrintStream sysout = System.out;
+        try {
+            System.setOut(new PrintStream(bos));
+            RunRightFastVertxApplicationLauncher.run(() -> app, "-c");
+            final String configAsString = bos.toString("UTF-8");
+            log.info(configAsString);
+            final Config config = ConfigFactory.parseString(configAsString);
+        } finally {
+            System.setOut(sysout);
+        }
+
+        System.out.println(String.format("\n\n%s%s%s%s%s", StringUtils.repeat('*', 10), StringUtils.repeat(' ', 3), "testConfigOption --config", StringUtils.repeat(' ', 3), StringUtils.repeat('*', 10)));
         RunRightFastVertxApplicationLauncher.run(() -> app, "--config");
     }
 

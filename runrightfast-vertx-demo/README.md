@@ -74,10 +74,17 @@
 - Hazelcast multicast works out of the box.
 - To get the Vertx event bus working in the cluster, the Vertx **clusterHost** config option needs to be set to the ip address assigned by Weave, e.g.
 
-                docker run -d --name=runrightfast-vertx-demo-1 -p 7410:7410 -e VERTX_CLUSTER_HOST=10.128.0.2 56a4a44853cf
-                docker run -d --name=runrightfast-vertx-demo-2 -p 7411:7410 -e VERTX_CLUSTER_HOST=10.128.0.3 56a4a44853cf
+                docker run -d --name=runrightfast-vertx-demo-1 -p 7410:7410 -e VERTX_CLUSTER_HOST=10.128.0.2 <image_id>
+                docker run -d --name=runrightfast-vertx-demo-2 -p 7411:7410 -e VERTX_CLUSTER_HOST=10.128.0.3 <image_id>
 
-- to get the weave assigned IP address from within the container, run the following command: 
+- to get the weave assigned IP address from within the container, run the following commands : 
 
-                hostname -I | cut -f 2 -d ' '
+                ip -4 -o addr show dev ethwe 2> /dev/null |awk '{split($4,a,"/") ;print a[1]}'
+
+### 2015-08-27 - Implemented work around to get Vertx clustered event bus working with weave
+- when weave is used, by default (see reference.conf in runrightfast-vertx-core module), the ip address is obtained from the ethwe interface
+  - ethwe is the network interface that is created by weave
+- now it is simple to start the docker container:
+            
+                docker run -d --name=runrightfast-vertx-demo-1 -p 7410:7410 <image_id>
 

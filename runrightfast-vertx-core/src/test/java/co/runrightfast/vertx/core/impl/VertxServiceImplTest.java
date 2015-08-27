@@ -147,6 +147,18 @@ public class VertxServiceImplTest {
         services.clear();
     }
 
+    @Test
+    public void test_vertx_reference_default_options() {
+        log.info("test_vertx_default_options");
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx")), deployments, appEventLogger, encryptionService);
+        ServiceUtils.start(service);
+        services.add(service);
+        log.info("service.getVertxOptions().getClusterHost() = " + service.getVertxOptions().getClusterHost());
+        final Vertx vertx = service.getVertx();
+        assertThat(vertx.isClustered(), is(false));
+        assertThat(vertx.isMetricsEnabled(), is(true));
+    }
+
     /**
      * Test of getVertx method, of class VertxServiceImpl.
      */
