@@ -42,7 +42,10 @@ import com.google.common.collect.ImmutableSet;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.eventbus.Message;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -53,6 +56,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
+ * The verticle manager can be used by other verticles to manage a hierarchy of verticles.
  *
  * @author alfio
  */
@@ -62,7 +66,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     public static final RunRightFastVerticleId VERTICLE_ID = RunRightFastVerticleId.builder()
             .group(RUNRIGHTFAST_GROUP)
             .name("verticle-manager")
-            .version("0.1")
+            .version("0.1.0")
             .build();
 
     @Getter
@@ -79,7 +83,12 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     private ImmutableMap<RunRightFastVerticleDeployment, JmxReporter> verticleJmxReporters = ImmutableMap.of();
 
-    private JmxReporter jmxReporterForSelf;
+    /**
+     * These are all of the verticles that have been deployed JVM wide.
+     */
+    private static Map<String, RunRightFastVerticleDeployment> globalDeployedVerticles = new ConcurrentHashMap<>();
+
+    private static JmxReporter jmxReporterForSelf;
 
     @Inject
     public RunRightFastVerticleManager(final AppEventLogger appEventLogger, final EncryptionService encryptionService, final Set<RunRightFastVerticleDeployment> deployments) {
@@ -225,6 +234,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     }
 
     private void deployVerticleInstance(@NonNull final RunRightFastVerticleDeployment deployment, @NonNull final RunRightFastVerticle verticle, final DeploymentOptions deploymentOptions) {
+        verticle.setParentVerticleInstanceId(Optional.of(this.verticleInstanceId));
         vertx.deployVerticle(verticle, deploymentOptions, result -> {
             if (result.succeeded()) {
                 this.deployedVerticles = ImmutableMap.<String, RunRightFastVerticleDeployment>builder()
@@ -237,6 +247,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                         .setData(deployment)
                         .build()
                 );
+                globalDeployedVerticles.put(result.result(), deployment);
             } else {
                 appEventLogger.accept(AppEvent.error(VERTICLE_DEPLOYMENT_FAILED)
                         .setVerticleId(VERTICLE_ID)
@@ -250,6 +261,10 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     private void registerJmxReporter(@NonNull final RunRightFastVerticleDeployment deployment) {
         if (verticleJmxReporters.containsKey(deployment)) {
+            return;
+        }
+
+        if (globalDeployedVerticles.values().contains(deployment)) {
             return;
         }
 

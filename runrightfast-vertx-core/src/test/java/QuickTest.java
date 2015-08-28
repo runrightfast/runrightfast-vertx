@@ -14,6 +14,7 @@
  limitations under the License.
  */
 
+import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheck;
@@ -27,6 +28,9 @@ import java.net.SocketException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.java.Log;
 import org.apache.commons.io.IOUtils;
 import static org.hamcrest.CoreMatchers.is;
@@ -121,6 +125,37 @@ public class QuickTest {
         networkInterface.getInterfaceAddresses().stream().forEach(address -> {
             log.info(String.format("%s : interface address: %s", address.getAddress().getClass().getSimpleName(), address.getAddress().getHostAddress()));
         });
+    }
+
+    /**
+     * It appears to be ok to start multiple JMX reporters for the same MetricRegistry within the same domain.
+     */
+    @Test
+    public void testStartingDuplicateMetricsJmxReporter() {
+        final MetricRegistry metricRegistry = new MetricRegistry();
+
+        final List<JmxReporter> reporters = new LinkedList<>();
+        try {
+            for (int i = 0; i < 2; i++) {
+                reporters.add(jmxReporter(metricRegistry));
+            }
+        } finally {
+            reporters.stream().forEach(JmxReporter::stop);
+        }
+
+        metricRegistry.counter("counter").inc();
+        log.info("counter = " + metricRegistry.counter("counter").getCount());
+    }
+
+    private JmxReporter jmxReporter(final MetricRegistry metricRegistry) {
+        final JmxReporter jmxReporter = JmxReporter.forRegistry(metricRegistry)
+                .inDomain("testDuplicateMetricsJmxReporter")
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .build();
+        jmxReporter.start();
+        log.info("started JmxReporter");
+        return jmxReporter;
     }
 
 }

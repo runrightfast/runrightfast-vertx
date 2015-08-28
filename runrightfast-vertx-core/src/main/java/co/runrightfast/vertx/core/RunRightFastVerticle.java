@@ -73,6 +73,7 @@ import javax.json.JsonObjectBuilder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 /**
  * Base class for verticles, which provides support for :
@@ -83,8 +84,9 @@ import lombok.RequiredArgsConstructor;
  * <li>healthchecks
  * </ol>
  *
- * Each verticle has its own scoped MetricRegistry and HealthCheckRegistry using the verticle's deployment id. Thus, if there are multiple instances of a
- * verticle running, they will share the same deployment id.
+ * Each verticle has its own scoped MetricRegistry and HealthCheckRegistry using the verticle's {@link RunRightFastVerticleId} - via
+ * {@link RunRightFastVerticle#getRunRightFastVerticleId()} . Thus, if there are multiple instances of a verticle running, they will share the same
+ * {@link RunRightFastVerticleId}.
  *
  * Subclasses must override the {@link #startUp()} and {@link #shutDown()} methods, which are invoked by the corresponding {@link #start()} and {@link #stop()}
  * methods.
@@ -122,6 +124,12 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     protected int instanceId;
 
+    protected RunRightFastVerticleInstanceId verticleInstanceId;
+
+    @Getter
+    @Setter
+    protected Optional<RunRightFastVerticleInstanceId> parentVerticleInstanceId = Optional.empty();
+
     @NonNull
     protected final AppEventLogger appEventLogger;
 
@@ -145,6 +153,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         this.metricRegistry = SharedMetricRegistries.getOrCreate(getRunRightFastVerticleId().toString());
         this.healthCheckRegistry = SharedHealthCheckRegistries.getOrCreate(getRunRightFastVerticleId().toString());
         this.instanceId = instanceSequence.incrementAndGet();
+        this.verticleInstanceId = new RunRightFastVerticleInstanceId(getRunRightFastVerticleId(), instanceId);
         info.log("init", () -> lifeCycleMsg("initialized"));
     }
 
