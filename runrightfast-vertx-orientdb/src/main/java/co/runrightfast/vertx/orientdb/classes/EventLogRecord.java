@@ -18,6 +18,7 @@ package co.runrightfast.vertx.orientdb.classes;
 import static co.runrightfast.vertx.orientdb.classes.EventLogRecord.Field.event;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Date;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -29,6 +30,14 @@ public class EventLogRecord extends Timestamped {
     public static enum Field {
 
         event
+    }
+
+    public EventLogRecord newEventLogRecord() {
+        final EventLogRecord record = new EventLogRecord();
+        final Date now = new Date();
+        record.getDocument().field(Timestamped.Field.created_on.name(), now);
+        record.getDocument().field(Timestamped.Field.updated_on.name(), now);
+        return record;
     }
 
     public EventLogRecord() {

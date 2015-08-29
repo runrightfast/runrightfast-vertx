@@ -32,6 +32,19 @@ import lombok.Singular;
 import org.apache.commons.collections4.CollectionUtils;
 
 /**
+ * Queries each of the specified classes.
+ *
+ * The message that is returned is a Json message that indicates if there was at least 1 instance for the class found.
+ *
+ * for example:  <code>
+ * { "db" : "logging",
+ *   "classes" : [
+ *       { "event" : 1 },
+ *       { "alert" : 0 }
+ * }
+ * </code>
+ *
+ * where 1 means at least 1 instance was found, and 0 means the class has no instances
  *
  * @author alfio
  */
@@ -60,7 +73,7 @@ public class ODatabaseDocumentTxHealthCheck extends HealthCheck {
                         classes.add(Json.createObjectBuilder().add(documentObject.getSimpleName(), 0));
                     }
                 });
-                msg.add("clases", classes);
+                msg.add("classes", classes);
             }
             return HealthCheck.Result.healthy(msg.build().toString());
         }

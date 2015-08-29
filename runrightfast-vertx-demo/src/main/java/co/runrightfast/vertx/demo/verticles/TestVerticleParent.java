@@ -22,7 +22,6 @@ import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
-import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.DeploymentOptions;
@@ -49,12 +48,13 @@ public final class TestVerticleParent extends RunRightFastVerticle {
 
     @Override
     protected void startUp() {
-        vertx.deployVerticle(new RunRightFastVerticleManager(appEventLogger, encryptionService, ImmutableSet.of(
+        deployVerticles(
                 new RunRightFastVerticleDeployment(() -> new TestVerticle(appEventLogger, encryptionService),
                         TestVerticle.class,
                         new DeploymentOptions()
                 )
-        )));
+        );
+
     }
 
     @Override
