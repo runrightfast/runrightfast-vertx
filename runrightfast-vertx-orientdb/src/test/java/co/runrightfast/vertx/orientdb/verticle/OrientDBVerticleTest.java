@@ -113,13 +113,23 @@ public class OrientDBVerticleTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(
+        public RunRightFastVerticleDeployment provideOrientDBVerticleRunRightFastVerticleDeployment(
                 final AppEventLogger logger,
                 final EncryptionService encryptionService,
                 final EmbeddedOrientDBServiceConfig embeddedOrientDBServiceConfig
         ) {
             return new RunRightFastVerticleDeployment(
-                    () -> new OrientDBVerticle(logger, encryptionService, "OrientDB", embeddedOrientDBServiceConfig, ImmutableSetMultimap.of()),
+                    () -> new OrientDBVerticle(
+                            logger,
+                            encryptionService,
+                            embeddedOrientDBServiceConfig,
+                            ImmutableSetMultimap.of(),
+                            new OrientDBRepositoryVerticleDeployment(
+                                    () -> new EventLogRepository(logger, encryptionService),
+                                    EventLogRepository.class,
+                                    new DeploymentOptions()
+                            )
+                    ),
                     OrientDBVerticle.class,
                     new DeploymentOptions()
             );
@@ -153,7 +163,6 @@ public class OrientDBVerticleTest {
             final File configDirTarget = new File(orientdbHome, "config");
             try {
                 FileUtils.copyFileToDirectory(new File(configDirSrc, "default-distributed-db-config.json"), configDirTarget);
-                FileUtils.copyFileToDirectory(new File(configDirSrc, "hazelcast.xml"), configDirTarget);
             } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
@@ -171,6 +180,7 @@ public class OrientDBVerticleTest {
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                     .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "admin", "admin", 10, true))
+                    .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, true))
                     .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                     .hook(() -> new SetCreatedOnAndUpdatedOn())
                     .build();
@@ -260,7 +270,7 @@ public class OrientDBVerticleTest {
 
         final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
         final CompletableFuture<GetVerticleDeployments.Response> getVerticleDeploymentsFuture = new CompletableFuture<>();
-        final long timeout = 20000L;
+        final long timeout = 60000L;
         vertx.eventBus().send(
                 EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments"),
                 GetVerticleDeployments.Request.newBuilder().build(),
