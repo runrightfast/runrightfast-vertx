@@ -109,6 +109,41 @@ public class VertxServiceImplTest {
 
     }
 
+    static class TestVerticleParent extends RunRightFastVerticle {
+
+        @Getter
+        private final RunRightFastVerticleId runRightFastVerticleId
+                = RunRightFastVerticleId.builder()
+                .group(RunRightFastVerticleId.RUNRIGHTFAST_GROUP)
+                .name(getClass().getSimpleName())
+                .version("1.0.0")
+                .build();
+
+        public TestVerticleParent(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
+            super(appEventLogger, encryptionService);
+        }
+
+        @Override
+        protected void startUp() {
+            deployVerticles(ImmutableSet.of(
+                    new RunRightFastVerticleDeployment(
+                            () -> new TestVerticle(appEventLogger, encryptionService),
+                            TestVerticle.class,
+                            new DeploymentOptions())
+            ));
+        }
+
+        @Override
+        protected void shutDown() {
+        }
+
+        @Override
+        public Set<RunRightFastHealthCheck> getHealthChecks() {
+            return ImmutableSet.of();
+        }
+
+    }
+
     private final AppEventLogger appEventLogger = new AppEventJDKLogger(ApplicationId.builder()
             .group("co.runrightfast")
             .name("VertxServiceImplTest")
@@ -119,6 +154,11 @@ public class VertxServiceImplTest {
             new RunRightFastVerticleDeployment(
                     () -> new TestVerticle(appEventLogger, encryptionService),
                     TestVerticle.class,
+                    new DeploymentOptions()
+            ),
+            new RunRightFastVerticleDeployment(
+                    () -> new TestVerticleParent(appEventLogger, encryptionService),
+                    TestVerticleParent.class,
                     new DeploymentOptions()
             )
     );

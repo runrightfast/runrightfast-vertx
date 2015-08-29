@@ -45,6 +45,8 @@ import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newInfoLog;
 import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newWarningLog;
 import static co.runrightfast.vertx.core.utils.ProtobufUtils.protobuMessageToJson;
 import co.runrightfast.vertx.core.verticles.messages.Ping;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -65,6 +67,7 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.core.eventbus.MessageConsumer;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -78,6 +81,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * Base class for verticles, which provides support for :
@@ -548,6 +552,18 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     protected Optional<HazelcastInstance> hazelcast() {
         return VertxService.hazelcastInstances.getOrDefault(vertx, Optional.empty());
+    }
+
+    protected void deployVerticles(final Set<RunRightFastVerticleDeployment> deployments) {
+        vertx.deployVerticle(new RunRightFastVerticleManager(appEventLogger, encryptionService, deployments));
+    }
+
+    protected void deployVerticles(@NonNull final RunRightFastVerticleDeployment deployment, final RunRightFastVerticleDeployment... deployments) {
+        final ImmutableSet.Builder<RunRightFastVerticleDeployment> set = ImmutableSet.<RunRightFastVerticleDeployment>builder().add(deployment);
+        if (ArrayUtils.isNotEmpty(deployments)) {
+            Arrays.stream(deployments).forEach(set::add);
+        }
+        deployVerticles(set.build());
     }
 
     @Override
