@@ -30,10 +30,10 @@ import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.protobuf.MessageConversions;
 import static co.runrightfast.vertx.core.protobuf.MessageConversions.toVerticleId;
 import static co.runrightfast.vertx.core.utils.JmxUtils.verticleJmxDomain;
+import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.HealthCheckResult;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
-import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleId;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.health.HealthCheck;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -221,12 +221,16 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
         if (deployment.getDeploymentOptions().getInstances() == 1) {
             deployVerticleInstance(deployment, deployment.getVerticleInstance(), deployment.getDeploymentOptions());
         } else {
+            // when more than 1 instance needs to be deployed, we need to manage that because we want to ensure each verticle instance is
+            // indeed a new instance and there is no shared state. The reason we need to do this is because we create the verticle instance and not Vertx.
             final DeploymentOptions deploymentOptions = new DeploymentOptions(deployment.getDeploymentOptions()).setInstances(1);
             for (int i = 0; i < deployment.getDeploymentOptions().getInstances(); i++) {
-                final RunRightFastVerticleDeployment deploymentInstance = deployment.withNewVerticleInstance();
                 if (i == 0) {
+                    // resuse the original instance
                     deployVerticleInstance(deployment, deployment.getVerticleInstance(), deploymentOptions);
                 } else {
+                    // this creates a new instance of the verticle
+                    final RunRightFastVerticleDeployment deploymentInstance = deployment.withNewVerticleInstance();
                     deployVerticleInstance(deploymentInstance, deploymentInstance.getVerticleInstance(), deploymentOptions);
                 }
             }

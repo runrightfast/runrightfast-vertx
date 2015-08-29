@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package co.runrightfast.vertx.core.verticles.messages;
+
+option java_generate_equals_and_hash = true;
+option java_string_check_utf8 = true;
+option java_multiple_files = true;
+
+message VerticleId {
+    string group = 1;
+
+    string name = 2;
+
+    string version = 3;
+}
+
+message Ping {
+    
+    message Request {}
+
+    message Response {
+        VerticleId verticle_id = 1;
+
+        int32 instance_id = 2;
+
+        string deployment_id = 3;
+    }
+}

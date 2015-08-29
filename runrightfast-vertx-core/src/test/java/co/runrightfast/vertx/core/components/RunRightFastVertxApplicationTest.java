@@ -48,6 +48,7 @@ import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.utils.VertxUtils;
+import co.runrightfast.vertx.core.verticles.messages.Ping;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
@@ -67,13 +68,16 @@ import dagger.Provides;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
 import java.time.Instant;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -615,6 +619,45 @@ public class RunRightFastVertxApplicationTest {
             final ReplyException replyException = (ReplyException) e.getCause();
             assertThat(replyException.failureCode(), is(MessageConsumerConfig.Failure.BAD_REQUEST.getCode()));
         }
+    }
+
+    @Test
+    public void testSendPingMessage() throws Exception {
+        final Vertx vertx = vertxService.getVertx();
+        final CompletableFuture<Ping.Response> future = new CompletableFuture();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle2.VERTICLE_ID, Ping.class);
+        vertx.eventBus().send(
+                address,
+                Ping.Request.getDefaultInstance(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, Ping.Response.class)
+        );
+        final Ping.Response response = future.get(2000L, TimeUnit.MILLISECONDS);
+        log.info(JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(response)).encodePrettily());
+    }
+
+    @Test
+    public void testPublishPingMessage() throws Exception {
+        final Vertx vertx = vertxService.getVertx();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle2.VERTICLE_ID, Ping.class);
+        final ProtobufMessageProducer<Ping.Request> messageProducer = new ProtobufMessageProducer(
+                vertx.eventBus(), address, Ping.Request.getDefaultInstance(), metricRegistry
+        );
+
+        final String replyTo = UUID.randomUUID().toString();
+        messageProducer.publish(
+                Ping.Request.getDefaultInstance(),
+                new DeliveryOptions().setHeaders(MultiMap.caseInsensitiveMultiMap().set(MessageHeader.REPLY_TO_ADDRESS.header, replyTo))
+        );
+
+        final CountDownLatch latch = new CountDownLatch((5));
+        vertx.eventBus().consumer(replyTo, msg -> {
+            final Ping.Response response = (Ping.Response) msg.body();
+            log.info(JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(response)).encodePrettily());
+            latch.countDown();
+        });
+
+        latch.await();
     }
 
     private <A extends com.google.protobuf.Message> Handler<AsyncResult<Message<A>>> responseHandler(final CompletableFuture future, final Class<A> messageType) {

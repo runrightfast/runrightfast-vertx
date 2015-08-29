@@ -17,7 +17,7 @@ package co.runrightfast.vertx.core.eventbus;
 
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
-import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleId;
+import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.buffer.Buffer;
 import java.security.Key;

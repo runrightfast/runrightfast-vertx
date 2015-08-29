@@ -15,7 +15,7 @@
  */
 package co.runrightfast.vertx.core;
 
-import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleId;
+import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import static com.google.common.base.Preconditions.checkArgument;
 import javax.json.Json;
 import javax.json.JsonObject;

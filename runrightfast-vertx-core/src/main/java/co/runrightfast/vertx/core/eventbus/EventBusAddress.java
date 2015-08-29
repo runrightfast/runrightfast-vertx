@@ -18,6 +18,7 @@ package co.runrightfast.vertx.core.eventbus;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.utils.JvmProcess;
 import static com.google.common.base.Preconditions.checkArgument;
+import com.google.protobuf.Message;
 import java.util.Arrays;
 import lombok.NonNull;
 import org.apache.commons.lang3.ArrayUtils;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
+ * Utility class for Vertx event bus
  *
  * @author alfio
  */
@@ -96,6 +98,16 @@ public interface EventBusAddress {
             sb.append('/').append(String.join("/", paths));
         }
         return sb.toString();
+    }
+
+    /**
+     *
+     * @param verticleId RunRightFastVerticleId
+     * @param messageClass uses the class's simple name
+     * @return eventbus address
+     */
+    public static String eventBusAddress(@NonNull final RunRightFastVerticleId verticleId, @NonNull final Class<? extends Message> messageClass) {
+        return eventBusAddress(verticleId, messageClass.getSimpleName());
     }
 
     /**

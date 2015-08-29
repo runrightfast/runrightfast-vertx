@@ -6,10 +6,8 @@ option java_generate_equals_and_hash = true;
 option java_string_check_utf8 = true;
 option java_multiple_files = true;
 
-// Use case - when configuring a MessageConsumer that does not return a response - see co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping
-message Void {
-    
-}
 
+// Use case - when configuring a MessageConsumer that does not return a response - see co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping
+message Void {}
 
 

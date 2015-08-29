@@ -25,9 +25,11 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.ME
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_SUCCESS;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Timers.MESSAGE_CONSUMER_HANDLER;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
+import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.EventBusUtils;
 import static co.runrightfast.vertx.core.eventbus.EventBusUtils.responseDeliveryOptions;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
+import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_PARALLEL;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerHandlerException;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerRegistration;
@@ -35,12 +37,14 @@ import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.getReplyToAddress;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
+import static co.runrightfast.vertx.core.protobuf.MessageConversions.toVerticleId;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
 import co.runrightfast.vertx.core.utils.LoggingUtils;
 import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newErrorLog;
 import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newInfoLog;
 import static co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog.newWarningLog;
 import static co.runrightfast.vertx.core.utils.ProtobufUtils.protobuMessageToJson;
+import co.runrightfast.vertx.core.verticles.messages.Ping;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -136,6 +140,31 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     @NonNull
     protected final EncryptionService encryptionService;
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // ABSTRACT METHODS                                                                             //
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Used to initialize the {@link #getRunRightFastVerticleId()} field.
+     *
+     * @return RunRightFastVerticleId
+     */
+    public abstract RunRightFastVerticleId getRunRightFastVerticleId();
+
+    public abstract Set<RunRightFastHealthCheck> getHealthChecks();
+
+    /**
+     * Verticle specific start up
+     */
+    protected abstract void startUp();
+
+    /**
+     * Verticle specific start up shutdown
+     */
+    protected abstract void shutDown();
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // ABSTRACT METHODS                                                                             //
+    //////////////////////////////////////////////////////////////////////////////////////////////////
     /**
      * Performs the following:
      *
@@ -164,6 +193,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
             metricRegistry.counter(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).inc();
             startUp();
             registerHealthChecks();
+            registerPingMessageConsumer();
         } finally {
             info.log("start", () -> lifeCycleMsg("started"));
         }
@@ -179,6 +209,32 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
             metricRegistry.counter(RunRightFastVerticleMetrics.Counters.INSTANCE_STARTED.metricName).dec();
             info.log("stop", () -> lifeCycleMsg("stopped"));
         }
+    }
+
+    private void registerPingMessageConsumer() {
+        final MessageConsumerConfig<Ping.Request, Ping.Response> messageConsumerConfig = MessageConsumerConfig.<Ping.Request, Ping.Response>builder()
+                .addressMessageMapping(EventBusAddressMessageMapping.builder()
+                        .address(eventBusAddress(Ping.class))
+                        .requestDefaultInstance(Ping.Request.getDefaultInstance())
+                        .responseDefaultInstance(Ping.Response.getDefaultInstance())
+                        .build()
+                )
+                .handler(this::handlePingMessageRequest)
+                .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
+                .ciphers(cipherFunctions(Ping.getDefaultInstance()))
+                .executionMode(WORKER_POOL_PARALLEL)
+                .build();
+
+        registerMessageConsumer(messageConsumerConfig);
+    }
+
+    private void handlePingMessageRequest(final io.vertx.core.eventbus.Message<Ping.Request> message) {
+        final Ping.Response response = Ping.Response.newBuilder()
+                .setDeploymentId(context.deploymentID())
+                .setInstanceId(instanceId)
+                .setVerticleId(toVerticleId(getRunRightFastVerticleId()))
+                .build();
+        reply(message, response);
     }
 
     private void registerHealthChecks() {
@@ -478,6 +534,10 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         return EventBusAddress.eventBusAddress(getRunRightFastVerticleId(), path, paths);
     }
 
+    protected String eventBusAddress(final Class<? extends Message> messageClass) {
+        return EventBusAddress.eventBusAddress(getRunRightFastVerticleId(), messageClass);
+    }
+
     protected void registerProtobufMessageProducer(@NonNull final ProtobufMessageProducer messageProducer) {
         this.messageProducers = ImmutableSet.<ProtobufMessageProducer>builder().addAll(messageProducers).add(messageProducer).build();
     }
@@ -506,24 +566,5 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         final RunRightFastVerticle other = (RunRightFastVerticle) obj;
         return getRunRightFastVerticleId().equals(other.getRunRightFastVerticleId());
     }
-
-    /**
-     * Used to initialize the {@link #getRunRightFastVerticleId()} field.
-     *
-     * @return RunRightFastVerticleId
-     */
-    public abstract RunRightFastVerticleId getRunRightFastVerticleId();
-
-    /**
-     * Verticle specific start up
-     */
-    protected abstract void startUp();
-
-    /**
-     * Verticle specific start up shutdown
-     */
-    protected abstract void shutDown();
-
-    public abstract Set<RunRightFastHealthCheck> getHealthChecks();
 
 }
