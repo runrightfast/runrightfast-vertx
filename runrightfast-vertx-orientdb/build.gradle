@@ -3,7 +3,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.6.1'
+    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.7.0'
   }
 }
 
@@ -12,7 +12,7 @@ apply plugin: 'com.google.protobuf'
 protobuf {
     protoc {
         // Download from repositories
-        artifact = 'com.google.protobuf:protoc:3.0.0-alpha-3.1'
+        artifact = 'com.google.protobuf:protoc:3.0.0-beta-1'
     }
     
     generatedFilesBaseDir = "$buildDir/generated/source/proto"

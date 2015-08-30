@@ -5,25 +5,40 @@ buildscript {
 
     dependencies {
         classpath 'se.transmode.gradle:gradle-docker:1.2'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.7.0'
     }
 }
 
 apply plugin: 'application'
 apply plugin: 'docker'
+apply plugin: 'com.google.protobuf'
 
-// Note: "common.gradle" in the root project contains additional initialization
-//   for this project. This initialization is applied in the "build.gradle"
-//   of the root project.
+protobuf {
+    protoc {
+        // Download from repositories
+        artifact = 'com.google.protobuf:protoc:3.0.0-beta-1'
+    }
+    
+    generatedFilesBaseDir = "$buildDir/generated/source/proto"
+}
 
-// NetBeans will automatically add "run" and "debug" tasks relying on the
-// "mainClass" property. You may however define the property prior executing
-// tasks by passing a "-PmainClass=<QUALIFIED_CLASS_NAME>" argument.
-//
-// Note however, that you may define your own "run" and "debug" task if you
-// prefer. In this case NetBeans will not add these tasks but you may rely on
-// your own implementation.
-if (!hasProperty('mainClass')) {
-    ext.mainClass = ''
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java',"$buildDir/generated/source/proto/main/java"]
+        }
+        resources {
+            srcDirs = ['src/main/resources','src/main/proto']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/java',"$buildDir/generated/source/proto/test/java"]
+        }
+        resources {
+            srcDirs = ['src/test/resources','src/test/proto']
+        }
+    }
 }
 
 mainClassName = 'co.runrightfast.vertx.demo.VertxApp'

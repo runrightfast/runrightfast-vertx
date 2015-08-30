@@ -20,7 +20,9 @@ import co.runrightfast.vertx.core.modules.CryptographyModule;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.demo.modules.EncryptionServiceModule;
+import co.runrightfast.vertx.demo.modules.OrientDBModule;
 import co.runrightfast.vertx.demo.modules.RunRightFastVerticleDeploymentModule;
+import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleDeploymentModule;
 import dagger.Component;
 import javax.inject.Singleton;
 
@@ -34,7 +36,9 @@ import javax.inject.Singleton;
             VertxServiceModule.class,
             RunRightFastVerticleDeploymentModule.class,
             EncryptionServiceModule.class,
-            CryptographyModule.class
+            CryptographyModule.class,
+            OrientDBModule.class,
+            OrientDBVerticleDeploymentModule.class
         }
 )
 @Singleton

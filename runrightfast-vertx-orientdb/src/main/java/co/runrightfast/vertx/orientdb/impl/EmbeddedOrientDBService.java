@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import static java.util.logging.Level.INFO;
+import static java.util.logging.Level.WARNING;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
@@ -152,8 +153,14 @@ public class EmbeddedOrientDBService extends AbstractIdleService implements Orie
         }
 
         final String dbUrl = "plocal:" + databaseDir;
+        if (server.existsStoragePath(dbUrl)) {
+            log.logp(INFO, CLASS_NAME, "createDatabase", String.format("storage path already exists for %s", dbUrl));
+            return;
+        }
         try (final ODatabase db = new ODatabaseFactory().createDatabase("document", dbUrl).create()) {
             log.logp(INFO, CLASS_NAME, "createDatabase", String.format("created db = %s", db.getName()));
+        } catch (final Exception e) {
+            log.logp(WARNING, CLASS_NAME, "createDatabase", String.format("dbUrl: %s", dbUrl), e);
         }
     }
 

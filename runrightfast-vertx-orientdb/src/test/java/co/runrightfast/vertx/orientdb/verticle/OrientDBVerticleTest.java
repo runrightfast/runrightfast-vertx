@@ -34,16 +34,17 @@ import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.utils.VertxUtils;
-import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
+import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
+import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleDeploymentModule;
 import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
 import co.runrightfast.vertx.testSupport.EncryptionServiceWithDefaultCiphers;
 import com.codahale.metrics.MetricFilter;
@@ -101,8 +102,6 @@ public class OrientDBVerticleTest {
 
     static final String CLASS_NAME = OrientDBVerticleTest.class.getSimpleName();
 
-    static final File orientdbHome = new File(String.format("build/temp/%s/orientdb", CLASS_NAME));
-
     private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
 
     private static final ProtobufMessageCodec<GetVerticleDeployments.Response> getVerticleDeploymentsResponseCodec = new ProtobufMessageCodec(
@@ -120,23 +119,10 @@ public class OrientDBVerticleTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideOrientDBVerticleRunRightFastVerticleDeployment(
-                final AppEventLogger logger,
-                final EncryptionService encryptionService,
-                final EmbeddedOrientDBServiceConfig embeddedOrientDBServiceConfig
-        ) {
-            return new RunRightFastVerticleDeployment(
-                    () -> new OrientDBVerticle(
-                            logger,
-                            encryptionService,
-                            embeddedOrientDBServiceConfig,
-                            new OrientDBRepositoryVerticleDeployment(
-                                    () -> new EventLogRepository(logger, encryptionService),
-                                    EventLogRepository.class,
-                                    new DeploymentOptions()
-                            )
-                    ),
-                    OrientDBVerticle.class,
+        public OrientDBRepositoryVerticleDeployment provideEventLogRepositoryDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
+            return new OrientDBRepositoryVerticleDeployment(
+                    () -> new EventLogRepository(logger, encryptionService),
+                    EventLogRepository.class,
                     new DeploymentOptions()
             );
         }
@@ -155,7 +141,8 @@ public class OrientDBVerticleTest {
 
         @Provides
         @Singleton
-        public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig() {
+        public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig(final OrientDBConfig config) {
+            final File orientdbHome = config.getHomeDirectory().toFile();
             orientdbHome.mkdirs();
             try {
                 FileUtils.cleanDirectory(orientdbHome);
@@ -179,7 +166,7 @@ public class OrientDBVerticleTest {
             return EmbeddedOrientDBServiceConfig.builder()
                     .orientDBRootDir(orientdbHome.toPath())
                     .handler(this::oGraphServerHandler)
-                    .handler(this::oHazelcastPlugin)
+                    .handler(() -> this.oHazelcastPlugin(orientdbHome))
                     .handler(this::oServerSideScriptInterpreter)
                     .networkConfig(oServerNetworkConfiguration())
                     .user(new OServerUserConfiguration("root", "root", "*"))
@@ -218,7 +205,7 @@ public class OrientDBVerticleTest {
             return config;
         }
 
-        private OServerHandlerConfiguration oHazelcastPlugin() {
+        private OServerHandlerConfiguration oHazelcastPlugin(final File orientdbHome) {
             final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
             config.clazz = OrientDBPluginWithProvidedHazelcastInstance.class.getName();
             config.parameters = new OServerParameterConfiguration[]{
@@ -243,7 +230,8 @@ public class OrientDBVerticleTest {
             modules = {
                 RunRightFastApplicationModule.class,
                 VertxServiceModule.class,
-                RunRightFastVerticleDeploymentModule.class
+                RunRightFastVerticleDeploymentModule.class,
+                OrientDBVerticleDeploymentModule.class
             }
     )
     @Singleton
