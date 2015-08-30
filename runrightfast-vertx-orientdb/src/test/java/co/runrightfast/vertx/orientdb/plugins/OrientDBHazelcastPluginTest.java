@@ -204,6 +204,7 @@ public class OrientDBHazelcastPluginTest {
     public void testODatabaseDocumentTxHealthCheck() {
         final ODatabaseDocumentTxHealthCheck healthcheck = ODatabaseDocumentTxHealthCheck.builder()
                 .oDatabaseDocumentTxSupplier(service.getODatabaseDocumentTxSupplier(CLASS_NAME).get())
+                .databaseName(CLASS_NAME)
                 .documentObject(EventLogRecord.class)
                 .documentObject(Timestamped.class)
                 .build();

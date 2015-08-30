@@ -29,10 +29,10 @@ import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck.ODatabaseDo
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import co.runrightfast.vertx.orientdb.OrientDBService;
 import co.runrightfast.vertx.orientdb.classes.DocumentObject;
+import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBService;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.SetMultimap;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,6 +48,9 @@ import org.apache.commons.lang3.ArrayUtils;
  * Only a single instance of this verticle should be created per JVM process.
  *
  * Verticles that require use of the OrientDBService must be created by this verticle, which will provide them with the {@link OrientDBService} instance.
+ *
+ * Automatically creates health checks for each of the domain document classes ({@link DatabasePoolConfig#documentClasses }) listed for each
+ * {@link DatabasePoolConfig}.
  *
  * @author alfio
  */
@@ -66,7 +69,7 @@ public final class OrientDBVerticle extends RunRightFastVerticle {
 
     private EmbeddedOrientDBService service;
 
-    private final ImmutableSetMultimap<String, Class<? extends DocumentObject>> databaseClassesForHealthCheck;
+    private final ImmutableSetMultimap<String /* database name */, Class<? extends DocumentObject>> databaseClassesForHealthCheck;
 
     private final OrientDBRepositoryVerticleDeployment[] orientDBRepositoryVerticleDeployments;
 
@@ -74,13 +77,12 @@ public final class OrientDBVerticle extends RunRightFastVerticle {
             final AppEventLogger appEventLogger,
             final EncryptionService encryptionService,
             @NonNull final EmbeddedOrientDBServiceConfig config,
-            @NonNull SetMultimap<String, Class<? extends DocumentObject>> databaseClassesForHealthCheck,
             final OrientDBRepositoryVerticleDeployment... orientDBRepositoryVerticleDeployments) {
         super(appEventLogger, encryptionService);
         config.validate();
 
         this.config = config;
-        this.databaseClassesForHealthCheck = ImmutableSetMultimap.copyOf(databaseClassesForHealthCheck);
+        this.databaseClassesForHealthCheck = databaseClassesForHealthCheck();
 
         if (ArrayUtils.isNotEmpty(orientDBRepositoryVerticleDeployments)) {
             this.orientDBRepositoryVerticleDeployments = Arrays.copyOf(orientDBRepositoryVerticleDeployments, orientDBRepositoryVerticleDeployments.length);
@@ -88,6 +90,14 @@ public final class OrientDBVerticle extends RunRightFastVerticle {
             this.orientDBRepositoryVerticleDeployments = new OrientDBRepositoryVerticleDeployment[0];
         }
 
+    }
+
+    private ImmutableSetMultimap<String, Class<? extends DocumentObject>> databaseClassesForHealthCheck() {
+        final ImmutableSetMultimap.Builder<String /* database name */, Class<? extends DocumentObject>> set = ImmutableSetMultimap.builder();
+        config.getDatabasePoolConfigs().stream().forEach(databasePoolConfig -> {
+            databasePoolConfig.getDocumentClasses().forEach(clazz -> set.put(databasePoolConfig.getDatabaseName(), clazz));
+        });
+        return set.build();
     }
 
     @Override
@@ -114,7 +124,9 @@ public final class OrientDBVerticle extends RunRightFastVerticle {
         return service.getDatabaseNames().stream()
                 .map(name -> {
                     final ODatabaseDocumentTxSupplier oDatabaseDocumentTxSupplier = service.getODatabaseDocumentTxSupplier(name).get();
-                    final ODatabaseDocumentTxHealthCheckBuilder healthcheckBuilder = ODatabaseDocumentTxHealthCheck.builder().oDatabaseDocumentTxSupplier(oDatabaseDocumentTxSupplier);
+                    final ODatabaseDocumentTxHealthCheckBuilder healthcheckBuilder = ODatabaseDocumentTxHealthCheck.builder()
+                    .oDatabaseDocumentTxSupplier(oDatabaseDocumentTxSupplier)
+                    .databaseName(name);
                     final Set<Class<? extends DocumentObject>> classes = databaseClassesForHealthCheck.get(name);
                     if (CollectionUtils.isNotEmpty(classes)) {
                         classes.stream().forEach(healthcheckBuilder::documentObject);

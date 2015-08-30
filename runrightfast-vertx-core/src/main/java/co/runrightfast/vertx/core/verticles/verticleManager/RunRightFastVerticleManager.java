@@ -54,6 +54,7 @@ import lombok.NonNull;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  * The verticle manager can be used by other verticles to manage a hierarchy of verticles.
@@ -160,14 +161,23 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
         return healthChecks.stream().map(healthCheck -> {
             final HealthCheckResult.Builder result = HealthCheckResult.newBuilder();
             final HealthCheckConfig config = healthCheck.getConfig();
-            final HealthCheck.Result healthCheckResult = healthCheck.getHealthCheck().execute();
+            HealthCheck.Result healthCheckResult;
+            try {
+                healthCheckResult = healthCheck.getHealthCheck().execute();
+            } catch (final Exception e) {
+                healthCheckResult = HealthCheck.Result.unhealthy(e);
+            }
             result.setHealthCheckName(config.getName());
             result.setHealthy(healthCheckResult.isHealthy());
             if (StringUtils.isNotBlank(healthCheckResult.getMessage())) {
                 result.setMessage(healthCheckResult.getMessage());
             }
+            if (healthCheckResult.getError() != null) {
+                result.setExceptionStacktrace(ExceptionUtils.getStackTrace(healthCheckResult.getError()));
+            }
             result.setVerticleId(verticleId);
             return result.build();
+
         }).collect(Collectors.toList());
     }
 

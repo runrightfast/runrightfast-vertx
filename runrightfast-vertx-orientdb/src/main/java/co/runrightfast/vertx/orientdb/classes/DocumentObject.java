@@ -27,6 +27,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public abstract class DocumentObject {
 
+    /**
+     *
+     * @param clazz document class
+     * @return {@link Class#getSimpleName() }
+     */
+    public static String documentClassName(@NonNull final Class<? extends DocumentObject> clazz) {
+        return clazz.getSimpleName();
+    }
+
     @NonNull
     @Getter
     protected final ODocument document;
@@ -37,10 +46,10 @@ public abstract class DocumentObject {
 
     /**
      *
-     * @return {@link Class#getSimpleName() }
+     * @return {@link DocumentObject#documentClassName(java.lang.Class) }
      */
     public final String getDocumentClassName() {
-        return getClass().getSimpleName();
+        return documentClassName(getClass());
     }
 
     public void save() {

@@ -39,6 +39,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
+import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
@@ -48,7 +49,6 @@ import co.runrightfast.vertx.testSupport.EncryptionServiceWithDefaultCiphers;
 import com.codahale.metrics.MetricFilter;
 import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSetMultimap;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -130,7 +130,6 @@ public class OrientDBVerticleTest {
                             logger,
                             encryptionService,
                             embeddedOrientDBServiceConfig,
-                            ImmutableSetMultimap.of(),
                             new OrientDBRepositoryVerticleDeployment(
                                     () -> new EventLogRepository(logger, encryptionService),
                                     EventLogRepository.class,
@@ -187,7 +186,7 @@ public class OrientDBVerticleTest {
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                     .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "admin", "admin", 10, true))
-                    .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, true))
+                    .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, true, EventLogRecord.class))
                     .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                     .hook(() -> new SetCreatedOnAndUpdatedOn())
                     .build();

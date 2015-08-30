@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb;
 
+import co.runrightfast.core.ApplicationException;
 import co.runrightfast.vertx.orientdb.classes.DocumentObject;
 import com.codahale.metrics.health.HealthCheck;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -23,7 +24,6 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Set;
 import javax.json.Json;
-import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import lombok.Builder;
@@ -51,6 +51,19 @@ import org.apache.commons.collections4.CollectionUtils;
 @Builder
 public class ODatabaseDocumentTxHealthCheck extends HealthCheck {
 
+    public static final class ODatabaseDocumentTxHealthCheckException extends ApplicationException {
+
+        private static final long serialVersionUID = 1L;
+
+        public ODatabaseDocumentTxHealthCheckException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
+
+    }
+
+    @NonNull
+    private final String databaseName;
+
     @NonNull
     private final ODatabaseDocumentTxSupplier oDatabaseDocumentTxSupplier;
 
@@ -61,21 +74,49 @@ public class ODatabaseDocumentTxHealthCheck extends HealthCheck {
     @Override
     protected Result check() throws Exception {
         try (final ODatabaseDocumentTx db = oDatabaseDocumentTxSupplier.get()) {
-            final JsonObjectBuilder msg = Json.createObjectBuilder().add("db", getDatabaseInfo(db));
+            final JsonObjectBuilder msgBuilder = Json.createObjectBuilder().add("db", getDatabaseInfo(db));
             if (CollectionUtils.isNotEmpty(documentObjects)) {
-                final JsonArrayBuilder classes = Json.createArrayBuilder();
-                documentObjects.stream().forEach(documentObject -> {
-                    final ORecordIteratorClass<ODocument> it = db.browseClass(documentObject.getSimpleName());
-                    if (it.hasNext()) {
-                        it.next();
-                        classes.add(Json.createObjectBuilder().add(documentObject.getSimpleName(), 1));
-                    } else {
-                        classes.add(Json.createObjectBuilder().add(documentObject.getSimpleName(), 0));
-                    }
-                });
-                msg.add("classes", classes);
+                final JsonObjectBuilder counts = Json.createObjectBuilder();
+                documentObjects.stream().forEach(documentObject -> browseClass(db, documentObject, counts));
+                msgBuilder.add("counts", counts);
             }
-            return HealthCheck.Result.healthy(msg.build().toString());
+
+            final JsonObject msg = msgBuilder.build();
+            if (isHealthy(msg)) {
+                return HealthCheck.Result.healthy(msg.toString());
+            }
+            return HealthCheck.Result.unhealthy(msg.toString());
+        } catch (final Exception e) {
+            final JsonObjectBuilder msg = Json.createObjectBuilder().add("db", Json.createObjectBuilder().add("name", databaseName).build());
+            return HealthCheck.Result.unhealthy(new ODatabaseDocumentTxHealthCheckException(msg.build().toString(), e));
+        }
+    }
+
+    private boolean isHealthy(final JsonObject healthcheckData) {
+        if (documentObjects.isEmpty()) {
+            return true;
+        }
+
+        final JsonObject counts = healthcheckData.getJsonObject("counts");
+        return !documentObjects.stream()
+                .filter(clazz -> counts.getInt(DocumentObject.documentClassName(clazz)) == -1)
+                .findFirst()
+                .isPresent();
+    }
+
+    private void browseClass(final ODatabaseDocumentTx db, final Class<? extends DocumentObject> documentObject, final JsonObjectBuilder counts) {
+        final String documentClassName = DocumentObject.documentClassName(documentObject);
+        if (db.getMetadata().getSchema().getClass(documentClassName) == null) {
+            counts.add(documentClassName, -1);
+            return;
+        }
+
+        final ORecordIteratorClass<ODocument> it = db.browseClass(documentClassName);
+        if (it.hasNext()) {
+            it.next();
+            counts.add(documentClassName, 1);
+        } else {
+            counts.add(documentClassName, 0);
         }
     }
 

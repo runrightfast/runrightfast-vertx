@@ -102,5 +102,7 @@ message HealthCheckResult {
     bool healthy = 3;
 
     string message = 4;
+
+    string exception_stacktrace = 5;
 }
 
