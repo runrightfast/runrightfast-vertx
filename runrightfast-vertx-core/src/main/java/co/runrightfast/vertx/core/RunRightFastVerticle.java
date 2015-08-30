@@ -407,83 +407,94 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
      * @return handler
      */
     private <REQ extends Message, RESP extends Message> Handler<io.vertx.core.eventbus.Message<REQ>> messageConsumerHandler(final MessageConsumerConfig<REQ, RESP> config) {
+        switch (config.getExecutionMode()) {
+            case EVENT_LOOP:
+                return messageConsumerHandlerUsingEventLoop(config);
+            case WORKER_POOL_SERIAL:
+                return messageConsumerHandlerUsingSerialWorkerPool(config);
+            case WORKER_POOL_PARALLEL:
+                return messageConsumerHandlerUsingParallelWorkerPool(config);
+            default:
+                throw new IllegalStateException("Unexpected execution mode: " + config.getExecutionMode());
+        }
+    }
+
+    private <REQ extends Message, RESP extends Message> Handler<io.vertx.core.eventbus.Message<REQ>> messageConsumerHandlerUsingParallelWorkerPool(final MessageConsumerConfig<REQ, RESP> config) {
         final Counter messageProcessingCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_PROCESSING.metricName, config.address()));
         final Counter messageSuccessCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_SUCCESS.metricName, config.address()));
         final Counter messageFailureCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_FAILURE.metricName, config.address()));
         final Timer timer = metricRegistry.timer(String.format("%s::%s", MESSAGE_CONSUMER_HANDLER.metricName, config.getAddressMessageMapping().getAddress()));
         final Handler<io.vertx.core.eventbus.Message<REQ>> handler = config.getHandler();
 
-        switch (config.getExecutionMode()) {
-            case EVENT_LOOP:
-                return msg -> {
-                    messageProcessingCounter.inc();
-                    log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);
-                    final Timer.Context timerCtx = timer.time();
-                    try {
-                        handler.handle(msg);
-                        messageSuccessCounter.inc();
-                    } catch (final Throwable t) {
-                        messageFailureCounter.inc();
-                        logMessageConsumerException(t, config.address(), config);
-                        replyWithFailure(msg, t, config);
-                    } finally {
-                        timerCtx.stop();
-                        messageProcessingCounter.dec();
-                    }
-                };
-            case WORKER_POOL_SERIAL:
-                return msg -> {
-                    messageProcessingCounter.inc();
-                    log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);
-                    final Timer.Context timerCtx = timer.time();
-                    vertx.executeBlocking(future -> {
-                        handler.handle(msg);
-                    }, result -> {
-                        try {
-                            if (result.succeeded()) {
-                                messageSuccessCounter.inc();
-                            } else {
-                                messageFailureCounter.inc();
-                                logMessageConsumerException(result.cause(), config.address(), config);
-                                replyWithFailure(msg, result.cause(), config);
-                            }
-                        } finally {
-                            timerCtx.stop();
-                            messageProcessingCounter.dec();
-                        }
-                    });
-                };
-            case WORKER_POOL_PARALLEL:
-                return msg -> {
-                    messageProcessingCounter.inc();
-                    log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);
-                    final Timer.Context timerCtx = timer.time();
-                    vertx.executeBlocking(
-                            future -> {
-                                handler.handle(msg);
-                                future.complete();
-                            },
-                            false, // ordered = false
-                            result -> {
-                                try {
-                                    if (result.succeeded()) {
-                                        messageSuccessCounter.inc();
-                                    } else {
-                                        messageFailureCounter.inc();
-                                        logMessageConsumerException(result.cause(), config.address(), config);
-                                        replyWithFailure(msg, result.cause(), config);
-                                    }
-                                } finally {
-                                    timerCtx.stop();
-                                    messageProcessingCounter.dec();
-                                }
-                            });
-                };
+        final Object[] logMsgArgs = new Object[]{config.address(), context.deploymentID()};
 
-        }
         return msg -> {
             messageProcessingCounter.inc();
-            log.logp(INFO, CLASS_NAME, "messageConsumerHandler", config::address);
+            log.logp(INFO, CLASS_NAME, "messageConsumerHandlerUsingParallelWorkerPool", "address={0}, deploymentId={1}", logMsgArgs);
+            final Timer.Context timerCtx = timer.time();
+            vertx.executeBlocking(future -> {
+                handler.handle(msg);
+            }, result -> {
+                try {
+                    if (result.succeeded()) {
+                        messageSuccessCounter.inc();
+                    } else {
+                        messageFailureCounter.inc();
+                        logMessageConsumerException(result.cause(), config.address(), config);
+                        replyWithFailure(msg, result.cause(), config);
+                    }
+                } finally {
+                    timerCtx.stop();
+                    messageProcessingCounter.dec();
+                }
+            });
+        };
+    }
+
+    private <REQ extends Message, RESP extends Message> Handler<io.vertx.core.eventbus.Message<REQ>> messageConsumerHandlerUsingSerialWorkerPool(final MessageConsumerConfig<REQ, RESP> config) {
+        final Counter messageProcessingCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_PROCESSING.metricName, config.address()));
+        final Counter messageSuccessCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_SUCCESS.metricName, config.address()));
+        final Counter messageFailureCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_FAILURE.metricName, config.address()));
+        final Timer timer = metricRegistry.timer(String.format("%s::%s", MESSAGE_CONSUMER_HANDLER.metricName, config.getAddressMessageMapping().getAddress()));
+        final Handler<io.vertx.core.eventbus.Message<REQ>> handler = config.getHandler();
+
+        final Object[] logMsgArgs = new Object[]{config.address(), context.deploymentID()};
+
+        return msg -> {
+            messageProcessingCounter.inc();
+            log.logp(INFO, CLASS_NAME, "messageConsumerHandlerUsingSerialWorkerPool", "address={0}, deploymentId={1}", logMsgArgs);
+            final Timer.Context timerCtx = timer.time();
+            vertx.executeBlocking(future -> {
+                handler.handle(msg);
+            }, result -> {
+                try {
+                    if (result.succeeded()) {
+                        messageSuccessCounter.inc();
+                    } else {
+                        messageFailureCounter.inc();
+                        logMessageConsumerException(result.cause(), config.address(), config);
+                        replyWithFailure(msg, result.cause(), config);
+                    }
+                } finally {
+                    timerCtx.stop();
+                    messageProcessingCounter.dec();
+                }
+            });
+        };
+    }
+
+    private <REQ extends Message, RESP extends Message> Handler<io.vertx.core.eventbus.Message<REQ>> messageConsumerHandlerUsingEventLoop(final MessageConsumerConfig<REQ, RESP> config) {
+        final Counter messageProcessingCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_PROCESSING.metricName, config.address()));
+        final Counter messageSuccessCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_SUCCESS.metricName, config.address()));
+        final Counter messageFailureCounter = metricRegistry.counter(String.format("%s::%s", MESSAGE_CONSUMER_MESSAGE_FAILURE.metricName, config.address()));
+        final Timer timer = metricRegistry.timer(String.format("%s::%s", MESSAGE_CONSUMER_HANDLER.metricName, config.getAddressMessageMapping().getAddress()));
+        final Handler<io.vertx.core.eventbus.Message<REQ>> handler = config.getHandler();
+
+        final Object[] logMsgArgs = new Object[]{config.address(), context.deploymentID()};
+
+        return msg -> {
+            messageProcessingCounter.inc();
+            log.logp(INFO, CLASS_NAME, "messageConsumerHandlerUsingEventLoop", "address={0}, deploymentId={1}", logMsgArgs);
             final Timer.Context timerCtx = timer.time();
             try {
                 handler.handle(msg);
@@ -497,7 +508,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
                 messageProcessingCounter.dec();
             }
         };
-
     }
 
     /**
@@ -534,7 +544,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
         final Optional<String> replyTo = getReplyToAddress(request);
         if (replyTo.isPresent()) {
-            vertx.eventBus().send(replyTo.get(), co.runrightfast.vertx.core.messages.Void.getDefaultInstance(), responseDeliveryOptions(request));
+            vertx.eventBus().send(replyTo.get(), co.runrightfast.vertx.core.messages.Void.getDefaultInstance(), responseDeliveryOptions(request, failure));
         } else {
             request.fail(failure.getCode(), failure.getMessage());
         }

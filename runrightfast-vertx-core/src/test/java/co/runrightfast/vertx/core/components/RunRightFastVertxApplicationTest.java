@@ -37,6 +37,7 @@ import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.EVENT_LOOP;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_PARALLEL;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_SERIAL;
+import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
@@ -74,6 +75,7 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -130,6 +132,22 @@ public class RunRightFastVertxApplicationTest {
             registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig(RunRightFastVertxApplicationTestMessage.class.getSimpleName(), EVENT_LOOP));
             registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig(RunRightFastVertxApplicationTestMessage.class.getSimpleName() + "/" + WORKER_POOL_SERIAL.name(), WORKER_POOL_SERIAL));
             registerMessageConsumer(runRightFastVertxApplicationTestMessageMessageConsumerConfig(RunRightFastVertxApplicationTestMessage.class.getSimpleName() + "/" + WORKER_POOL_PARALLEL, WORKER_POOL_PARALLEL));
+            registerMessageConsumer(voidMessageMessageConsumerConfig(WORKER_POOL_PARALLEL));
+        }
+
+        private MessageConsumerConfig<co.runrightfast.vertx.core.messages.Void, co.runrightfast.vertx.core.messages.Void> voidMessageMessageConsumerConfig(@NonNull final ExecutionMode executionMode) {
+            return MessageConsumerConfig.<co.runrightfast.vertx.core.messages.Void, co.runrightfast.vertx.core.messages.Void>builder()
+                    .addressMessageMapping(EventBusAddressMessageMapping.builder()
+                            .address(eventBusAddress(co.runrightfast.vertx.core.messages.Void.class))
+                            .requestDefaultInstance(co.runrightfast.vertx.core.messages.Void.getDefaultInstance())
+                            .responseDefaultInstance(co.runrightfast.vertx.core.messages.Void.getDefaultInstance())
+                            .build()
+                    )
+                    .handler(msg -> reply(msg, co.runrightfast.vertx.core.messages.Void.getDefaultInstance()))
+                    .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
+                    .ciphers(cipherFunctions(co.runrightfast.vertx.core.messages.Void.getDefaultInstance()))
+                    .executionMode(executionMode)
+                    .build();
         }
 
         private MessageConsumerConfig<RunRightFastVertxApplicationTestMessage.Request, RunRightFastVertxApplicationTestMessage.Response> runRightFastVertxApplicationTestMessageMessageConsumerConfig(
@@ -552,6 +570,37 @@ public class RunRightFastVertxApplicationTest {
     }
 
     @Test
+    public void test_eventbus_RunRightFastVertxApplicationTestMessage_failure_using_publish() throws Exception {
+        log.info("test_eventbus_RunRightFastVertxApplicationTestMessage_failure");
+        final Vertx vertx = vertxService.getVertx();
+
+        final ProtobufMessageProducer<RunRightFastVertxApplicationTestMessage.Request> messageProducer = new ProtobufMessageProducer(
+                vertx.eventBus(),
+                EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName()),
+                RunRightFastVertxApplicationTestMessage.Request.getDefaultInstance(),
+                metricRegistry
+        );
+
+        final String replyTo = UUID.randomUUID().toString();
+        messageProducer.publish(
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(IllegalArgumentException.class.getSimpleName()).build(),
+                new DeliveryOptions().setHeaders(MultiMap.caseInsensitiveMultiMap().set(MessageHeader.REPLY_TO_ADDRESS.header, replyTo))
+        );
+
+        final CompletableFuture<Message> future = new CompletableFuture();
+        vertx.eventBus().consumer(replyTo, msg -> {
+            final co.runrightfast.vertx.core.messages.Void response = (co.runrightfast.vertx.core.messages.Void) msg.body();
+            log.info(JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(response)).encodePrettily());
+            future.complete(msg);
+        });
+
+        final Message result = future.get(2000L, TimeUnit.MILLISECONDS);
+        Optional<Failure> failure = MessageHeader.getFailure(result);
+        assertThat(failure.isPresent(), is(true));
+        log.info(failure.get().toString());
+    }
+
+    @Test
     public void test_eventbus_RunRightFastVertxApplicationTestMessage_failure_to_WORKER_POOL_SERIAL() throws Exception {
         log.info("test_eventbus_RunRightFastVertxApplicationTestMessage_failure");
         final Vertx vertx = vertxService.getVertx();
@@ -637,6 +686,20 @@ public class RunRightFastVertxApplicationTest {
     }
 
     @Test
+    public void testSendVoidMessage() throws Exception {
+        final Vertx vertx = vertxService.getVertx();
+        final CompletableFuture<co.runrightfast.vertx.core.messages.Void> future = new CompletableFuture();
+        final String address = EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, co.runrightfast.vertx.core.messages.Void.class);
+        vertx.eventBus().send(
+                address,
+                co.runrightfast.vertx.core.messages.Void.getDefaultInstance(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, co.runrightfast.vertx.core.messages.Void.class)
+        );
+        final co.runrightfast.vertx.core.messages.Void response = future.get(2000L, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
     public void testPublishPingMessage() throws Exception {
         final Vertx vertx = vertxService.getVertx();
 
@@ -661,6 +724,8 @@ public class RunRightFastVertxApplicationTest {
                     .orElse(0);
             log.info(String.format("testVerticle2DeployedCount = %s", testVerticle2DeployedCount));
         }
+
+        Thread.sleep(100L);
 
         final ProtobufMessageProducer<Ping.Request> messageProducer = new ProtobufMessageProducer(
                 vertx.eventBus(),
