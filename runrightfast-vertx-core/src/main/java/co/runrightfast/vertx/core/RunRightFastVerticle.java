@@ -41,7 +41,6 @@ import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.getReplyToAddress;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
-import static co.runrightfast.vertx.core.protobuf.MessageConversions.toFailure;
 import static co.runrightfast.vertx.core.protobuf.MessageConversions.toJsonArray;
 import static co.runrightfast.vertx.core.protobuf.MessageConversions.toVerticleId;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
@@ -535,7 +534,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
         final Optional<String> replyTo = getReplyToAddress(request);
         if (replyTo.isPresent()) {
-            vertx.eventBus().send(replyTo.get(), toFailure(failure), responseDeliveryOptions(request));
+            vertx.eventBus().send(replyTo.get(), co.runrightfast.vertx.core.messages.Void.getDefaultInstance(), responseDeliveryOptions(request));
         } else {
             request.fail(failure.getCode(), failure.getMessage());
         }

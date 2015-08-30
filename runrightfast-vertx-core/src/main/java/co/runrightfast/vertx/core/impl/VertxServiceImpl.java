@@ -27,6 +27,7 @@ import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.LOG;
+import co.runrightfast.vertx.core.eventbus.VoidMessageCodec;
 import static co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
@@ -129,6 +130,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             logVertxOptions();
             initVertx();
             hazelcastInstances.put(vertx, getHazelcastInstance());
+            registerCodecs();
             deployVerticleManager();
             appEventLogger.accept(AppEvent.info(APP_STARTED).build());
         } catch (final Throwable t) {
@@ -138,6 +140,10 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             );
             throw t;
         }
+    }
+
+    private void registerCodecs() {
+        vertx.eventBus().registerDefaultCodec(co.runrightfast.vertx.core.messages.Void.class, new VoidMessageCodec());
     }
 
     private void logVertxOptions() {

@@ -15,10 +15,13 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure;
+import co.runrightfast.vertx.core.utils.JsonUtils;
 import io.vertx.core.eventbus.Message;
 import java.time.Instant;
 import java.util.Optional;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -29,9 +32,23 @@ public enum MessageHeader {
     MESSAGE_ID("rrf-msg-id"),
     MESSAGE_CORRELATION_ID("rrf-msg-correlation"),
     MESSAGE_TIMESTAMP("rrf-msg-ts"),
-    REPLY_TO_ADDRESS("rrf-reply-address"), // event bus address
-    FROM_ADDRESS("rrf-from-address"), // event bus address
-    FROM("rrf-from");
+    /**
+     * event bus address
+     */
+    REPLY_TO_ADDRESS("rrf-reply-address"),
+    /**
+     * event bus address
+     */
+    FROM_ADDRESS("rrf-from-address"),
+    FROM("rrf-from"),
+    /**
+     * if set, then this indicates the message failed to process.
+     *
+     * The message header will contain the Json Representation for {@link Failure}.
+     *
+     * The message body will contain a {@link co.runrightfast.vertx.core.messages.Void} message.
+     */
+    FAILURE("rrf-failure");
 
     public final String header;
 
@@ -57,6 +74,15 @@ public enum MessageHeader {
 
     public static Optional<String> getFromAddress(@NonNull final Message message) {
         return Optional.ofNullable(message.headers().get(FROM_ADDRESS.header));
+    }
+
+    public static Optional<Failure> getFailure(@NonNull final Message message) {
+        final String failureJson = message.headers().get(FAILURE.header);
+        if (StringUtils.isNotBlank(failureJson)) {
+            return Optional.of(new Failure(JsonUtils.parse(failureJson)));
+        }
+
+        return Optional.empty();
     }
 
 }

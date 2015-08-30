@@ -86,7 +86,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     /**
      * These are all of the verticles that have been deployed JVM wide.
      */
-    private static Map<String, RunRightFastVerticleDeployment> globalDeployedVerticles = new ConcurrentHashMap<>();
+    private static final Map<String, RunRightFastVerticleDeployment> globalDeployedVerticles = new ConcurrentHashMap<>();
 
     private static JmxReporter jmxReporterForSelf;
 
@@ -193,15 +193,22 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                         || request.getNamesList().stream().filter(name -> name.equals(id.getName())).findFirst().isPresent()
                         || request.getVerticleIdsList().stream().filter(id::equalsVerticleId).findFirst().isPresent();
                     })
-                    .map(MessageConversions::toVerticleDeployment)
+                    .map(deployment -> MessageConversions.toVerticleDeployment(deployment, getDeploymentIds(deployment)))
                     .forEach(response::addDeployments);
         } else {
             deployments.stream()
-                    .map(MessageConversions::toVerticleDeployment)
+                    .map(deployment -> MessageConversions.toVerticleDeployment(deployment, getDeploymentIds(deployment)))
                     .forEach(response::addDeployments);
         }
 
         reply(message, response.build());
+    }
+
+    private Set<String> getDeploymentIds(final RunRightFastVerticleDeployment deployment) {
+        return deployedVerticles.entrySet().stream()
+                .filter(entry -> entry.getValue().equals(deployment))
+                .map(entry -> entry.getKey())
+                .collect(Collectors.toSet());
     }
 
     private boolean hasFilters(@NonNull final GetVerticleDeployments.Request request) {

@@ -46,6 +46,8 @@ message VerticleDeployment {
     DeploymentOptions deployment_options = 3;
 
     repeated HealthCheck health_checks = 4;
+
+    repeated string deployment_ids = 5;
 }
 
 message DeploymentOptions {

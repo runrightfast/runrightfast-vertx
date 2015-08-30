@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import co.runrightfast.core.JsonRepresentation;
 import co.runrightfast.core.crypto.CipherFunctions;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.EVENT_LOOP;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure.INTERNAL_SERVER_ERROR;
@@ -237,7 +238,7 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     }
 
     @lombok.Builder
-    public static final class Failure {
+    public static final class Failure implements JsonRepresentation {
 
         public static final Failure BAD_REQUEST = new Failure(400, "Invalid message");
         public static final Failure UNAUTHORIZED = new Failure(401, "Unauthorized");
@@ -258,6 +259,11 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
         @Getter
         private final String message;
 
+        public Failure(@NonNull final JsonObject json) {
+            this.code = json.getInt("code");
+            this.message = json.getString("message");
+        }
+
         public Failure(final int code, final String message) {
             checkArgument(isNotBlank(message));
             this.code = code;
@@ -276,6 +282,19 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
             } else {
                 this.message = failure.message;
             }
+        }
+
+        @Override
+        public JsonObject toJson() {
+            return Json.createObjectBuilder()
+                    .add("code", code)
+                    .add("message", message)
+                    .build();
+        }
+
+        @Override
+        public String toString() {
+            return toJson().toString();
         }
 
     }

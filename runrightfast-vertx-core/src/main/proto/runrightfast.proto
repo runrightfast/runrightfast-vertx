@@ -9,11 +9,3 @@ option java_multiple_files = true;
 
 // Use case - when configuring a MessageConsumer that does not return a response - see co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping
 message Void {}
-
-
-message Failure {
-
-    int32 code = 1;
-
-    string message = 2;
-}

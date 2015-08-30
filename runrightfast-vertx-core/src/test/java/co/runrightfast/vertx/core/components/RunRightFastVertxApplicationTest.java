@@ -639,9 +639,34 @@ public class RunRightFastVertxApplicationTest {
     @Test
     public void testPublishPingMessage() throws Exception {
         final Vertx vertx = vertxService.getVertx();
-        final String address = EventBusAddress.eventBusAddress(TestVerticle2.VERTICLE_ID, Ping.class);
+
+        int testVerticle2DeployedCount = 0;
+
+        // because of the async nature of the deployment, we must wait for all 5 verticle instances to get deployed
+        while (testVerticle2DeployedCount < 5) {
+            Thread.sleep(100L);
+            final RunRightFastVerticleId verticleManagerId = RunRightFastVerticleManager.VERTICLE_ID;
+            final CompletableFuture<GetVerticleDeployments.Response> future = new CompletableFuture<>();
+            vertx.eventBus().send(
+                    EventBusAddress.toProcessSpecificEventBusAddress(EventBusAddress.eventBusAddress(verticleManagerId, "get-verticle-deployments")),
+                    GetVerticleDeployments.Request.newBuilder().build(),
+                    new DeliveryOptions().setSendTimeout(2000L),
+                    responseHandler(future, GetVerticleDeployments.Response.class)
+            );
+            final GetVerticleDeployments.Response result = future.get(2000L, TimeUnit.MILLISECONDS);
+            testVerticle2DeployedCount = result.getDeploymentsList().stream()
+                    .filter(deployment -> deployment.getVerticleId().getName().equals(TestVerticle2.class.getSimpleName()))
+                    .findFirst()
+                    .map(deployment -> deployment.getDeploymentIdsCount())
+                    .orElse(0);
+            log.info(String.format("testVerticle2DeployedCount = %s", testVerticle2DeployedCount));
+        }
+
         final ProtobufMessageProducer<Ping.Request> messageProducer = new ProtobufMessageProducer(
-                vertx.eventBus(), address, Ping.Request.getDefaultInstance(), metricRegistry
+                vertx.eventBus(),
+                EventBusAddress.eventBusAddress(TestVerticle2.VERTICLE_ID, Ping.class),
+                Ping.Request.getDefaultInstance(),
+                metricRegistry
         );
 
         final String replyTo = UUID.randomUUID().toString();
@@ -650,7 +675,7 @@ public class RunRightFastVertxApplicationTest {
                 new DeliveryOptions().setHeaders(MultiMap.caseInsensitiveMultiMap().set(MessageHeader.REPLY_TO_ADDRESS.header, replyTo))
         );
 
-        final CountDownLatch latch = new CountDownLatch((5));
+        final CountDownLatch latch = new CountDownLatch(testVerticle2DeployedCount);
         vertx.eventBus().consumer(replyTo, msg -> {
             final Ping.Response response = (Ping.Response) msg.body();
             log.info(JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(response)).encodePrettily());

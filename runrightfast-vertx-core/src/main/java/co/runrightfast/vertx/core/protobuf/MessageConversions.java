@@ -18,8 +18,6 @@ package co.runrightfast.vertx.core.protobuf;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
-import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
-import co.runrightfast.vertx.core.messages.Failure;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
@@ -42,7 +40,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public interface MessageConversions {
 
-    static VerticleDeployment toVerticleDeployment(@NonNull final RunRightFastVerticleDeployment deployment) {
+    static VerticleDeployment toVerticleDeployment(@NonNull final RunRightFastVerticleDeployment deployment, @NonNull final Set<String> deploymentIds) {
         final VerticleDeployment.Builder builder = VerticleDeployment.newBuilder()
                 .setVerticleClass(deployment.getVerticleClass().getName())
                 .setVerticleId(toVerticleId(deployment.getRunRightFastVerticleId()))
@@ -53,6 +51,10 @@ public interface MessageConversions {
             healthChecks.stream()
                     .map(healthCheck -> toHealthCheck(healthCheck, builder.getVerticleId()))
                     .forEach(builder::addHealthChecks);
+        }
+
+        if (CollectionUtils.isNotEmpty(deploymentIds)) {
+            builder.addAllDeploymentIds(deploymentIds);
         }
 
         return builder.build();
@@ -124,13 +126,6 @@ public interface MessageConversions {
         }
 
         return VerticleType.STANDARD;
-    }
-
-    static Failure toFailure(@NonNull final MessageConsumerConfig.Failure failure) {
-        return Failure.newBuilder()
-                .setCode(failure.getCode())
-                .setMessage(failure.getMessage())
-                .build();
     }
 
     static JsonArray toJsonArray(final Collection<RunRightFastVerticleDeployment> deployments) {

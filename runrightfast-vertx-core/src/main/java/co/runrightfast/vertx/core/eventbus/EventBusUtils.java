@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
+import static co.runrightfast.vertx.core.eventbus.MessageHeader.FAILURE;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.FROM;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.FROM_ADDRESS;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_CORRELATION_ID;
@@ -76,6 +77,10 @@ public interface EventBusUtils {
         );
     }
 
+    static DeliveryOptions responseDeliveryOptions(@NonNull final Message requestMessage, final MessageConsumerConfig.Failure failure) {
+        return withFailure(responseDeliveryOptions(requestMessage), failure);
+    }
+
     /**
      * Adds the following headers:
      *
@@ -131,6 +136,11 @@ public interface EventBusUtils {
     static DeliveryOptions withFromAddress(final DeliveryOptions deliveryOptions, final String fromAddress) {
         checkArgument(isNotBlank(fromAddress));
         deliveryOptions.addHeader(FROM_ADDRESS.header, fromAddress);
+        return deliveryOptions;
+    }
+
+    static DeliveryOptions withFailure(@NonNull final DeliveryOptions deliveryOptions, @NonNull final MessageConsumerConfig.Failure failure) {
+        deliveryOptions.addHeader(FAILURE.header, failure.toJson().toString());
         return deliveryOptions;
     }
 }
