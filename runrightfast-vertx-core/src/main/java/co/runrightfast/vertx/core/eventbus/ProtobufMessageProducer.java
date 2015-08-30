@@ -137,13 +137,13 @@ public final class ProtobufMessageProducer<A extends Message> {
         this.messageLastSent = Instant.now();
     }
 
-    public void send(@NonNull final A msg, @NonNull final Handler<AsyncResult<io.vertx.core.eventbus.Message<A>>> handler) {
+    public <RESPONSE> void send(@NonNull final A msg, @NonNull final Handler<AsyncResult<io.vertx.core.eventbus.Message<RESPONSE>>> handler) {
         eventBus.send(address, msg, addRunRightFastHeaders(new DeliveryOptions()), handler);
         this.messageSent.mark();
         this.messageLastSent = Instant.now();
     }
 
-    public void send(@NonNull final A msg, @NonNull final DeliveryOptions options, @NonNull final Handler<AsyncResult<io.vertx.core.eventbus.Message<A>>> handler) {
+    public <RESPONSE> void send(@NonNull final A msg, @NonNull final DeliveryOptions options, @NonNull final Handler<AsyncResult<io.vertx.core.eventbus.Message<RESPONSE>>> handler) {
         eventBus.send(address, msg, addRunRightFastHeaders(options), handler);
         this.messageSent.mark();
         this.messageLastSent = Instant.now();

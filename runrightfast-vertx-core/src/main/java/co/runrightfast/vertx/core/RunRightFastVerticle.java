@@ -15,7 +15,10 @@
  */
 package co.runrightfast.vertx.core;
 
+import co.runrightfast.core.application.event.AppEvent;
 import co.runrightfast.core.application.event.AppEventLogger;
+import co.runrightfast.core.application.event.ApplicationEvents.RunRightFastVerticleManagerDeployment;
+import static co.runrightfast.core.application.event.ApplicationEvents.VERTICLE_DEPLOYMENT_FAILED;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.core.crypto.CipherFunctions;
@@ -24,6 +27,7 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.ME
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_PROCESSING;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_SUCCESS;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Timers.MESSAGE_CONSUMER_HANDLER;
+import static co.runrightfast.vertx.core.VertxService.LOG;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.EventBusUtils;
@@ -37,6 +41,8 @@ import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.getReplyToAddress;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
+import static co.runrightfast.vertx.core.protobuf.MessageConversions.toFailure;
+import static co.runrightfast.vertx.core.protobuf.MessageConversions.toJsonArray;
 import static co.runrightfast.vertx.core.protobuf.MessageConversions.toVerticleId;
 import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
 import co.runrightfast.vertx.core.utils.LoggingUtils;
@@ -47,6 +53,7 @@ import static co.runrightfast.vertx.core.utils.ProtobufUtils.protobuMessageToJso
 import co.runrightfast.vertx.core.verticles.messages.Ping;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
+import static co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager.VERTICLE_ID;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -388,11 +395,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         }
     }
 
-    private void replyWithFailure(final io.vertx.core.eventbus.Message<?> message, final Throwable exception, final MessageConsumerConfig config) {
-        final Failure failure = config.toFailure(exception);
-        message.fail(failure.getCode(), failure.getMessage());
-    }
-
     /**
      * Wraps the handler to perform the following:
      * <ul>
@@ -527,6 +529,18 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         }
     }
 
+    private void replyWithFailure(final io.vertx.core.eventbus.Message<?> request, final Throwable exception, final MessageConsumerConfig config) {
+        final Failure failure = config.toFailure(exception);
+        request.fail(failure.getCode(), failure.getMessage());
+
+        final Optional<String> replyTo = getReplyToAddress(request);
+        if (replyTo.isPresent()) {
+            vertx.eventBus().send(replyTo.get(), toFailure(failure), responseDeliveryOptions(request));
+        } else {
+            request.fail(failure.getCode(), failure.getMessage());
+        }
+    }
+
     /**
      *
      *
@@ -555,7 +569,20 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     }
 
     protected void deployVerticles(final Set<RunRightFastVerticleDeployment> deployments) {
-        vertx.deployVerticle(new RunRightFastVerticleManager(appEventLogger, encryptionService, deployments));
+        vertx.deployVerticle(new RunRightFastVerticleManager(appEventLogger, encryptionService, deployments), result -> {
+            if (result.succeeded()) {
+                LOG.logp(INFO, CLASS_NAME, "deployVerticles", () -> String.format("%s : %s", result.result(), toJsonArray(deployments)));
+            } else {
+                appEventLogger.accept(AppEvent.error(VERTICLE_DEPLOYMENT_FAILED)
+                        .setVerticleId(VERTICLE_ID)
+                        .setData(new RunRightFastVerticleManagerDeployment(deployments))
+                        .setException(result.cause())
+                        .build()
+                );
+                throw new RuntimeException("Failed to deploy RunRightFastVerticleManager : " + toJsonArray(deployments), result.cause());
+            }
+        });
+
     }
 
     protected void deployVerticles(@NonNull final RunRightFastVerticleDeployment deployment, final RunRightFastVerticleDeployment... deployments) {

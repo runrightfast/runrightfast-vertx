@@ -18,13 +18,20 @@ package co.runrightfast.vertx.core.protobuf;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
+import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
+import co.runrightfast.vertx.core.messages.Failure;
+import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.DeploymentOptions;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.HealthCheck;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleType;
+import java.util.Collection;
 import java.util.Set;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -117,5 +124,22 @@ public interface MessageConversions {
         }
 
         return VerticleType.STANDARD;
+    }
+
+    static Failure toFailure(@NonNull final MessageConsumerConfig.Failure failure) {
+        return Failure.newBuilder()
+                .setCode(failure.getCode())
+                .setMessage(failure.getMessage())
+                .build();
+    }
+
+    static JsonArray toJsonArray(final Collection<RunRightFastVerticleDeployment> deployments) {
+        if (deployments == null) {
+            return JsonUtils.EMPTY_ARRAY;
+        }
+
+        final JsonArrayBuilder jsonArray = Json.createArrayBuilder();
+        deployments.stream().forEach(deployment -> jsonArray.add(deployment.toJson()));
+        return jsonArray.build();
     }
 }

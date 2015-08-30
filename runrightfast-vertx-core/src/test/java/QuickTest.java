@@ -31,6 +31,7 @@ import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.json.Json;
 import lombok.extern.java.Log;
 import org.apache.commons.io.IOUtils;
 import static org.hamcrest.CoreMatchers.is;
@@ -156,6 +157,11 @@ public class QuickTest {
         jmxReporter.start();
         log.info("started JmxReporter");
         return jmxReporter;
+    }
+
+    @Test
+    public void testJsonArrayToString() {
+        log.info(Json.createArrayBuilder().add(1).add(2).build().toString());
     }
 
 }

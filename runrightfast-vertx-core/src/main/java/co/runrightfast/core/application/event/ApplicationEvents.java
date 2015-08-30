@@ -16,7 +16,10 @@
 package co.runrightfast.core.application.event;
 
 import co.runrightfast.core.JsonRepresentation;
+import static co.runrightfast.vertx.core.protobuf.MessageConversions.toJsonArray;
+import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import com.codahale.metrics.health.HealthCheck;
+import java.util.Set;
 import javax.json.Json;
 import javax.json.JsonObject;
 import lombok.NonNull;
@@ -60,6 +63,19 @@ public interface ApplicationEvents {
         @Override
         public JsonObject toJson() {
             return Json.createObjectBuilder().add("healthy", result.isHealthy()).build();
+        }
+
+    }
+
+    @RequiredArgsConstructor
+    public static class RunRightFastVerticleManagerDeployment implements JsonRepresentation {
+
+        @NonNull
+        private final Set<RunRightFastVerticleDeployment> deployments;
+
+        @Override
+        public JsonObject toJson() {
+            return Json.createObjectBuilder().add("deployments", toJsonArray(deployments)).build();
         }
 
     }

@@ -11,3 +11,9 @@ option java_multiple_files = true;
 message Void {}
 
 
+message Failure {
+
+    int32 code = 1;
+
+    string message = 2;
+}

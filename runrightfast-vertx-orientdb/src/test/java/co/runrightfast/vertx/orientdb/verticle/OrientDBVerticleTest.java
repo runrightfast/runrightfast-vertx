@@ -26,6 +26,7 @@ import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer.addRunRightFastHeaders;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
@@ -69,12 +70,16 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.ReplyException;
+import static io.vertx.core.eventbus.ReplyFailure.NO_HANDLERS;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
+import static java.util.logging.Level.WARNING;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 import lombok.extern.java.Log;
@@ -84,6 +89,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
+import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
 
 /**
  *
@@ -291,6 +298,94 @@ public class OrientDBVerticleTest {
         final RunVerticleHealthChecks.Response response = future.get(timeout, TimeUnit.MILLISECONDS);
         assertThat(response.getResultsCount(), is(totalHealthCheckCount));
 
+    }
+
+    @Test
+    public void testEventLogRepository_getEventCount() throws Exception {
+        final Vertx vertx = vertxService.getVertx();
+        final RunRightFastVerticleId verticleManagerId = EventLogRepository.VERTICLE_ID;
+
+        final long timeout = 60000L;
+
+        final ProtobufMessageProducer<GetEventCount.Request> getEventCountMessageProducer = new ProtobufMessageProducer<>(
+                vertx.eventBus(),
+                EventBusAddress.eventBusAddress(verticleManagerId, GetEventCount.class),
+                new ProtobufMessageCodec<>(GetEventCount.Request.getDefaultInstance(), encryptionService.cipherFunctions(GetEventCount.Request.getDescriptor().getFullName())),
+                metricRegistry
+        );
+
+        // because the verticles are deployed asynchronously, the EventLogRepository verticle may not yet be deployed yet
+        // the message consumer for the Verticle only gets registered, while the verticle is starting. Thus, the message consumer may not yet be registered.
+        while (true) {
+            final CompletableFuture<GetEventCount.Response> getEventCountFuture = new CompletableFuture<>();
+            getEventCountMessageProducer.send(GetEventCount.Request.getDefaultInstance(), responseHandler(getEventCountFuture, GetEventCount.Response.class));
+            try {
+                getEventCountFuture.get(timeout, TimeUnit.MILLISECONDS);
+                break;
+            } catch (final ExecutionException e) {
+                if (e.getCause() instanceof ReplyException) {
+                    final ReplyException replyException = (ReplyException) e.getCause();
+                    if (replyException.failureType() == NO_HANDLERS) {
+                        log.log(WARNING, "Waiting for EventLogRepository ... ", e);
+                        Thread.sleep(5000L);
+                        continue;
+                    }
+                }
+                throw e;
+            }
+        }
+    }
+
+    @Test
+    public void testEventLogRepository() throws Exception {
+        final Vertx vertx = vertxService.getVertx();
+        final RunRightFastVerticleId verticleManagerId = EventLogRepository.VERTICLE_ID;
+
+        final CompletableFuture<GetEventCount.Response> getEventCountFuture = new CompletableFuture<>();
+        final long timeout = 60000L;
+
+        // because the verticles are deployed asynchronously, the EventLogRepository verticle may not yet be deployed yet
+        // the message codec for the Verticle only gets registered, while the verticle is starting. Thus, the message codec may not yet be registered.
+        while (true) {
+            try {
+                vertx.eventBus().send(
+                        EventBusAddress.eventBusAddress(verticleManagerId, GetEventCount.class),
+                        GetEventCount.Request.getDefaultInstance(),
+                        new DeliveryOptions().setSendTimeout(timeout),
+                        responseHandler(getEventCountFuture, GetEventCount.Response.class)
+                );
+                break;
+            } catch (final IllegalArgumentException e) {
+                if (e.getMessage().contains("No message codec for type")) {
+                    log.log(WARNING, "Waiting for EventLogRepository ... ", e);
+                    Thread.sleep(5000L);
+                } else {
+                    throw e;
+                }
+            }
+        }
+        final GetEventCount.Response getEventCountResponse = getEventCountFuture.get(timeout, TimeUnit.MILLISECONDS);
+        assertThat(getEventCountResponse.getCount(), is(0L));
+
+        final CompletableFuture<CreateEvent.Response> createEventFuture = new CompletableFuture<>();
+        vertx.eventBus().send(
+                EventBusAddress.eventBusAddress(verticleManagerId, CreateEvent.class),
+                CreateEvent.Request.newBuilder().setEvent("testEventLogRepository").build(),
+                new DeliveryOptions().setSendTimeout(timeout),
+                responseHandler(createEventFuture, CreateEvent.Response.class)
+        );
+        final CreateEvent.Response createEventResponse = createEventFuture.get(timeout, TimeUnit.MILLISECONDS);
+        log.info(String.format("record id = %d::%d", createEventResponse.getId().getClusterId(), createEventResponse.getId().getPosition()));
+
+        final CompletableFuture<GetEventCount.Response> getEventCountFuture2 = new CompletableFuture<>();
+        vertx.eventBus().send(
+                EventBusAddress.eventBusAddress(verticleManagerId, GetEventCount.class),
+                GetEventCount.Request.getDefaultInstance(),
+                new DeliveryOptions().setSendTimeout(timeout),
+                responseHandler(getEventCountFuture2, GetEventCount.Response.class)
+        );
+        final GetEventCount.Response getEventCountResponse2 = getEventCountFuture2.get(timeout, TimeUnit.MILLISECONDS);
+        assertThat(getEventCountResponse2.getCount(), is(1L));
     }
 
     private <A extends com.google.protobuf.Message> Handler<AsyncResult<Message<A>>> responseHandler(final CompletableFuture future, final Class<A> messageType) {

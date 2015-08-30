@@ -23,10 +23,11 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GRO
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_PARALLEL;
-import co.runrightfast.vertx.core.verticles.messages.Ping;
+import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -37,7 +38,10 @@ import io.vertx.core.eventbus.Message;
 import java.util.Set;
 import javax.json.Json;
 import lombok.Getter;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
+import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
 import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
+import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.RecordId;
 
 /**
  *
@@ -72,6 +76,7 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
         dbSupplier = orientDBService.getODatabaseDocumentTxSupplier(DB).get();
         initDatabase();
         registerGetEventCountMessageConsumer();
+        registerCreateEventCountMessageConsumer();
     }
 
     public void initDatabase() {
@@ -112,16 +117,55 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
                 )
                 .handler(this::handleGetEventCount)
                 .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
-                .ciphers(cipherFunctions(Ping.getDefaultInstance()))
+                .ciphers(cipherFunctions(GetEventCount.getDefaultInstance()))
                 .executionMode(WORKER_POOL_PARALLEL)
                 .build();
+        registerMessageConsumer(config);
     }
 
     private void handleGetEventCount(final Message<GetEventCount.Request> msg) {
         try (final ODatabaseDocumentTx db = orientDBService.getODatabaseDocumentTxSupplier(DB).get().get()) {
             final long count = db.countClass(EventLogRecord.class.getSimpleName());
             final GetEventCount.Response response = GetEventCount.Response.newBuilder().setCount(count).build();
-            msg.reply(response);
+            reply(msg, response);
+        }
+    }
+
+    private void registerCreateEventCountMessageConsumer() {
+        final MessageConsumerConfig<CreateEvent.Request, CreateEvent.Response> config = MessageConsumerConfig.<CreateEvent.Request, CreateEvent.Response>builder()
+                .addressMessageMapping(EventBusAddressMessageMapping.builder()
+                        .address(eventBusAddress(CreateEvent.class))
+                        .requestDefaultInstance(CreateEvent.Request.getDefaultInstance())
+                        .responseDefaultInstance(CreateEvent.Response.getDefaultInstance())
+                        .build()
+                )
+                .handler(this::handleCreateEvent)
+                .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
+                .ciphers(cipherFunctions(CreateEvent.getDefaultInstance()))
+                .executionMode(WORKER_POOL_PARALLEL)
+                .build();
+        registerMessageConsumer(config);
+    }
+
+    private void handleCreateEvent(final Message<CreateEvent.Request> msg) {
+        final CreateEvent.Request request = msg.body();
+        checkArgument(isNotBlank(request.getEvent()), MUST_NOT_BE_BLANK, "event");
+        try (final ODatabaseDocumentTx db = orientDBService.getODatabaseDocumentTxSupplier(DB).get().get()) {
+            final EventLogRecord eventLogRecord = new EventLogRecord();
+            try {
+                db.begin();
+                eventLogRecord.setEvent(request.getEvent());
+                eventLogRecord.save();
+                db.commit();
+
+                final CreateEvent.Response response = CreateEvent.Response.newBuilder()
+                        .setId(RecordId.newBuilder())
+                        .build();
+                reply(msg, response);
+            } catch (final Exception e) {
+                db.rollback();
+                throw e;
+            }
         }
     }
 
