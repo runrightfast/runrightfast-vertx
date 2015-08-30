@@ -16,8 +16,9 @@
 package co.runrightfast.vertx.core.eventbus;
 
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.FAILURE;
-import static co.runrightfast.vertx.core.eventbus.MessageHeader.FROM;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.FROM_ADDRESS;
+import static co.runrightfast.vertx.core.eventbus.MessageHeader.FROM_JVM;
+import static co.runrightfast.vertx.core.eventbus.MessageHeader.FROM_VERTICLE;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_CORRELATION_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_TIMESTAMP;
@@ -53,7 +54,7 @@ public interface EventBusUtils {
         final DeliveryOptions options = new DeliveryOptions();
         options.addHeader(MESSAGE_ID.header, uuid());
         options.addHeader(MESSAGE_TIMESTAMP.header, DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        options.addHeader(FROM.header, JVM_ID);
+        options.addHeader(FROM_JVM.header, JVM_ID);
         return options;
     }
 
@@ -141,6 +142,11 @@ public interface EventBusUtils {
 
     static DeliveryOptions withFailure(@NonNull final DeliveryOptions deliveryOptions, @NonNull final MessageConsumerConfig.Failure failure) {
         deliveryOptions.addHeader(FAILURE.header, failure.toJson().toString());
+        return deliveryOptions;
+    }
+
+    static DeliveryOptions withVerticleDeploymentId(@NonNull final DeliveryOptions deliveryOptions, @NonNull final String deploymentId) {
+        deliveryOptions.addHeader(FROM_VERTICLE.header, deploymentId);
         return deliveryOptions;
     }
 }

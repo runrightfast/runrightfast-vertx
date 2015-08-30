@@ -24,5 +24,7 @@ message Ping {
         int32 instance_id = 2;
 
         string deployment_id = 3;
+
+        string parent_deployment_id = 4;
     }
 }

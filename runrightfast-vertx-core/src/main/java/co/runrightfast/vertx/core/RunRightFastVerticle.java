@@ -32,6 +32,7 @@ import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.EventBusUtils;
 import static co.runrightfast.vertx.core.eventbus.EventBusUtils.responseDeliveryOptions;
+import static co.runrightfast.vertx.core.eventbus.EventBusUtils.withVerticleDeploymentId;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_PARALLEL;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure;
@@ -192,7 +193,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         this.metricRegistry = SharedMetricRegistries.getOrCreate(getRunRightFastVerticleId().toString());
         this.healthCheckRegistry = SharedHealthCheckRegistries.getOrCreate(getRunRightFastVerticleId().toString());
         this.instanceId = instanceSequence.incrementAndGet();
-        this.verticleInstanceId = new RunRightFastVerticleInstanceId(getRunRightFastVerticleId(), instanceId);
+        this.verticleInstanceId = new RunRightFastVerticleInstanceId(getRunRightFastVerticleId(), instanceId, context.deploymentID());
         info.log("init", () -> lifeCycleMsg("initialized"));
     }
 
@@ -239,12 +240,12 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     }
 
     private void handlePingMessageRequest(final io.vertx.core.eventbus.Message<Ping.Request> message) {
-        final Ping.Response response = Ping.Response.newBuilder()
+        final Ping.Response.Builder response = Ping.Response.newBuilder()
                 .setDeploymentId(context.deploymentID())
                 .setInstanceId(instanceId)
-                .setVerticleId(toVerticleId(getRunRightFastVerticleId()))
-                .build();
-        reply(message, response);
+                .setVerticleId(toVerticleId(getRunRightFastVerticleId()));
+        this.parentVerticleInstanceId.ifPresent(verticleId -> response.setParentDeploymentId(verticleId.getDeploymentId()));
+        reply(message, response.build());
     }
 
     private void registerHealthChecks() {
@@ -532,9 +533,9 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     protected void reply(@NonNull final io.vertx.core.eventbus.Message request, @NonNull final Object response, @NonNull final DeliveryOptions options) {
         final Optional<String> replyTo = getReplyToAddress(request);
         if (replyTo.isPresent()) {
-            vertx.eventBus().send(replyTo.get(), response, options);
+            vertx.eventBus().send(replyTo.get(), response, withVerticleDeploymentId(options, context.deploymentID()));
         } else {
-            request.reply(response, options);
+            request.reply(response, withVerticleDeploymentId(options, context.deploymentID()));
         }
     }
 
@@ -544,7 +545,11 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
         final Optional<String> replyTo = getReplyToAddress(request);
         if (replyTo.isPresent()) {
-            vertx.eventBus().send(replyTo.get(), co.runrightfast.vertx.core.messages.Void.getDefaultInstance(), responseDeliveryOptions(request, failure));
+            vertx.eventBus().send(
+                    replyTo.get(),
+                    co.runrightfast.vertx.core.messages.Void.getDefaultInstance(),
+                    withVerticleDeploymentId(responseDeliveryOptions(request, failure), context.deploymentID())
+            );
         } else {
             request.fail(failure.getCode(), failure.getMessage());
         }
@@ -578,7 +583,9 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     }
 
     protected void deployVerticles(final Set<RunRightFastVerticleDeployment> deployments) {
-        vertx.deployVerticle(new RunRightFastVerticleManager(appEventLogger, encryptionService, deployments), result -> {
+        final RunRightFastVerticleManager verticleManager = new RunRightFastVerticleManager(appEventLogger, encryptionService, deployments);
+        verticleManager.setParentVerticleInstanceId(Optional.of(this.verticleInstanceId));
+        vertx.deployVerticle(verticleManager, result -> {
             if (result.succeeded()) {
                 LOG.logp(INFO, CLASS_NAME, "deployVerticles", () -> String.format("%s : %s", result.result(), toJsonArray(deployments)));
             } else {

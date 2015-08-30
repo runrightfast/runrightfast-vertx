@@ -48,7 +48,7 @@ applicationDefaultJvmArgs = [
 ]
 
 dependencies {
-   compile project(':runrightfast-vertx-core')
+   compile project(':runrightfast-vertx-orientdb')
 }
 
 
@@ -70,10 +70,6 @@ task appDocker(type: Docker) {
     // JMX port
     exposePort 7410
     // Remote debug port
-    exposePort 4000
-    // Hazelcast port
-    exposePort 5701
-    // Vertx EventBus port
-    exposePort 9701
+    exposePort 4000    
     addFile("${buildDir}/install/${project.name}", "/runrightfast/apps/${project.name}")
 }

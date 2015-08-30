@@ -107,6 +107,8 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
     @Override
     protected void shutDown() {
+        // by the time this verticle manager instance is being shutdown, all of its deployed instances would have been been shutdown, i.e., un-deployed
+        deployedVerticles.keySet().forEach(globalDeployedVerticles::remove);
         verticleJmxReporters.values().forEach(reporter -> {
             reporter.stop();
             reporter.close();
@@ -185,6 +187,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     private void handleGetVerticleDeploymentsMessage(@NonNull final Message<GetVerticleDeployments.Request> message) {
         final GetVerticleDeployments.Response.Builder response = GetVerticleDeployments.Response.newBuilder();
         final GetVerticleDeployments.Request request = message.body();
+
         if (hasFilters(request)) {
             deployments.stream()
                     .filter(deployment -> {

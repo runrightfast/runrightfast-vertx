@@ -40,7 +40,14 @@ public enum MessageHeader {
      * event bus address
      */
     FROM_ADDRESS("rrf-from-address"),
-    FROM("rrf-from"),
+    /**
+     * JVM ID
+     */
+    FROM_JVM("rrf-from-jvm"),
+    /**
+     * Verticle deployment id
+     */
+    FROM_VERTICLE("rrf-verticle-deployment-id"),
     /**
      * if set, then this indicates the message failed to process.
      *

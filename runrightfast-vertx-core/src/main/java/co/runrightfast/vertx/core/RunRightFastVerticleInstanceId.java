@@ -29,4 +29,7 @@ public class RunRightFastVerticleInstanceId {
     private final RunRightFastVerticleId verticleId;
 
     private final int instanceId;
+
+    @NonNull
+    private final String deploymentId;
 }

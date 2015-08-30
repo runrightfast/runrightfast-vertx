@@ -574,6 +574,21 @@ public class RunRightFastVertxApplicationTest {
         log.info("test_eventbus_RunRightFastVertxApplicationTestMessage_failure");
         final Vertx vertx = vertxService.getVertx();
 
+        final ProtobufMessageProducer<Ping.Request> pingProducer = new ProtobufMessageProducer(
+                vertx.eventBus(),
+                EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, Ping.class),
+                Ping.Request.getDefaultInstance(),
+                metricRegistry
+        );
+
+        // Ensure the verticle is deployed by pinging it
+        final CountDownLatch pingLatch = new CountDownLatch(1);
+        pingProducer.send(Ping.Request.getDefaultInstance(), result -> {
+            pingLatch.countDown();
+        });
+        pingLatch.await();
+        // this means the verticle has been deployed
+
         final ProtobufMessageProducer<RunRightFastVertxApplicationTestMessage.Request> messageProducer = new ProtobufMessageProducer(
                 vertx.eventBus(),
                 EventBusAddress.eventBusAddress(TestVerticle.VERTICLE_ID, RunRightFastVertxApplicationTestMessage.class.getSimpleName()),

@@ -174,6 +174,9 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         } catch (final InterruptedException | ExecutionException ex) {
             throw new RuntimeException(ex);
         }
+
+        // TODO: aggregate GetVerticleDeployments.Response from all RunRightFastVerticleManager instances deployed within the JVm
+        // ping
         return JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(response)).encodePrettily();
     }
 
