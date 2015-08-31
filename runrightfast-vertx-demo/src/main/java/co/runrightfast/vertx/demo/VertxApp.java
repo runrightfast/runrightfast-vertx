@@ -42,7 +42,7 @@ public final class VertxApp {
     private static void registerDemoMXBean(final RunRightFastVertxApplication app) {
         final String jmxDomain = app.runRightFastApplication().getJmxDefaultDomain();
         final Vertx vertx = app.vertxService().getVertx();
-        final DemoMXBean mbean = new DemoMXBeanImpl(vertx);
+        final DemoMXBean mbean = new DemoMXBeanImpl(vertx, app.encryptionService());
         JmxUtils.registerApplicationMBean(jmxDomain, mbean, DemoMXBean.class);
     }
 

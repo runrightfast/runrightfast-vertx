@@ -45,4 +45,9 @@ public interface DemoMXBean {
     String[] getIPAddresses(final String host);
 
     String[] getHostNameAndHostAddress();
+
+    long getEventLogRecordCount();
+
+    String createEventLogRecord(String event);
+
 }

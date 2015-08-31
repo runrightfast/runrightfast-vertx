@@ -72,12 +72,12 @@ public class OrientDBModule {
     public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig(final OrientDBConfig config) {
         final File orientdbHome = config.getHomeDirectory().toFile();
         orientdbHome.mkdirs();
-//        try {
-//            FileUtils.cleanDirectory(orientdbHome);
-//            FileUtils.deleteDirectory(orientdbHome);
-//        } catch (final IOException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            FileUtils.cleanDirectory(orientdbHome);
+            FileUtils.deleteDirectory(orientdbHome);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
         log.logp(INFO, getClass().getName(), "providesEmbeddedOrientDBServiceConfig", String.format("orientdbHome.exists() = %s", orientdbHome.exists()));
 
         final File configDirSrc = new File("src/main/resources/orientdb/config");

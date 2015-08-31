@@ -18,22 +18,26 @@ package co.runrightfast.vertx.demo.testHarness.jmx;
 import co.runrightfast.core.crypto.Decryption;
 import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusUtils;
 import static co.runrightfast.vertx.core.eventbus.EventBusUtils.deliveryOptions;
 import co.runrightfast.vertx.core.eventbus.MessageHeader;
+import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
+import co.runrightfast.vertx.core.utils.ConcurrencyUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.utils.JvmProcess;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
+import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Preconditions;
+import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
+import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -44,22 +48,23 @@ import io.vertx.core.eventbus.MessageConsumer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import java.security.Key;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import static java.util.logging.Level.SEVERE;
+import static java.util.logging.Level.WARNING;
 import javax.json.Json;
 import javax.json.JsonObject;
 import lombok.NonNull;
 import lombok.extern.java.Log;
-import org.apache.shiro.crypto.AesCipherService;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 /**
  *
@@ -72,7 +77,9 @@ public final class DemoMXBeanImpl implements DemoMXBean {
 
     private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(DemoMXBean.class.getName());
 
-    private final ProtobufMessageProducer getVerticleDeploymentsMessageSender;
+    private ProtobufMessageProducer getVerticleDeploymentsMessageSender;
+
+    private final EncryptionService encryptionService;
 
     private final Encryption encryption;
 
@@ -86,28 +93,34 @@ public final class DemoMXBeanImpl implements DemoMXBean {
 
     private MessageConsumer<String> echoMessageConsumer;
 
-    public DemoMXBeanImpl(@NonNull final Vertx vertx) {
+    private ProtobufMessageProducer<GetEventCount.Request> getEventCountMessageProducer;
+
+    public DemoMXBeanImpl(@NonNull final Vertx vertx, @NonNull final EncryptionService encryptionService) {
         this.vertx = vertx;
+        this.encryptionService = encryptionService;
+        initJmxReporter();
 
-        final JmxReporter jmxReporter = JmxReporter.forRegistry(this.metricRegistry)
-                .inDomain(String.format("%s.metrics", DemoMXBean.class.getSimpleName()))
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .convertRatesTo(TimeUnit.SECONDS)
-                .build();
-        jmxReporter.start();
-
-        getVerticleDeploymentsMessageSender = new ProtobufMessageProducer(
-                vertx.eventBus(),
-                EventBusAddress.eventBusAddress(RunRightFastVerticleManager.VERTICLE_ID, "get-verticle-deployments"),
-                getProtobufMessageCodec(GetVerticleDeployments.Request.getDefaultInstance()).get(),
-                metricRegistry
-        );
-
-        final String KEY = "DEFAULT";
-        final EncryptionService encryptionService = encryptionService(KEY);
+        final String KEY = GetEventCount.Request.getDescriptor().getFullName();
         encryption = encryptionService.encryption(KEY);
         decryption = encryptionService.decryption(KEY);
 
+        registerGetVerticleDeploymentsMessageConsumer();
+        initEchoMessageConsumer();
+    }
+
+    private void waitForEventLogRepositoryVerticleToStartUp() {
+        while (true) {
+            try {
+                this.getEventLogRecordCount();
+                break;
+            } catch (final Exception e) {
+                log.log(WARNING, "Waiting for EventLogRepository ... ", e);
+                ConcurrencyUtils.sleep(Duration.ofSeconds(2));
+            }
+        }
+    }
+
+    private void registerGetVerticleDeploymentsMessageConsumer() {
         this.vertx.eventBus().consumer(GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS, this::handleGetVerticleDeploymentsResponse)
                 .completionHandler(res -> {
                     if (res.succeeded()) {
@@ -116,7 +129,18 @@ public final class DemoMXBeanImpl implements DemoMXBean {
                         log.log(Level.INFO, "Registration failed : {0}", GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS);
                     }
                 });
+    }
 
+    private void initJmxReporter() {
+        final JmxReporter jmxReporter = JmxReporter.forRegistry(this.metricRegistry)
+                .inDomain(String.format("%s.metrics", DemoMXBean.class.getSimpleName()))
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .build();
+        jmxReporter.start();
+    }
+
+    private void initEchoMessageConsumer() {
         this.vertx.eventBus().consumer(ECHO_REPLY_TO_ADDRESS, this::handleEchoResponse).completionHandler(res -> {
             if (res.succeeded()) {
                 log.log(Level.INFO, "The handler registration has reached all nodes: {0}", ECHO_REPLY_TO_ADDRESS);
@@ -126,7 +150,6 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         });
 
         registerMessageConsumer();
-
     }
 
     void handleEchoRequest(final Message<String> request) {
@@ -149,17 +172,17 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         log.info(JsonUtils.toVertxJsonObject(json).encodePrettily());
     }
 
-    private EncryptionService encryptionService(final String secretKey) {
-        final AesCipherService aes = new AesCipherService();
-        aes.setKeySize(256);
-        final Map<String, Key> keys = ImmutableMap.<String, Key>builder()
-                .put(secretKey, aes.generateNewKey())
-                .build();
-        return new EncryptionServiceImpl(aes, keys);
-    }
-
     @Override
     public String getVerticleDeployments() {
+        if (getVerticleDeploymentsMessageSender == null) {
+            getVerticleDeploymentsMessageSender = new ProtobufMessageProducer(
+                    vertx.eventBus(),
+                    EventBusAddress.eventBusAddress(RunRightFastVerticleManager.VERTICLE_ID, "get-verticle-deployments"),
+                    getProtobufMessageCodec(GetVerticleDeployments.Request.getDefaultInstance()).get(),
+                    metricRegistry
+            );
+        }
+
         final CompletableFuture<com.google.protobuf.Message> future = new CompletableFuture();
 
         getVerticleDeploymentsMessageSender.send(
@@ -278,6 +301,47 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     @Override
     public String[] getHostNameAndHostAddress() {
         return new String[]{JvmProcess.HOST, JvmProcess.HOST_ADDRESS};
+    }
+
+    @Override
+    public long getEventLogRecordCount() {
+        if (this.getEventCountMessageProducer == null) {
+            getEventCountMessageProducer = new ProtobufMessageProducer<>(
+                    vertx.eventBus(),
+                    EventBusAddress.eventBusAddress(EventLogRepository.VERTICLE_ID, GetEventCount.class),
+                    new ProtobufMessageCodec<>(GetEventCount.Request.getDefaultInstance(), encryptionService.cipherFunctions(GetEventCount.Request.getDescriptor().getFullName())),
+                    metricRegistry
+            );
+        }
+
+        try {
+            final CompletableFuture<GetEventCount.Response> getEventCountFuture = new CompletableFuture<>();
+            getEventCountMessageProducer.send(GetEventCount.Request.getDefaultInstance(), responseHandler(getEventCountFuture, GetEventCount.Response.class));
+            final GetEventCount.Response response = getEventCountFuture.get(2, TimeUnit.SECONDS);
+            return response.getCount();
+        } catch (final InterruptedException | ExecutionException | TimeoutException ex) {
+            log.logp(SEVERE, getClass().getName(), "getEventLogRecordCount", "failed", ex);
+            throw new RuntimeException("Failed to get event log record count: " + ex.getMessage());
+        }
+    }
+
+    @Override
+    public String createEventLogRecord(final String event) {
+        Preconditions.checkArgument(isNotBlank(event));
+        final CompletableFuture<CreateEvent.Response> createEventFuture = new CompletableFuture<>();
+        vertx.eventBus().send(
+                EventBusAddress.eventBusAddress(EventLogRepository.VERTICLE_ID, CreateEvent.class),
+                CreateEvent.Request.newBuilder().setEvent("testEventLogRepository").build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(createEventFuture, CreateEvent.Response.class)
+        );
+        try {
+            final CreateEvent.Response createEventResponse = createEventFuture.get(2, TimeUnit.SECONDS);
+            return ProtobufUtils.protobuMessageToJson(createEventResponse.getId()).toString();
+        } catch (final InterruptedException | ExecutionException | TimeoutException ex) {
+            log.logp(SEVERE, getClass().getName(), "createEventLogRecord", "failed", ex);
+            throw new RuntimeException("Failed to create event log record : " + ex.getMessage());
+        }
     }
 
 }

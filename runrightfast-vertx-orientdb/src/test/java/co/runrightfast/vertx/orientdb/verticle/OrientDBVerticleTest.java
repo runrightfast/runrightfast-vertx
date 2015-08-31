@@ -290,13 +290,13 @@ public class OrientDBVerticleTest {
     @Test
     public void testEventLogRepository_getEventCount() throws Exception {
         final Vertx vertx = vertxService.getVertx();
-        final RunRightFastVerticleId verticleManagerId = EventLogRepository.VERTICLE_ID;
+        final RunRightFastVerticleId verticleId = EventLogRepository.VERTICLE_ID;
 
         final long timeout = 60000L;
 
         final ProtobufMessageProducer<GetEventCount.Request> getEventCountMessageProducer = new ProtobufMessageProducer<>(
                 vertx.eventBus(),
-                EventBusAddress.eventBusAddress(verticleManagerId, GetEventCount.class),
+                EventBusAddress.eventBusAddress(verticleId, GetEventCount.class),
                 new ProtobufMessageCodec<>(GetEventCount.Request.getDefaultInstance(), encryptionService.cipherFunctions(GetEventCount.Request.getDescriptor().getFullName())),
                 metricRegistry
         );
