@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.core.hazelcast.impl;
 
 import co.runrightfast.core.ConfigurationException.ConfigurationExceptionSupplier;
+import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableSet;
@@ -48,8 +49,10 @@ import com.hazelcast.config.TcpIpConfig;
 import com.hazelcast.config.TopicConfig;
 import java.util.Optional;
 import java.util.Set;
+import static java.util.logging.Level.INFO;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -58,6 +61,7 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author alfio
  */
+@Log
 public class TypesafeHazelcastConfig {
 
     @Getter
@@ -99,7 +103,7 @@ public class TypesafeHazelcastConfig {
         );
 
         _hazelcastConfig.setNetworkConfig(ConfigUtils.getConfig(typeSafeConfig, "network-config")
-                .map(this::networkConfig)
+                .map(c -> this.networkConfig(c, typeSafeConfig))
                 .orElseThrow(new ConfigurationExceptionSupplier("network-config is required"))
         );
 
@@ -273,20 +277,26 @@ public class TypesafeHazelcastConfig {
         return maxSizeConfig;
     }
 
-    private NetworkConfig networkConfig(final com.typesafe.config.Config config) {
+    private NetworkConfig networkConfig(final com.typesafe.config.Config networkTypeSafeconfig, final com.typesafe.config.Config hazelcastconfig) {
         final NetworkConfig networkConfig = new NetworkConfig()
-                .setReuseAddress(ConfigUtils.getBoolean(config, "reuse-address").orElse(true))
-                .setPort(ConfigUtils.getInt(config, "port").orElse(5701));
+                .setReuseAddress(ConfigUtils.getBoolean(networkTypeSafeconfig, "reuse-address").orElse(true))
+                .setPort(ConfigUtils.getInt(networkTypeSafeconfig, "port").orElse(5701));
 
-        ConfigUtils.getString(config, "public-address").ifPresent(networkConfig::setPublicAddress);
-        ConfigUtils.getInt(config, "port-count").ifPresent(networkConfig::setPortCount);
-        ConfigUtils.getBoolean(config, "port-auto-increment").ifPresent(networkConfig::setPortAutoIncrement);
-        ConfigUtils.getStringList(config, "outbound-port-definitions").ifPresent(outboundPortDefinitions -> {
+        final Optional<String> publicAddress = getWeaveClusterHostIPAddress(hazelcastconfig);
+        log.log(INFO, "publicAddress = {0}", publicAddress);
+        if (publicAddress.isPresent()) {
+            networkConfig.setPublicAddress(publicAddress.get());
+        } else {
+            ConfigUtils.getString(networkTypeSafeconfig, "public-address").ifPresent(networkConfig::setPublicAddress);
+        }
+        ConfigUtils.getInt(networkTypeSafeconfig, "port-count").ifPresent(networkConfig::setPortCount);
+        ConfigUtils.getBoolean(networkTypeSafeconfig, "port-auto-increment").ifPresent(networkConfig::setPortAutoIncrement);
+        ConfigUtils.getStringList(networkTypeSafeconfig, "outbound-port-definitions").ifPresent(outboundPortDefinitions -> {
             outboundPortDefinitions.stream().forEach(networkConfig::addOutboundPortDefinition);
         });
 
-        networkConfig.setJoin(joinConfig(config));
-        ConfigUtils.getStringList(config, "interfaces").ifPresent(interfaces -> {
+        networkConfig.setJoin(joinConfig(networkTypeSafeconfig));
+        ConfigUtils.getStringList(networkTypeSafeconfig, "interfaces").ifPresent(interfaces -> {
             final InterfacesConfig interfaceConfig = networkConfig.getInterfaces();
             interfaces.stream().forEach(interfaceConfig::addInterface);
         });

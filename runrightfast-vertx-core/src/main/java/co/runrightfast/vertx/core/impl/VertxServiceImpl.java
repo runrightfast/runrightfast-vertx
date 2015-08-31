@@ -27,6 +27,7 @@ import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.LOG;
+import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.core.eventbus.VoidMessageCodec;
 import static co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
@@ -48,9 +49,6 @@ import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import io.vertx.ext.dropwizard.Match;
 import io.vertx.ext.dropwizard.MatchType;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-import java.net.Inet4Address;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +60,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import static java.util.logging.Level.CONFIG;
 import static java.util.logging.Level.INFO;
-import static java.util.logging.Level.SEVERE;
 import javax.inject.Inject;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
@@ -285,7 +282,7 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     private VertxOptions createVertxOptions() {
         final JsonObject vertxJsonObject = JsonUtils.toVertxJsonObject(ConfigUtils.toJsonObject(config.getConfig("VertxOptions")));
         vertxOptions = new VertxOptions(vertxJsonObject);
-        getWeaveClusterHostIPAddress().ifPresent(vertxOptions::setClusterHost);
+        getWeaveClusterHostIPAddress(config).ifPresent(vertxOptions::setClusterHost);
 
         if (vertxOptions.getMetricsOptions() != null && vertxOptions.getMetricsOptions().isEnabled()) {
             configureMetricsOptions();
@@ -296,25 +293,6 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
         }
 
         return vertxOptions;
-    }
-
-    private Optional<String> getWeaveClusterHostIPAddress() {
-        if (!ConfigUtils.getBoolean(config, "weave", "enabled").orElse(Boolean.FALSE)) {
-            return Optional.empty();
-        }
-        try {
-            final NetworkInterface networkInterface = NetworkInterface.getByName(ConfigUtils.getString(config, "weave", "network-interface").orElse("ethwe"));
-            if (networkInterface == null) {
-                return Optional.empty();
-            }
-            return networkInterface.getInterfaceAddresses().stream()
-                    .filter(address -> address.getAddress() instanceof Inet4Address)
-                    .findFirst()
-                    .map(address -> address.getAddress().getHostAddress());
-        } catch (final SocketException ex) {
-            LOG.logp(SEVERE, getClass().getName(), "getWeaveClusterHostIPAddress", "failed", ex);
-            return Optional.empty();
-        }
     }
 
     /**
@@ -384,7 +362,8 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
             final String hazelcastInstanceName = ConfigUtils.getString(c, "instance-name")
                     .map(name -> String.format("%s/%s", VERTX_HAZELCAST_INSTANCE_ID, name))
                     .orElse(VERTX_HAZELCAST_INSTANCE_ID);
-            final com.hazelcast.config.Config hazelcastConfig = hazelcastConfigFactory(hazelcastInstanceName).apply(c);
+
+            final com.hazelcast.config.Config hazelcastConfig = hazelcastConfigFactory(hazelcastInstanceName).apply(c.withFallback(config));
             return new HazelcastClusterManager(hazelcastConfig);
         }).ifPresent(vertxOptions::setClusterManager);
     }

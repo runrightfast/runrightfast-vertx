@@ -21,9 +21,11 @@ import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.core.crypto.EncryptionServiceException;
 import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
-import com.google.common.collect.ImmutableMap;
+import co.runrightfast.vertx.core.messages.SecretKeys;
+import static co.runrightfast.vertx.core.protobuf.MessageConversions.toKeyMap;
 import dagger.Module;
 import dagger.Provides;
+import java.io.InputStream;
 import java.util.Set;
 import javax.inject.Singleton;
 import lombok.NonNull;
@@ -43,10 +45,15 @@ public class EncryptionServiceModule {
         private final EncryptionService encryptionService;
 
         public EncryptionServiceWithDefaultCiphers(@NonNull final AesCipherService cipherService) {
-            encryptionService = new EncryptionServiceImpl(
-                    cipherService,
-                    ImmutableMap.of(GLOBAL, cipherService.generateNewKey())
-            );
+            try (final InputStream is = getClass().getResourceAsStream("/secretKeys")) {
+                encryptionService = new EncryptionServiceImpl(
+                        cipherService,
+                        toKeyMap(SecretKeys.parseFrom(is))
+                );
+            } catch (final Exception e) {
+                throw new RuntimeException(e);
+            }
+
         }
 
         @Override

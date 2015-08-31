@@ -38,6 +38,7 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Preconditions;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
+import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEvents;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -331,13 +332,35 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         final CompletableFuture<CreateEvent.Response> createEventFuture = new CompletableFuture<>();
         vertx.eventBus().send(
                 EventBusAddress.eventBusAddress(EventLogRepository.VERTICLE_ID, CreateEvent.class),
-                CreateEvent.Request.newBuilder().setEvent("testEventLogRepository").build(),
+                CreateEvent.Request.newBuilder().setEvent(event).build(),
                 new DeliveryOptions().setSendTimeout(2000L),
                 responseHandler(createEventFuture, CreateEvent.Response.class)
         );
         try {
             final CreateEvent.Response createEventResponse = createEventFuture.get(2, TimeUnit.SECONDS);
             return ProtobufUtils.protobuMessageToJson(createEventResponse.getId()).toString();
+        } catch (final InterruptedException | ExecutionException | TimeoutException ex) {
+            log.logp(SEVERE, getClass().getName(), "createEventLogRecord", "failed", ex);
+            throw new RuntimeException("Failed to create event log record : " + ex.getMessage());
+        }
+    }
+
+    @Override
+    public String browseEventLogRecords(int skip, int limit) {
+        final CompletableFuture<GetEvents.Response> future = new CompletableFuture<>();
+        vertx.eventBus().send(
+                EventBusAddress.eventBusAddress(EventLogRepository.VERTICLE_ID, GetEvents.class),
+                GetEvents.Request.newBuilder().setSkip(skip).setLimit(limit).build(),
+                new DeliveryOptions().setSendTimeout(2000L),
+                responseHandler(future, GetEvents.Response.class)
+        );
+        try {
+            final GetEvents.Response response = future.get(2, TimeUnit.SECONDS);
+            return JsonUtils.toVertxJsonObject(Json.createObjectBuilder()
+                    .add("count", response.getEventsCount())
+                    .add("records", ProtobufUtils.protobuMessageToJson(response))
+                    .build())
+                    .encodePrettily();
         } catch (final InterruptedException | ExecutionException | TimeoutException ex) {
             log.logp(SEVERE, getClass().getName(), "createEventLogRecord", "failed", ex);
             throw new RuntimeException("Failed to create event log record : " + ex.getMessage());

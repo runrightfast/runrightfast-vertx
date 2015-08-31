@@ -33,12 +33,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
+import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.Event;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
+import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEvents;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.RecordId;
 import io.vertx.core.eventbus.Message;
+import java.util.List;
 import java.util.Set;
 import javax.json.Json;
 import lombok.Getter;
@@ -78,6 +84,7 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
         initDatabase();
         registerGetEventCountMessageConsumer();
         registerCreateEventCountMessageConsumer();
+        registerGetEventsMessageConsumer();
     }
 
     public void initDatabase() {
@@ -167,6 +174,46 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
                 db.rollback();
                 throw e;
             }
+        }
+    }
+
+    private void registerGetEventsMessageConsumer() {
+        final MessageConsumerConfig<GetEvents.Request, GetEvents.Response> config = MessageConsumerConfig.<GetEvents.Request, GetEvents.Response>builder()
+                .addressMessageMapping(EventBusAddressMessageMapping.builder()
+                        .address(eventBusAddress(GetEvents.class))
+                        .requestDefaultInstance(GetEvents.Request.getDefaultInstance())
+                        .responseDefaultInstance(GetEvents.Response.getDefaultInstance())
+                        .build()
+                )
+                .handler(this::handleGetEvents)
+                .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
+                .ciphers(cipherFunctions(GetEvents.getDefaultInstance()))
+                .executionMode(WORKER_POOL_PARALLEL)
+                .build();
+        registerMessageConsumer(config);
+    }
+
+    private void handleGetEvents(final Message<GetEvents.Request> msg) {
+        final GetEvents.Request request = msg.body();
+        final int skip = request.getSkip() <= 0 ? 0 : request.getSkip();
+        final int limit = request.getLimit() <= 0 ? 10 : request.getLimit();
+        final GetEvents.Response.Builder response = GetEvents.Response.newBuilder();
+        try (final ODatabaseDocumentTx db = orientDBService.getODatabaseDocumentTxSupplier(DB).get().get()) {
+            final EventLogRecord eventLogRecord = new EventLogRecord();
+            final List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select from EventLogRecord SKIP ? LIMIT ?"), skip, limit);
+            docs.stream().forEach(doc -> {
+                final EventLogRecord record = new EventLogRecord(doc);
+                final ORID orid = record.getDocument().getRecord().getIdentity();
+                final RecordId recordId = RecordId.newBuilder().setClusterId(orid.getClusterId()).setPosition(orid.getClusterPosition()).build();
+                response.addEvents(Event.newBuilder()
+                        .setCreatedOn(record.getCreatedOn() != null ? record.getCreatedOn().getTime() : 0)
+                        .setUpdatedOn(record.getUpdatedOn() != null ? record.getUpdatedOn().getTime() : 0)
+                        .setEvent(record.getEvent())
+                        .setRecordId(recordId)
+                        .build()
+                );
+            });
+            reply(msg, response.build());
         }
     }
 

@@ -18,6 +18,7 @@ package co.runrightfast.vertx.core.protobuf;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
+import co.runrightfast.vertx.core.messages.SecretKeys;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
@@ -25,13 +26,17 @@ import co.runrightfast.vertx.core.verticles.verticleManager.messages.DeploymentO
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.HealthCheck;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleType;
+import com.google.common.collect.ImmutableMap;
+import java.security.Key;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -136,5 +141,11 @@ public interface MessageConversions {
         final JsonArrayBuilder jsonArray = Json.createArrayBuilder();
         deployments.stream().forEach(deployment -> jsonArray.add(deployment.toJson()));
         return jsonArray.build();
+    }
+
+    static Map<String, Key> toKeyMap(@NonNull final SecretKeys keys) {
+        final ImmutableMap.Builder<String, Key> mapBuilder = ImmutableMap.builder();
+        keys.getKeys().entrySet().stream().forEach(entry -> mapBuilder.put(entry.getKey(), SerializationUtils.deserialize(entry.getValue().toByteArray())));
+        return mapBuilder.build();
     }
 }

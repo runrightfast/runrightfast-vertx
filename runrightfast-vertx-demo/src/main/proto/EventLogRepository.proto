@@ -28,8 +28,35 @@ message CreateEvent {
     }
 }
 
+message GetEvents {
+    
+    message Request {
+        int32 skip = 1;
+
+        int32 limit = 2;
+    }
+
+    message Response {
+
+        repeated Event events = 1;
+    }
+
+}
+
 message RecordId {
     int32 cluster_id = 1;
 
     int64 position = 2;
+}
+
+message Event {
+
+    RecordId record_id = 1;
+    
+    int64 created_on = 2;
+
+    int64 updated_on = 3;
+
+    string event = 4;
+
 }

@@ -15,19 +15,30 @@
  */
 package co.runrightfast.core.crypto.impl;
 
+import co.runrightfast.core.crypto.AESKeySizes;
 import co.runrightfast.core.crypto.Decryption;
 import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.core.crypto.EncryptionServiceException;
 import co.runrightfast.core.crypto.UnknownSecretKeyException;
+import co.runrightfast.vertx.core.messages.SecretKeys;
+import static co.runrightfast.vertx.core.protobuf.MessageConversions.toKeyMap;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import com.google.common.collect.ImmutableMap;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.Key;
 import java.util.Map;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.shiro.crypto.AesCipherService;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -184,6 +195,40 @@ public class EncryptionServiceImplTest {
                 .build();
         final EncryptionService service = new EncryptionServiceImpl(aes, keys);
         service.decrypt(service.encrypt("data".getBytes(), "a"), "b");
+    }
+
+    @Test
+    public void testStoringSecretKeys() throws IOException {
+        final AesCipherService cipherService = new AesCipherService();
+        cipherService.setKeySize(AESKeySizes.KEY_SIZE_256);
+
+        final Key key = cipherService.generateNewKey();
+        final byte[] keyBytes = SerializationUtils.serialize(key);
+        final ByteString keyByteString = ByteString.copyFrom(keyBytes);
+
+        final String keyName = "GLOBAL";
+        final SecretKeys keys = SecretKeys.newBuilder()
+                .putAllKeys(ImmutableMap.of(keyName, keyByteString))
+                .build();
+
+        final EncryptionService service1 = new EncryptionServiceImpl(cipherService, toKeyMap(keys));
+
+        final byte[] encryptedData = service1.encrypt("data".getBytes(), keyName);
+        assertThat("data", is(new String(service1.decrypt(encryptedData, keyName))));
+
+        final File secretKeysFile = new File("build/temp/secretKeys");
+        secretKeysFile.getParentFile().mkdirs();
+        try (final OutputStream os = new FileOutputStream(secretKeysFile)) {
+            keys.writeTo(os);
+        }
+
+        final AesCipherService cipherService2 = new AesCipherService();
+        cipherService2.setKeySize(AESKeySizes.KEY_SIZE_256);
+        try (final InputStream is = new FileInputStream(secretKeysFile)) {
+            final EncryptionService service2 = new EncryptionServiceImpl(cipherService2, toKeyMap(SecretKeys.parseFrom(is)));
+            assertThat("data", is(new String(service2.decrypt(encryptedData, keyName))));
+        }
+
     }
 
 }

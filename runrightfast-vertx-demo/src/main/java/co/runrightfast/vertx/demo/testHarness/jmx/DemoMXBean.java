@@ -50,4 +50,6 @@ public interface DemoMXBean {
 
     String createEventLogRecord(String event);
 
+    String browseEventLogRecords(int skip, int limit);
+
 }

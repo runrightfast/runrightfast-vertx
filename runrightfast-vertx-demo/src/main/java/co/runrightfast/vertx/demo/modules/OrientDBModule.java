@@ -19,6 +19,7 @@ import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.application.ApplicationId;
+import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
@@ -135,7 +136,7 @@ public class OrientDBModule {
                 .add(new OServerNetworkProtocolConfiguration("binary", ONetworkProtocolBinary.class.getName()))
                 .build();
         final OServerNetworkListenerConfiguration binaryListener = new OServerNetworkListenerConfiguration();
-        binaryListener.ipAddress = "0.0.0.0";
+        binaryListener.ipAddress = getWeaveClusterHostIPAddress().orElse("0.0.0.0");
         binaryListener.protocol = "binary";
         binaryListener.portRange = "2424-2430";
         binaryListener.socket = "default";
