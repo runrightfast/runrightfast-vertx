@@ -47,6 +47,15 @@ public final class OrientDBConfig {
 
     public OrientDBConfig(@NonNull final Config config) {
         this.homeDirectory = Paths.get(ConfigUtils.getString(config, "home", "dir").orElse("/orientdb"));
-        this.nodeName = ConfigUtils.getString(config, "nodeName").orElse(HOST);
+        this.nodeName = ConfigUtils.getString(config, "nodeName").orElseGet(this::defaultNodeName);
+    }
+
+    private String defaultNodeName() {
+        final int index = HOST.indexOf('.');
+        if (index == -1) {
+            return HOST;
+        }
+
+        return HOST.substring(0, index);
     }
 }

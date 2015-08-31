@@ -96,6 +96,11 @@ public class OrientDBModule {
         final Path defaultDistributedDBConfigFile = Paths.get(orientDBConfig.getHomeDirectory().toAbsolutePath().toString(), "config", "default-distributed-db-config.json");
         log.info(String.format("defaultDistributedDBConfigFile = %s", defaultDistributedDBConfigFile));
         if (!Files.exists(defaultDistributedDBConfigFile)) {
+            try {
+                Files.createDirectories(defaultDistributedDBConfigFile.getParent());
+            } catch (final IOException ex) {
+                throw new RuntimeException(ex);
+            }
             try (final InputStream is = getClass().getResourceAsStream("/orientdb/config/default-distributed-db-config.json")) {
                 try (final OutputStream os = new FileOutputStream(defaultDistributedDBConfigFile.toFile())) {
                     IOUtils.copy(is, os);
