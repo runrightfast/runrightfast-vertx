@@ -16,6 +16,7 @@
 package co.runrightfast.vertx.orientdb;
 
 import co.runrightfast.vertx.core.utils.ConfigUtils;
+import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import com.typesafe.config.Config;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -41,7 +42,11 @@ public final class OrientDBConfig {
     @Getter
     private final Path homeDirectory;
 
+    @Getter
+    private final String nodeName;
+
     public OrientDBConfig(@NonNull final Config config) {
-        homeDirectory = Paths.get(ConfigUtils.getString(config, "home", "dir").orElse("/orientdb"));
+        this.homeDirectory = Paths.get(ConfigUtils.getString(config, "home", "dir").orElse("/orientdb"));
+        this.nodeName = ConfigUtils.getString(config, "nodeName").orElse(HOST);
     }
 }

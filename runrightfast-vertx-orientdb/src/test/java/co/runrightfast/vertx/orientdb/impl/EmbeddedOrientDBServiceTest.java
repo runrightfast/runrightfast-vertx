@@ -18,6 +18,7 @@ package co.runrightfast.vertx.orientdb.impl;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
+import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
@@ -144,6 +145,7 @@ public class EmbeddedOrientDBServiceTest {
         config.clazz = OHazelcastPlugin.class.getName();
         config.parameters = new OServerParameterConfiguration[]{
             new OServerParameterConfiguration("enabled", "true"),
+            new OServerParameterConfiguration("nodeName", HOST),
             new OServerParameterConfiguration("configuration.db.default", new File(orientdbHome, "config/default-distributed-db-config.json").getAbsolutePath()),
             new OServerParameterConfiguration("configuration.hazelcast", new File(orientdbHome, "config/hazelcast.xml").getAbsolutePath())
         };

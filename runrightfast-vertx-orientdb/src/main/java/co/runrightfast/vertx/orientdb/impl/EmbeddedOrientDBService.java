@@ -152,16 +152,16 @@ public class EmbeddedOrientDBService extends AbstractIdleService implements Orie
             databaseDir = Paths.get(config.getOrientDBRootDir().toString(), "databases", database).toAbsolutePath();
         }
 
-        final ODatabaseFactory dbFactory = new ODatabaseFactory();
-        if (dbFactory.getInstances(poolConfig.getDatabaseName()).isEmpty()) {
-            final String dbUrl = "plocal:" + databaseDir;
+        final String dbUrl = "plocal:" + databaseDir;
+        if (!new ODatabaseDocumentTx(dbUrl).exists()) {
             try (final ODatabase db = new ODatabaseFactory().createDatabase("document", dbUrl).create()) {
                 log.logp(INFO, CLASS_NAME, "createDatabase", String.format("created db = %s", db.getName()));
             } catch (final Exception e) {
                 log.logp(WARNING, CLASS_NAME, "createDatabase", String.format("dbUrl: %s", dbUrl), e);
             }
+        } else {
+            log.logp(INFO, CLASS_NAME, "createDatabase", String.format("db already exists: %s", dbUrl));
         }
-
     }
 
     private void registerDatabaseLifeCycleListeners() {

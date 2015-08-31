@@ -20,6 +20,7 @@ import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory;
 import co.runrightfast.vertx.core.utils.JsonUtils;
+import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
@@ -165,6 +166,7 @@ public class OrientDBHazelcastPluginTest {
         config.clazz = OrientDBPluginWithProvidedHazelcastInstance.class.getName();
         config.parameters = new OServerParameterConfiguration[]{
             new OServerParameterConfiguration("enabled", "true"),
+            new OServerParameterConfiguration("nodeName", HOST),
             new OServerParameterConfiguration("configuration.db.default", new File(orientdbHome, "config/default-distributed-db-config.json").getAbsolutePath()),};
         return config;
     }

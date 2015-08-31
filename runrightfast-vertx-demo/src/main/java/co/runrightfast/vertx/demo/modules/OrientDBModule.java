@@ -43,11 +43,9 @@ import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.DeploymentOptions;
 import java.io.File;
-import java.io.IOException;
 import static java.util.logging.Level.INFO;
 import javax.inject.Singleton;
 import lombok.extern.java.Log;
-import org.apache.commons.io.FileUtils;
 
 /**
  *
@@ -69,32 +67,31 @@ public class OrientDBModule {
 
     @Provides
     @Singleton
-    public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig(final OrientDBConfig config) {
-        final File orientdbHome = config.getHomeDirectory().toFile();
+    public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig(final OrientDBConfig orientDBConfig) {
+        final File orientdbHome = orientDBConfig.getHomeDirectory().toFile();
         orientdbHome.mkdirs();
-        try {
-            FileUtils.cleanDirectory(orientdbHome);
-            FileUtils.deleteDirectory(orientdbHome);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            FileUtils.cleanDirectory(orientdbHome);
+//            FileUtils.deleteDirectory(orientdbHome);
+//        } catch (final IOException e) {
+//            throw new RuntimeException(e);
+//        }
         log.logp(INFO, getClass().getName(), "providesEmbeddedOrientDBServiceConfig", String.format("orientdbHome.exists() = %s", orientdbHome.exists()));
 
-        final File configDirSrc = new File("src/main/resources/orientdb/config");
-        final File configDirTarget = new File(orientdbHome, "config");
-        try {
-            FileUtils.copyFileToDirectory(new File(configDirSrc, "default-distributed-db-config.json"), configDirTarget);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
-
+//        final File configDirSrc = new File("src/main/resources/orientdb/config");
+//        final File configDirTarget = new File(orientdbHome, "config");
+//        try {
+//            FileUtils.copyFileToDirectory(new File(configDirSrc, "default-distributed-db-config.json"), configDirTarget);
+//        } catch (final IOException e) {
+//            throw new RuntimeException(e);
+//        }
         final ApplicationId appId = ApplicationId.builder().group("co.runrightfast").name("runrightfast-vertx-orientdb").version("1.0.0").build();
         final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);
 
         return EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(orientdbHome.toPath())
                 .handler(this::oGraphServerHandler)
-                .handler(() -> this.oHazelcastPlugin(orientdbHome))
+                .handler(() -> this.oHazelcastPlugin(orientdbHome, orientDBConfig))
                 .handler(this::oServerSideScriptInterpreter)
                 .networkConfig(oServerNetworkConfiguration())
                 .user(new OServerUserConfiguration("root", "root", "*"))
@@ -132,11 +129,12 @@ public class OrientDBModule {
         return config;
     }
 
-    private OServerHandlerConfiguration oHazelcastPlugin(final File orientdbHome) {
+    private OServerHandlerConfiguration oHazelcastPlugin(final File orientdbHome, final OrientDBConfig orientDBConfig) {
         final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
         config.clazz = OrientDBPluginWithProvidedHazelcastInstance.class.getName();
         config.parameters = new OServerParameterConfiguration[]{
             new OServerParameterConfiguration("enabled", "true"),
+            new OServerParameterConfiguration("nodeName", orientDBConfig.getNodeName()),
             new OServerParameterConfiguration("configuration.db.default", new File(orientdbHome, "config/default-distributed-db-config.json").getAbsolutePath()),};
         return config;
     }

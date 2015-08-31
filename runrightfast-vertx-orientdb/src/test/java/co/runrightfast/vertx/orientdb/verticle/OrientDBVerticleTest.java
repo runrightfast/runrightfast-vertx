@@ -31,6 +31,7 @@ import static co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer.addRun
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.core.utils.JsonUtils;
+import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.utils.VertxUtils;
@@ -210,6 +211,7 @@ public class OrientDBVerticleTest {
             config.clazz = OrientDBPluginWithProvidedHazelcastInstance.class.getName();
             config.parameters = new OServerParameterConfiguration[]{
                 new OServerParameterConfiguration("enabled", "true"),
+                new OServerParameterConfiguration("nodeName", HOST),
                 new OServerParameterConfiguration("configuration.db.default", new File(orientdbHome, "config/default-distributed-db-config.json").getAbsolutePath()),};
             return config;
         }
