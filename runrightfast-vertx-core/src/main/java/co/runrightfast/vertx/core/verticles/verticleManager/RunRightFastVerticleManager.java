@@ -47,6 +47,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.Getter;
@@ -90,6 +92,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     private static final Map<String, RunRightFastVerticleDeployment> globalDeployedVerticles = new ConcurrentHashMap<>();
 
     private static JmxReporter jmxReporterForSelf;
+    private static final Lock lock = new ReentrantLock();
 
     @Inject
     public RunRightFastVerticleManager(final AppEventLogger appEventLogger, final EncryptionService encryptionService, final Set<RunRightFastVerticleDeployment> deployments) {
@@ -318,12 +321,18 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     }
 
     private void stopJmxReporterForSelf() {
-        if (jmxReporterForSelf == null) {
-            return;
+        if (lock.tryLock()) {
+            try {
+                if (jmxReporterForSelf == null) {
+                    return;
+                }
+                jmxReporterForSelf.stop();
+                jmxReporterForSelf.close();
+                jmxReporterForSelf = null;
+            } finally {
+                lock.unlock();
+            }
         }
-        jmxReporterForSelf.stop();
-        jmxReporterForSelf.close();
-        jmxReporterForSelf = null;
     }
 
     @Override

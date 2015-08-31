@@ -53,13 +53,13 @@ applicationDefaultJvmArgs = [
     "-Dcom.sun.management.jmxremote.ssl=false",
     "-Dcom.sun.management.jmxremote.port=7410",
     
-    "-Dapp.log.dir=${buildDir}/app/logs",   
+//    "-Dapp.log.dir=${buildDir}/app/logs",   
     "-Drunrightfast.app.version=${version}",
     
-    // "-Dconfig.resource=application_local.conf"
+//    "-Dconfig.resource=application_local.conf"
     
-    // "-Dvertx.cluster.public.host=192.168.0.100"
-    //"-Dvertx.cluster.public.port=60558"
+//    "-Dvertx.cluster.public.host=192.168.0.100",
+//    "-Dvertx.cluster.public.port=60558"
 ]
 
 dependencies {

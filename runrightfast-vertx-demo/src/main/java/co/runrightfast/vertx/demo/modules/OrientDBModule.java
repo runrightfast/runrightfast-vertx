@@ -43,9 +43,17 @@ import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.DeploymentOptions;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import static java.util.logging.Level.INFO;
 import javax.inject.Singleton;
 import lombok.extern.java.Log;
+import org.apache.commons.io.IOUtils;
 
 /**
  *
@@ -85,6 +93,19 @@ public class OrientDBModule {
 //        } catch (final IOException e) {
 //            throw new RuntimeException(e);
 //        }
+        final Path defaultDistributedDBConfigFile = Paths.get(orientDBConfig.getHomeDirectory().toAbsolutePath().toString(), "config", "default-distributed-db-config.json");
+        log.info(String.format("defaultDistributedDBConfigFile = %s", defaultDistributedDBConfigFile));
+        if (!Files.exists(defaultDistributedDBConfigFile)) {
+            try (final InputStream is = getClass().getResourceAsStream("/orientdb/config/default-distributed-db-config.json")) {
+                try (final OutputStream os = new FileOutputStream(defaultDistributedDBConfigFile.toFile())) {
+                    IOUtils.copy(is, os);
+                }
+                log.info(String.format("copied over defaultDistributedDBConfigFile : %s", defaultDistributedDBConfigFile));
+            } catch (final IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         final ApplicationId appId = ApplicationId.builder().group("co.runrightfast").name("runrightfast-vertx-orientdb").version("1.0.0").build();
         final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);
 
