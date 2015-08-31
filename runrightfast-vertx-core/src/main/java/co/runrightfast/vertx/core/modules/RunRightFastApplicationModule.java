@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.modules;
 
+import co.runrightfast.core.AppConfig;
 import co.runrightfast.core.ConfigurationException;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
@@ -62,6 +63,12 @@ public final class RunRightFastApplicationModule {
         final String configPath = configPath(CONFIG_NAMESPACE, "vertx");
         return ConfigUtils.getConfig(config, configPath)
                 .orElseThrow(() -> new ConfigurationException(String.format("Missing required config: %s", configPath)));
+    }
+
+    @Provides
+    @Singleton
+    public AppConfig provideAppConfig(@ApplicationConfig final Config config) {
+        return new AppConfig(config);
     }
 
     @Provides

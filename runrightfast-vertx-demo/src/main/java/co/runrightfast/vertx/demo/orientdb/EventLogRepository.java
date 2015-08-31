@@ -26,16 +26,11 @@ import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Executio
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
-import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.verticle.OrientDBRepositoryVerticle;
 import static com.google.common.base.Preconditions.checkArgument;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
@@ -46,7 +41,6 @@ import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.
 import io.vertx.core.eventbus.Message;
 import java.util.List;
 import java.util.Set;
-import javax.json.Json;
 import lombok.Getter;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -88,27 +82,26 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
     }
 
     public void initDatabase() {
-        try (final ODatabase db = dbSupplier.get()) {
-            OClass timestampedClass = db.getMetadata().getSchema().getClass(Timestamped.class.getSimpleName());
-            if (timestampedClass == null) {
-                timestampedClass = db.getMetadata().getSchema().createAbstractClass(Timestamped.class.getSimpleName());
-                timestampedClass.createProperty(Timestamped.Field.created_on.name(), OType.DATETIME);
-                timestampedClass.createProperty(Timestamped.Field.updated_on.name(), OType.DATETIME);
-                info.log("startUp", () -> Json.createObjectBuilder().add("class", Timestamped.class.getSimpleName()).add("created", true).build());
-            } else {
-                info.log("startUp", () -> Json.createObjectBuilder().add("class", Timestamped.class.getSimpleName()).build());
-            }
-
-            OClass logRecordClass = db.getMetadata().getSchema().getClass(EventLogRecord.class.getSimpleName());
-            if (logRecordClass == null) {
-                logRecordClass = db.getMetadata().getSchema().createClass(EventLogRecord.class.getSimpleName()).setSuperClasses(ImmutableList.of(timestampedClass));
-                logRecordClass.createProperty(EventLogRecord.Field.event.name(), OType.STRING);
-                info.log("startUp", () -> Json.createObjectBuilder().add("class", EventLogRecord.class.getSimpleName()).add("created", true).build());
-            } else {
-                info.log("startUp", () -> Json.createObjectBuilder().add("class", EventLogRecord.class.getSimpleName()).build());
-            }
-
-        }
+//        try (final ODatabase db = dbSupplier.get()) {
+//            OClass timestampedClass = db.getMetadata().getSchema().getClass(Timestamped.class.getSimpleName());
+//            if (timestampedClass == null) {
+//                timestampedClass = db.getMetadata().getSchema().createAbstractClass(Timestamped.class.getSimpleName());
+//                timestampedClass.createProperty(Timestamped.Field.created_on.name(), OType.DATETIME);
+//                timestampedClass.createProperty(Timestamped.Field.updated_on.name(), OType.DATETIME);
+//                info.log("startUp", () -> Json.createObjectBuilder().add("class", Timestamped.class.getSimpleName()).add("created", true).build());
+//            } else {
+//                info.log("startUp", () -> Json.createObjectBuilder().add("class", Timestamped.class.getSimpleName()).build());
+//            }
+//
+//            OClass logRecordClass = db.getMetadata().getSchema().getClass(EventLogRecord.class.getSimpleName());
+//            if (logRecordClass == null) {
+//                logRecordClass = db.getMetadata().getSchema().createClass(EventLogRecord.class.getSimpleName()).setSuperClasses(ImmutableList.of(timestampedClass));
+//                logRecordClass.createProperty(EventLogRecord.Field.event.name(), OType.STRING);
+//                info.log("startUp", () -> Json.createObjectBuilder().add("class", EventLogRecord.class.getSimpleName()).add("created", true).build());
+//            } else {
+//                info.log("startUp", () -> Json.createObjectBuilder().add("class", EventLogRecord.class.getSimpleName()).build());
+//            }
+//        }
     }
 
     @Override

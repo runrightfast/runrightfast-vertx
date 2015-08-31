@@ -104,7 +104,7 @@ public class DatabasePoolConfig {
      * <ol>
      * <li>createDatabase = false
      * <li>databaseUrl = "plocal:" + databaseName - e.g., if databaseName = "config", then databaseUrl = "plocal:config". This assumes that the database is
-     * located underneath ${ORIENTDB_HOME}/databases/config.
+     * located underneath ${ORIENTDB_HOME}/databases.
      * </ol>
      *
      * @param databaseName
@@ -121,7 +121,7 @@ public class DatabasePoolConfig {
      * with
      * <ol>
      * <li>databaseUrl = "plocal:" + databaseName - e.g., if databaseName = "config", then databaseUrl = "plocal:config". This assumes that the database is
-     * located underneath ${ORIENTDB_HOME}/databases/config.
+     * located underneath ${ORIENTDB_HOME}/databases.
      * </ol>
      *
      * @param databaseName

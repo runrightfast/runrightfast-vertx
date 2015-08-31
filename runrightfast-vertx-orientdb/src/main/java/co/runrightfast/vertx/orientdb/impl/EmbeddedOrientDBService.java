@@ -21,8 +21,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
@@ -36,7 +34,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import static java.util.logging.Level.INFO;
-import static java.util.logging.Level.WARNING;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
@@ -153,12 +150,10 @@ public class EmbeddedOrientDBService extends AbstractIdleService implements Orie
         }
 
         final String dbUrl = "plocal:" + databaseDir;
-        if (!new ODatabaseDocumentTx(dbUrl).exists()) {
-            try (final ODatabase db = new ODatabaseFactory().createDatabase("document", dbUrl).create()) {
-                log.logp(INFO, CLASS_NAME, "createDatabase", String.format("created db = %s", db.getName()));
-            } catch (final Exception e) {
-                log.logp(WARNING, CLASS_NAME, "createDatabase", String.format("dbUrl: %s", dbUrl), e);
-            }
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+        if (!db.exists()) {
+            db.create();
+            log.logp(INFO, CLASS_NAME, "createDatabase", String.format("created db : %s", dbUrl));
         } else {
             log.logp(INFO, CLASS_NAME, "createDatabase", String.format("db already exists: %s", dbUrl));
         }

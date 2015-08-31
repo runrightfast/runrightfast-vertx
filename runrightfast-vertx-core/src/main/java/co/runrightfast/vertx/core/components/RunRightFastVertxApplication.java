@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.components;
 
+import co.runrightfast.core.AppConfig;
 import co.runrightfast.core.application.services.healthchecks.HealthChecksService;
 import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.VertxService;
@@ -43,4 +44,6 @@ public interface RunRightFastVertxApplication {
      * @return
      */
     EncryptionService encryptionService();
+
+    AppConfig getConfig();
 }

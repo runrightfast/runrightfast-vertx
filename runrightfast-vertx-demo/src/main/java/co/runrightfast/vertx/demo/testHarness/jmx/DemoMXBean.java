@@ -52,4 +52,8 @@ public interface DemoMXBean {
 
     String browseEventLogRecords(int skip, int limit);
 
+    boolean eventLogRepositoryExists();
+
+    boolean createEventLogRepository();
+
 }

@@ -124,7 +124,7 @@ public class OrientDBModule {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, true, EventLogRecord.class))
+                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, false, EventLogRecord.class))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
@@ -137,8 +137,9 @@ public class OrientDBModule {
                 .build();
         final OServerNetworkListenerConfiguration binaryListener = new OServerNetworkListenerConfiguration();
         binaryListener.ipAddress = getWeaveClusterHostIPAddress().orElse("0.0.0.0");
+        log.info(String.format("binaryListener.ipAddress = %s", binaryListener.ipAddress));
         binaryListener.protocol = "binary";
-        binaryListener.portRange = "2424-2430";
+        binaryListener.portRange = "2424";
         binaryListener.socket = "default";
         network.listeners = ImmutableList.<OServerNetworkListenerConfiguration>builder()
                 .add(binaryListener)

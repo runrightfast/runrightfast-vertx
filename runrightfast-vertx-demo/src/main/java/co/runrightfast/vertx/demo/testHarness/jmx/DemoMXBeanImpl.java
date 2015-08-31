@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.demo.testHarness.jmx;
 
+import co.runrightfast.core.AppConfig;
 import co.runrightfast.core.crypto.Decryption;
 import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
@@ -26,16 +27,20 @@ import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import co.runrightfast.vertx.core.utils.ConcurrencyUtils;
+import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.utils.JvmProcess;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
+import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Preconditions;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEvents;
@@ -59,6 +64,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
+import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Level.WARNING;
 import javax.json.Json;
@@ -96,7 +102,9 @@ public final class DemoMXBeanImpl implements DemoMXBean {
 
     private ProtobufMessageProducer<GetEventCount.Request> getEventCountMessageProducer;
 
-    public DemoMXBeanImpl(@NonNull final Vertx vertx, @NonNull final EncryptionService encryptionService) {
+    private final String eventLogRepoDBUrl;
+
+    public DemoMXBeanImpl(@NonNull final Vertx vertx, @NonNull final EncryptionService encryptionService, final AppConfig appConfig) {
         this.vertx = vertx;
         this.encryptionService = encryptionService;
         initJmxReporter();
@@ -107,6 +115,10 @@ public final class DemoMXBeanImpl implements DemoMXBean {
 
         registerGetVerticleDeploymentsMessageConsumer();
         initEchoMessageConsumer();
+
+        final OrientDBConfig orientDBConfig = new OrientDBConfig(appConfig.getConfig().getConfig(configPath(CONFIG_NAMESPACE, "orientdb")));
+        this.eventLogRepoDBUrl = String.format("plocal:%s/databases/%s", orientDBConfig.getHomeDirectory().toAbsolutePath(), EventLogRepository.DB);
+        log.info("eventLogRepoDBUrl = " + eventLogRepoDBUrl);
     }
 
     private void waitForEventLogRepositoryVerticleToStartUp() {
@@ -364,6 +376,23 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         } catch (final InterruptedException | ExecutionException | TimeoutException ex) {
             log.logp(SEVERE, getClass().getName(), "createEventLogRecord", "failed", ex);
             throw new RuntimeException("Failed to create event log record : " + ex.getMessage());
+        }
+    }
+
+    @Override
+    public boolean eventLogRepositoryExists() {
+        return new ODatabaseDocumentTx(eventLogRepoDBUrl).exists();
+    }
+
+    @Override
+    public boolean createEventLogRepository() {
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(eventLogRepoDBUrl);
+        if (!db.exists()) {
+            db.create();
+            log.logp(INFO, getClass().getName(), "createEventLogRepository", String.format("created db = %s", eventLogRepoDBUrl));
+            return true;
+        } else {
+            return false;
         }
     }
 

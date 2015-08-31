@@ -85,6 +85,8 @@ task appDocker(type: Docker) {
     // JMX port
     exposePort 7410
     // Remote debug port
-    exposePort 4000    
+    exposePort 4000        
+    // OrientDB
+    exposePort 2424
     addFile("${buildDir}/install/${project.name}", "/runrightfast/apps/${project.name}")
 }
