@@ -124,7 +124,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     private void waitForEventLogRepositoryVerticleToStartUp() {
         while (true) {
             try {
-                this.getEventLogRecordCount();
+                this.eventLogRecordCount();
                 break;
             } catch (final Exception e) {
                 log.log(WARNING, "Waiting for EventLogRepository ... ", e);
@@ -186,7 +186,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     }
 
     @Override
-    public String getVerticleDeployments() {
+    public String verticleDeployments() {
         if (getVerticleDeploymentsMessageSender == null) {
             getVerticleDeploymentsMessageSender = new ProtobufMessageProducer(
                     vertx.eventBus(),
@@ -217,7 +217,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     }
 
     @Override
-    public void getVerticleDeploymentsAcrossCluster() {
+    public void verticleDeploymentsAcrossCluster() {
         getVerticleDeploymentsMessageSender.publish(
                 GetVerticleDeployments.Request.newBuilder().build(),
                 EventBusUtils.withReplyToAddress(EventBusUtils.deliveryOptions(), GET_VERTICLE_DEPLOYMENTS_REPLY_TO_ADDRESS)
@@ -317,7 +317,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     }
 
     @Override
-    public long getEventLogRecordCount() {
+    public long eventLogRecordCount() {
         if (this.getEventCountMessageProducer == null) {
             getEventCountMessageProducer = new ProtobufMessageProducer<>(
                     vertx.eventBus(),

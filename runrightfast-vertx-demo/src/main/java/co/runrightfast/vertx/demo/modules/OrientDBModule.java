@@ -115,6 +115,8 @@ public class OrientDBModule {
         final ApplicationId appId = ApplicationId.builder().group("co.runrightfast").name("runrightfast-vertx-orientdb").version("1.0.0").build();
         final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);
 
+        final boolean createDatabase = "true".equals(System.getenv("CREATE_DB"));
+
         return EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(orientdbHome.toPath())
                 .handler(this::oGraphServerHandler)
@@ -124,7 +126,7 @@ public class OrientDBModule {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, false, EventLogRecord.class))
+                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, createDatabase, EventLogRecord.class))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
@@ -139,7 +141,7 @@ public class OrientDBModule {
         binaryListener.ipAddress = getWeaveClusterHostIPAddress().orElse("0.0.0.0");
         log.info(String.format("binaryListener.ipAddress = %s", binaryListener.ipAddress));
         binaryListener.protocol = "binary";
-        binaryListener.portRange = "2424";
+        binaryListener.portRange = "2424-2430";
         binaryListener.socket = "default";
         network.listeners = ImmutableList.<OServerNetworkListenerConfiguration>builder()
                 .add(binaryListener)

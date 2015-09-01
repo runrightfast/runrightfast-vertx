@@ -24,9 +24,9 @@ import javax.management.MXBean;
 @MXBean
 public interface DemoMXBean {
 
-    String getVerticleDeployments();
+    String verticleDeployments();
 
-    void getVerticleDeploymentsAcrossCluster();
+    void verticleDeploymentsAcrossCluster();
 
     String encrypt(String data);
 
@@ -46,7 +46,7 @@ public interface DemoMXBean {
 
     String[] getHostNameAndHostAddress();
 
-    long getEventLogRecordCount();
+    long eventLogRecordCount();
 
     String createEventLogRecord(String event);
 
