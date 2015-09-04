@@ -91,8 +91,8 @@
 ### 2015-09-04 - Docker OrientDB Demo working
 - issues / work arounds
     1. When a remote OrientDB is created, it is created in the process's working directory. However, in order for the database to be recognized it must 
-              be created in the $OIENTDB_HOME/databases directory
-        - Work around: The docker container working directory must be set to $OIENTDB_HOME/databases (/orientdb/databases in our case) in order for the 
+              be created in the $ORIENTDB_HOME/databases directory
+        - Work around: The docker container working directory must be set to $ORIENTDB_HOME/databases (/orientdb/databases in our case) in order for the 
                        database to be created in the correct location. 
     2. When connecting to the database using plocal mode, database changes are not propagated throughout the cluster. The changes are applied to the local node
        only. The databases do sync up after restarting, but the first node to come up wins, i.e., its database is copied to other nodes.
