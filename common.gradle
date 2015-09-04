@@ -44,8 +44,8 @@ targetCompatibility = '1.8'
 
 repositories {
     mavenLocal();
-    jcenter();
     mavenCentral();
+    jcenter();    
 }
 
 dependencyManagement {
@@ -86,7 +86,7 @@ dependencyManagement {
             entry 'dagger-compiler'
         }
         
-        dependencySet(group:'com.orientechnologies', version: '2.1.0') {
+        dependencySet(group:'com.orientechnologies', version: '2.1.1') {
             entry 'orientdb-core'
             entry 'orientdb-client'
             entry 'orientdb-enterprise'

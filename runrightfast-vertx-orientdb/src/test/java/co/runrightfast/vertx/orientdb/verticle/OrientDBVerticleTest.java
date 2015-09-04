@@ -173,8 +173,8 @@ public class OrientDBVerticleTest {
                     .user(new OServerUserConfiguration("root", "root", "*"))
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                    .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "admin", "admin", 10, true))
-                    .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, true, EventLogRecord.class))
+                    .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10, true))
+                    .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, String.format("remote:localhost/%s", EventLogRepository.DB), "admin", "admin", 10, true, EventLogRecord.class))
                     .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                     .hook(() -> new SetCreatedOnAndUpdatedOn())
                     .build();

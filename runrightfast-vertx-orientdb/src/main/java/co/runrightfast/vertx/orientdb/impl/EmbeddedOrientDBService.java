@@ -20,6 +20,7 @@ import co.runrightfast.vertx.orientdb.OrientDBService;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -28,8 +29,7 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -47,14 +46,11 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  */
 @RequiredArgsConstructor
 @Log
-public class EmbeddedOrientDBService extends AbstractIdleService implements OrientDBService {
-
-    private static final String CLASS_NAME = EmbeddedOrientDBService.class.getSimpleName();
+public final class EmbeddedOrientDBService extends AbstractIdleService implements OrientDBService {
 
     private OServer server;
 
     private ImmutableMap<String, OPartitionedDatabasePool> databasePools;
-    private ImmutableMap<String, ODatabaseDocumentTxSupplier> oDatabaseDocumentTxSuppliers;
     private final EmbeddedOrientDBServiceConfig config;
 
     @Override
@@ -140,22 +136,34 @@ public class EmbeddedOrientDBService extends AbstractIdleService implements Orie
         this.databasePools = oPartitionedDatabasePoolMapBuilder.build();
     }
 
-    private void createDatabase(final DatabasePoolConfig poolConfig) {
-        final String database = StringUtils.split(poolConfig.getDatabaseUrl(), ':')[1];
-        final Path databaseDir;
-        if (database.startsWith("/")) {
-            databaseDir = Paths.get(database);
-        } else {
-            databaseDir = Paths.get(config.getOrientDBRootDir().toString(), "databases", database).toAbsolutePath();
+    private boolean databaseExists(final OServerAdmin serverAdmin, final String database) {
+        try {
+            return serverAdmin.listDatabases().containsKey(database);
+        } catch (final IOException ex) {
+            throw new RuntimeException(ex);
         }
+    }
 
-        final String dbUrl = "plocal:" + databaseDir;
-        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-        if (!db.exists()) {
-            db.create();
-            log.logp(INFO, CLASS_NAME, "createDatabase", String.format("created db : %s", dbUrl));
-        } else {
-            log.logp(INFO, CLASS_NAME, "createDatabase", String.format("db already exists: %s", dbUrl));
+    private void createDatabase(final DatabasePoolConfig poolConfig) {
+        OServerAdmin serverAdmin = null;
+        try {
+            serverAdmin = new OServerAdmin("remote:localhost");
+            final OServerUserConfiguration userConfig = server.getUser("root");
+            serverAdmin.connect(userConfig.name, userConfig.password);
+            final String database = poolConfig.getDatabaseNameFromDatabaseUrl();
+            if (!databaseExists(serverAdmin, database)) {
+                serverAdmin.createDatabase(database, "document", "plocal");
+                log.logp(INFO, getClass().getName(), "createDatabase", String.format("created db : %s", database));
+                serverAdmin.listDatabases().entrySet().forEach(entry -> log.info(String.format("%s -> %s", entry.getKey(), entry.getValue())));
+            } else {
+                log.logp(INFO, getClass().getName(), "createDatabase", String.format("db already exists: %s", database));
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (serverAdmin != null) {
+                serverAdmin.close();
+            }
         }
     }
 

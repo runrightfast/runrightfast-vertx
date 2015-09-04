@@ -24,6 +24,7 @@ import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -133,6 +134,16 @@ public class DatabasePoolConfig {
      */
     public DatabasePoolConfig(final String databaseName, final String userName, final String password, final int maxPoolSize, final boolean createDatabase, final Class<? extends DocumentObject>... documentClasses) {
         this(databaseName, "plocal:" + databaseName, userName, password, maxPoolSize, createDatabase, documentClasses);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getDatabaseNameFromDatabaseUrl() {
+        final String url = StringUtils.split(databaseUrl, ':')[1];
+        final int startIndex = url.lastIndexOf('/') + 1;
+        return url.substring(startIndex);
     }
 
 }

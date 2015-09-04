@@ -117,6 +117,11 @@ public class OrientDBModule {
 
         final boolean createDatabase = "true".equals(System.getenv("CREATE_DB"));
 
+        final String dbUrl = String.format("remote:%s/%s",
+                getWeaveClusterHostIPAddress().orElse(getWeaveClusterHostIPAddress("eth0").orElse("localhost")),
+                EventLogRepository.DB
+        );
+
         return EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(orientdbHome.toPath())
                 .handler(this::oGraphServerHandler)
@@ -126,7 +131,7 @@ public class OrientDBModule {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, "admin", "admin", 10, createDatabase, EventLogRecord.class))
+                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, dbUrl, "admin", "admin", 10, createDatabase, EventLogRecord.class))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();

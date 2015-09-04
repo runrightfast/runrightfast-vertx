@@ -79,14 +79,22 @@ docker {
 
 task appDocker(type: Docker) {
     dependsOn installDist
+    
     project.group = "runrightfast"
     applicationName = "${project.name}"
+    
     entryPoint(["/runrightfast/apps/${project.name}/bin/${project.name}"])
+    
+    // when a new database is created remotely, it is created within the working directory
+    // in order to get it created in the proper location, we set the working directory to the ${ORIENTDB_HOME}/databases directory
+    workingDir '/orientdb/databases'
+    
     // JMX port
     exposePort 7410
     // Remote debug port
     exposePort 4000        
     // OrientDB
     exposePort 2424
+    
     addFile("${buildDir}/install/${project.name}", "/runrightfast/apps/${project.name}")
 }

@@ -81,7 +81,7 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
     @Override
     protected void startUp() {
         dbSupplier = orientDBService.getODatabaseDocumentTxSupplier(DB).get();
-        initDatabase();
+        //initDatabase();
         registerGetEventCountMessageConsumer();
         registerCreateEventCountMessageConsumer();
         registerGetEventsMessageConsumer();

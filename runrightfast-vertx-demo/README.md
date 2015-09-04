@@ -79,7 +79,7 @@
 
 - to get the weave assigned IP address from within the container, run the following commands : 
 
-                ip -4 -o addr show dev ethwe 2> /dev/null |awk '{split($4,a,"/") ;print a[1]}'
+                ip -4 -o addr show dev ethwe 2> /dev/null | awk '{split($4,a,"/") ;print a[1]}'
 
 ### 2015-08-27 - Implemented work around to get Vertx clustered event bus working with weave
 - when weave is used, by default (see reference.conf in runrightfast-vertx-core module), the ip address is obtained from the ethwe interface
@@ -87,4 +87,13 @@
 - now it is simple to start the docker container:
             
                 docker run -d --name=runrightfast-vertx-demo-1 -p 7410:7410 <image_id>
+
+### 2015-09-04 - OrientDB Demo
+- OrientDB command to create database using console.sh
+
+            create database remote:10.128.0.5/EventLogRepository root root plocal document
+
+- Docker create container commands:
+
+            docker create --name=demo-orientdb-1 -e "ORIENTDB_HOME=/orientdb" -e "ORIENT_HOME=/orientdb" -v <volume>:/orientdb -p 7410:7410 <image_id>
 
