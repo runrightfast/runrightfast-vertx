@@ -88,12 +88,27 @@
             
                 docker run -d --name=runrightfast-vertx-demo-1 -p 7410:7410 <image_id>
 
-### 2015-09-04 - OrientDB Demo
+### 2015-09-04 - Docker OrientDB Demo working
+- issues / work arounds
+    1. When a remote OrientDB is created, it is created in the process's working directory. However, in order for the database to be recognized it must 
+              be created in the $OIENTDB_HOME/databases directory
+        - Work around: The docker container working directory must be set to $OIENTDB_HOME/databases (/orientdb/databases in our case) in order for the 
+                       database to be created in the correct location. 
+    2. When connecting to the database using plocal mode, database changes are not propagated throughout the cluster. The changes are applied to the local node
+       only. The databases do sync up after restarting, but the first node to come up wins, i.e., its database is copied to other nodes.
+       - Work around: Connect to the database in remote mode. This is less efficient than plocal mode, but the database changes are propagated throughout the 
+                      cluster.
+
 - OrientDB command to create database using console.sh
 
             create database remote:10.128.0.5/EventLogRepository root root plocal document
 
 - Docker create container commands:
 
-            docker create --name=demo-orientdb-1 -e "ORIENTDB_HOME=/orientdb" -e "ORIENT_HOME=/orientdb" -v <volume>:/orientdb -p 7410:7410 <image_id>
+            docker create --name=demo-orientdb-<n> -e "ORIENTDB_HOME=/orientdb" -e "ORIENT_HOME=/orientdb" -v <volume>:/orientdb -p 7410:7410 <image_id>
+
+            e.g. 
+            docker create --name=demo-orientdb-1 -e "ORIENTDB_HOME=/orientdb" -v /home/alfio/Documents/work/data/demo/orientdb-1:/orientdb -p 7410:7410 b964d6177aec
+            docker create --name=demo-orientdb-2 -e "ORIENTDB_HOME=/orientdb" -v /home/alfio/Documents/work/data/demo/orientdb-2:/orientdb -p 7411:7410 b964d6177aec
+
 
