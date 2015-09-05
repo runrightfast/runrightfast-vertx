@@ -105,10 +105,20 @@
 
 - Docker create container commands:
 
-            docker create --name=demo-orientdb-<n> -e "ORIENTDB_HOME=/orientdb" -e "ORIENT_HOME=/orientdb" -v <volume>:/orientdb -p 7410:7410 <image_id>
+            docker create --name=demo-orientdb-<n> -e "ORIENTDB_HOME=/orientdb" -e "ORIENT_HOME=/orientdb" -v <volume>:/orientdb <image_id>
 
             e.g. 
-            docker create --name=demo-orientdb-1 -e "ORIENTDB_HOME=/orientdb" -v /home/alfio/Documents/work/data/demo/orientdb-1:/orientdb -p 7410:7410 b964d6177aec
-            docker create --name=demo-orientdb-2 -e "ORIENTDB_HOME=/orientdb" -v /home/alfio/Documents/work/data/demo/orientdb-2:/orientdb -p 7411:7410 b964d6177aec
+            docker create --name=demo-orientdb-1 -e "ORIENTDB_HOME=/orientdb" -v /home/alfio/Documents/work/data/demo/orientdb-1:/orientdb b964d6177aec
+            docker create --name=demo-orientdb-2 -e "ORIENTDB_HOME=/orientdb" -v /home/alfio/Documents/work/data/demo/orientdb-2:/orientdb b964d6177aec
+
+- use **weave expose** to be able to connect to each Docker container, e.g., to use OrientDB console.sh script to connect to an OrientDB node
+
+            weave expose
+
+            # use weave to discover the assigned ip address
+            weave ps
+
+            # connect via JMX - assuming weave ip address is 10.128.0.2
+            jconsole 10.128.0.2:7410
 
 
