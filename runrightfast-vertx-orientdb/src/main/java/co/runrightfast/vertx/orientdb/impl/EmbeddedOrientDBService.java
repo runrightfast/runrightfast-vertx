@@ -15,7 +15,12 @@
  */
 package co.runrightfast.vertx.orientdb.impl;
 
+import co.runrightfast.core.ApplicationException;
+import co.runrightfast.vertx.core.utils.JvmProcess;
+import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
+import static co.runrightfast.vertx.orientdb.OrientDBConstants.NETWORK_BINARY_PROTOCOL;
+import static co.runrightfast.vertx.orientdb.OrientDBConstants.ROOT_USER;
 import co.runrightfast.vertx.orientdb.OrientDBService;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
@@ -34,6 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import static java.util.logging.Level.INFO;
+import static java.util.logging.Level.SEVERE;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
@@ -51,6 +57,7 @@ public final class EmbeddedOrientDBService extends AbstractIdleService implement
     private OServer server;
 
     private ImmutableMap<String, OPartitionedDatabasePool> databasePools;
+    private ImmutableMap<String, ODatabaseDocumentTxSupplier> oDatabaseDocumentTxSuppliers;
     private final EmbeddedOrientDBServiceConfig config;
 
     @Override
@@ -105,71 +112,64 @@ public final class EmbeddedOrientDBService extends AbstractIdleService implement
     @Override
     public Optional<ODatabaseDocumentTxSupplier> getODatabaseDocumentTxSupplier(final String name) {
         checkArgument(isNotBlank(name));
-        final OPartitionedDatabasePool pool = databasePools.get(name);
-        if (pool == null) {
-            return Optional.empty();
-        }
-        return Optional.of(() -> pool.acquire());
+        return Optional.ofNullable(oDatabaseDocumentTxSuppliers.get(name));
     }
 
     private void createDatabasePools() {
         final ImmutableMap.Builder<String, OPartitionedDatabasePool> oPartitionedDatabasePoolMapBuilder = ImmutableMap.builder();
         final ImmutableMap.Builder<String, ODatabaseDocumentTxSupplier> oDatabaseDocumentTxSupplierMapBuilder = ImmutableMap.builder();
         config.getDatabasePoolConfigs().stream().forEach(poolConfig -> {
-            if (poolConfig.isCreateDatabase()) {
-                createDatabase(poolConfig);
-            }
-            final OPartitionedDatabasePool pool = new OPartitionedDatabasePool(poolConfig.getDatabaseUrl(), poolConfig.getUserName(), poolConfig.getPassword(), poolConfig.getMaxPoolSize());
-            oPartitionedDatabasePoolMapBuilder.put(poolConfig.getDatabaseName(), pool);
-
-            if (CollectionUtils.isNotEmpty(config.getHooks())) {
-                oDatabaseDocumentTxSupplierMapBuilder.put(poolConfig.getDatabaseName(), () -> {
-                    final ODatabaseDocumentTx db = pool.acquire();
-                    config.getHooks().stream().forEach(hook -> db.registerHook(hook.get()));
-                    return db;
-                });
-            } else {
-                oDatabaseDocumentTxSupplierMapBuilder.put(poolConfig.getDatabaseName(), () -> pool.acquire());
+            try {
+                final OPartitionedDatabasePool pool = createDatabasePool(poolConfig);
+                oPartitionedDatabasePoolMapBuilder.put(poolConfig.getDatabaseName(), pool);
+                oDatabaseDocumentTxSupplierMapBuilder.put(poolConfig.getDatabaseName(), createODatabaseDocumentTxSupplier(poolConfig.getDatabaseName(), pool));
+                log.logp(INFO, getClass().getName(), "createDatabasePools", () -> String.format("Created database pool for: %s", poolConfig));
+            } catch (final Exception e) {
+                log.logp(SEVERE, getClass().getName(), "createDatabasePools", e, () -> String.format("failed to create database pool for: %s", poolConfig));
             }
         });
 
         this.databasePools = oPartitionedDatabasePoolMapBuilder.build();
+        this.oDatabaseDocumentTxSuppliers = oDatabaseDocumentTxSupplierMapBuilder.build();
     }
 
-    private boolean databaseExists(final OServerAdmin serverAdmin, final String database) {
-        try {
-            return serverAdmin.listDatabases().containsKey(database);
-        } catch (final IOException ex) {
-            throw new RuntimeException(ex);
-        }
+    private OPartitionedDatabasePool createDatabasePool(final DatabasePoolConfig poolConfig) {
+        return new OPartitionedDatabasePool(poolConfig.getDatabaseUrl(), poolConfig.getUserName(), poolConfig.getPassword(), poolConfig.getMaxPoolSize());
     }
 
-    private void createDatabase(final DatabasePoolConfig poolConfig) {
-        OServerAdmin serverAdmin = null;
-        try {
-            serverAdmin = new OServerAdmin("remote:localhost");
-            final OServerUserConfiguration userConfig = server.getUser("root");
-            serverAdmin.connect(userConfig.name, userConfig.password);
-            final String database = poolConfig.getDatabaseNameFromDatabaseUrl();
-            if (!databaseExists(serverAdmin, database)) {
-                serverAdmin.createDatabase(database, "document", "plocal");
-                log.logp(INFO, getClass().getName(), "createDatabase", String.format("created db : %s", database));
-                serverAdmin.listDatabases().entrySet().forEach(entry -> log.info(String.format("%s -> %s", entry.getKey(), entry.getValue())));
-            } else {
-                log.logp(INFO, getClass().getName(), "createDatabase", String.format("db already exists: %s", database));
-            }
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (serverAdmin != null) {
-                serverAdmin.close();
-            }
+    private ODatabaseDocumentTxSupplier createODatabaseDocumentTxSupplier(final String database, final OPartitionedDatabasePool pool) {
+        if (CollectionUtils.isNotEmpty(config.getHooks())) {
+            return () -> {
+                final ODatabaseDocumentTx db = pool.acquire();
+                config.getHooks().stream().forEach(hook -> db.registerHook(hook.get()));
+                return db;
+            };
+        } else {
+            return () -> pool.acquire();
         }
     }
 
     private void registerDatabaseLifeCycleListeners() {
         if (CollectionUtils.isNotEmpty(config.getLifecycleListeners())) {
             config.getLifecycleListeners().forEach(l -> Orient.instance().addDbLifecycleListener(l.get()));
+        }
+    }
+
+    @Override
+    public OServerAdmin getServerAdmin() {
+        final String ipAddress = config.getNetworkConfig().listeners.stream()
+                .filter(l -> l.protocol.equals(NETWORK_BINARY_PROTOCOL))
+                .findFirst()
+                .map(l -> l.ipAddress.equals("0.0.0.0") ? JvmProcess.HOST : l.ipAddress)
+                .orElse(JvmProcess.HOST);
+
+        try {
+            final OServerAdmin serverAdmin = new OServerAdmin(String.format("remote:%s", ipAddress));
+            final OServerUserConfiguration userConfig = server.getUser(ROOT_USER);
+            serverAdmin.connect(userConfig.name, userConfig.password);
+            return serverAdmin;
+        } catch (final IOException ex) {
+            throw new ApplicationException(ex);
         }
     }
 

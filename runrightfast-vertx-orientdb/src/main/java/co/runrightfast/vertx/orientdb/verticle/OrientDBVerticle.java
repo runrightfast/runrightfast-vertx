@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb.verticle;
 
+import co.runrightfast.core.TypeSafeObjectRegistry;
 import co.runrightfast.core.application.event.AppEventLogger;
 import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
@@ -24,12 +25,12 @@ import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
+import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck.ODatabaseDocumentTxHealthCheckBuilder;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import co.runrightfast.vertx.orientdb.OrientDBService;
 import co.runrightfast.vertx.orientdb.classes.DocumentObject;
-import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBService;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -104,12 +105,13 @@ public final class OrientDBVerticle extends RunRightFastVerticle {
     protected void startUp() {
         service = new EmbeddedOrientDBService(config);
         ServiceUtils.start(service);
-
+        TypeSafeObjectRegistry.GLOBAL_OBJECT_REGISTRY.put(OrientDBService.ORIENTDB_SERVICE, service);
         deployOrientDBRepositoryVerticles();
     }
 
     @Override
     protected void shutDown() {
+        TypeSafeObjectRegistry.GLOBAL_OBJECT_REGISTRY.remove(OrientDBService.ORIENTDB_SERVICE);
         ServiceUtils.stop(service);
         service = null;
     }

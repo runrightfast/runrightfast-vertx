@@ -21,10 +21,10 @@ import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
+import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
-import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
@@ -115,8 +115,6 @@ public class OrientDBModule {
         final ApplicationId appId = ApplicationId.builder().group("co.runrightfast").name("runrightfast-vertx-orientdb").version("1.0.0").build();
         final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);
 
-        final boolean createDatabase = "true".equals(System.getenv("CREATE_DB"));
-
         final String dbUrl = String.format("remote:%s/%s",
                 getWeaveClusterHostIPAddress().orElse(getWeaveClusterHostIPAddress("eth0").orElse("localhost")),
                 EventLogRepository.DB
@@ -131,7 +129,7 @@ public class OrientDBModule {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, dbUrl, "admin", "admin", 10, createDatabase, EventLogRecord.class))
+                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, dbUrl, "admin", "admin", 10, EventLogRecord.class))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();

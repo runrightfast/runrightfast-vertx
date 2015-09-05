@@ -15,7 +15,10 @@
  */
 package co.runrightfast.vertx.orientdb;
 
+import co.runrightfast.core.TypeReference;
+import co.runrightfast.core.TypeSafeObjectRegistry;
 import com.google.common.util.concurrent.Service;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,8 +28,21 @@ import java.util.Set;
  */
 public interface OrientDBService extends Service {
 
+    /**
+     * Used to register the service with {@link TypeSafeObjectRegistry}
+     */
+    public static final TypeReference<OrientDBService> ORIENTDB_SERVICE = new TypeReference<OrientDBService>() {
+    };
+
     Set<String> getDatabaseNames();
 
     Optional<ODatabaseDocumentTxSupplier> getODatabaseDocumentTxSupplier(String name);
+
+    /**
+     *
+     * @return new instance is returned - it is the responsibility of the client to close the connection, i.e., via OServerAdmin.close(), when they are done
+     * with it.
+     */
+    OServerAdmin getServerAdmin();
 
 }

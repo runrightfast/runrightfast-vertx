@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb.impl;
+package co.runrightfast.vertx.orientdb;
 
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -32,6 +33,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  * @author alfio
  */
 @EqualsAndHashCode(of = {"databaseName"})
+@ToString(exclude = "password")
 public class DatabasePoolConfig {
 
     @Getter
@@ -49,16 +51,13 @@ public class DatabasePoolConfig {
     @Getter
     private final int maxPoolSize;
 
-    @Getter
-    private final boolean createDatabase;
-
     /**
      * domain classes that are managed by this database
      */
     @Getter
     private final Set<Class<? extends DocumentObject>> documentClasses;
 
-    public DatabasePoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize, final boolean createDatabase, final Class<? extends DocumentObject>... documentClasses) {
+    public DatabasePoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize, final Class<? extends DocumentObject>... documentClasses) {
         checkArgument(isNotBlank(databaseName), MUST_NOT_BE_BLANK, databaseName);
         checkArgument(isNotBlank(databaseUrl), MUST_NOT_BE_BLANK, databaseUrl);
         checkArgument(isNotBlank(userName), MUST_NOT_BE_BLANK, userName);
@@ -69,35 +68,7 @@ public class DatabasePoolConfig {
         this.userName = userName.trim();
         this.password = password.trim();
         this.maxPoolSize = maxPoolSize;
-        this.createDatabase = createDatabase;
         this.documentClasses = ArrayUtils.isNotEmpty(documentClasses) ? ImmutableSet.copyOf(documentClasses) : ImmutableSet.of();
-    }
-
-    /**
-     * with createDatabase = false
-     *
-     * @param databaseName
-     * @param databaseUrl
-     * @param userName
-     * @param password
-     * @param maxPoolSize
-     * @param documentClasses
-     */
-    public DatabasePoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize, final Class<? extends DocumentObject>... documentClasses) {
-        this(databaseName, databaseUrl, userName, password, maxPoolSize, false, documentClasses);
-    }
-
-    /**
-     * with createDatabase = false
-     *
-     * @param databaseName
-     * @param databaseUrl
-     * @param userName
-     * @param password
-     * @param maxPoolSize
-     */
-    public DatabasePoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize) {
-        this(databaseName, databaseUrl, userName, password, maxPoolSize, false);
     }
 
     /**
@@ -115,25 +86,7 @@ public class DatabasePoolConfig {
      * @param documentClasses
      */
     public DatabasePoolConfig(final String databaseName, final String userName, final String password, final int maxPoolSize, final Class<? extends DocumentObject>... documentClasses) {
-        this(databaseName, "plocal:" + databaseName, userName, password, maxPoolSize, false, documentClasses);
-    }
-
-    /**
-     * with
-     * <ol>
-     * <li>databaseUrl = "plocal:" + databaseName - e.g., if databaseName = "config", then databaseUrl = "plocal:config". This assumes that the database is
-     * located underneath ${ORIENTDB_HOME}/databases.
-     * </ol>
-     *
-     * @param databaseName
-     * @param userName
-     * @param password
-     * @param maxPoolSize
-     * @param createDatabase
-     * @param documentClasses
-     */
-    public DatabasePoolConfig(final String databaseName, final String userName, final String password, final int maxPoolSize, final boolean createDatabase, final Class<? extends DocumentObject>... documentClasses) {
-        this(databaseName, "plocal:" + databaseName, userName, password, maxPoolSize, createDatabase, documentClasses);
+        this(databaseName, "plocal:" + databaseName, userName, password, maxPoolSize, documentClasses);
     }
 
     /**

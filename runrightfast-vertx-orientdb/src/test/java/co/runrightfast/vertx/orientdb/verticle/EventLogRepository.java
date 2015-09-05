@@ -23,6 +23,7 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GRO
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_PARALLEL;
+import co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
@@ -36,8 +37,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import io.vertx.core.eventbus.Message;
 import java.util.Set;
+import java.util.logging.Logger;
 import javax.json.Json;
 import lombok.Getter;
+import lombok.NonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
 import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
@@ -74,13 +77,13 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
     @Override
     protected void startUp() {
         dbSupplier = orientDBService.getODatabaseDocumentTxSupplier(DB).get();
-        initDatabase();
         registerGetEventCountMessageConsumer();
         registerCreateEventCountMessageConsumer();
     }
 
-    public void initDatabase() {
-        try (final ODatabase db = dbSupplier.get()) {
+    public static void initDatabase(@NonNull final ODatabase db) {
+        final JsonLog info = JsonLog.newInfoLog(Logger.getLogger(EventLogRepository.class.getName()), EventLogRepository.class.getName());
+        try {
             OClass timestampedClass = db.getMetadata().getSchema().getClass(Timestamped.class.getSimpleName());
             if (timestampedClass == null) {
                 timestampedClass = db.getMetadata().getSchema().createAbstractClass(Timestamped.class.getSimpleName());
@@ -100,6 +103,8 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
                 info.log("startUp", () -> Json.createObjectBuilder().add("class", EventLogRecord.class.getSimpleName()).build());
             }
 
+        } finally {
+            db.close();
         }
     }
 

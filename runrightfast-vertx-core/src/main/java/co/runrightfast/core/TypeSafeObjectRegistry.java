@@ -6,14 +6,13 @@
 package co.runrightfast.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.java.Log;
@@ -49,7 +48,7 @@ public final class TypeSafeObjectRegistry {
 
     }
 
-    private Map<TypeReference<?>, Object> objects = ImmutableMap.of();
+    private final Map<TypeReference<?>, Object> objects = new ConcurrentHashMap<>();
 
     private final EventBus eventBus = new EventBus();
 
@@ -65,8 +64,8 @@ public final class TypeSafeObjectRegistry {
         return eventBus;
     }
 
-    public synchronized Optional<Object> put(final ObjectRegistration<?> objectRegistration) {
-        final Optional<Object> formerValue = put(objectRegistration.getType(), objectRegistration.getObject());
+    public <A> Optional<A> put(@NonNull final ObjectRegistration<A> objectRegistration) {
+        final Optional<A> formerValue = put(objectRegistration.getType(), objectRegistration.getObject());
         eventBus.post(objectRegistration);
         return formerValue;
     }
@@ -77,14 +76,9 @@ public final class TypeSafeObjectRegistry {
      * @param obj object
      * @return object that was replaced
      */
-    private synchronized Optional<Object> put(final TypeReference<?> type, final Object obj) {
-        checkNotNull(type);
-        checkNotNull(obj);
+    public <A> Optional<A> put(@NonNull final TypeReference<A> type, @NonNull final A obj) {
         checkArgument(Modifier.isPublic(type.getRawType().getModifiers()), "type interface must be public : %s", type);
-        checkArgument(type.getRawType().isInstance(obj), "obj is not an instance of %s", type);
-        final Map<TypeReference<?>, Object> temp = new HashMap<>(objects);
-        final Optional<Object> formerValue = Optional.ofNullable(temp.put(type, obj));
-        objects = ImmutableMap.copyOf(temp);
+        final Optional<A> formerValue = Optional.ofNullable((A) objects.put(type, obj));
         log.info(() -> String.format("registered object : %s -> %s", type, obj.getClass()));
         return formerValue;
     }
@@ -95,26 +89,23 @@ public final class TypeSafeObjectRegistry {
      * @param type type
      * @return the object that was removed
      */
-    public synchronized <A> Optional<A> remove(final TypeReference<?> type) {
-        final Map<TypeReference<?>, Object> temp = new HashMap<>(objects);
-        final Optional<A> removedObject = Optional.ofNullable((A) temp.remove(type));
+    public <A> Optional<A> remove(@NonNull final TypeReference<?> type) {
+        final Optional<A> removedObject = Optional.ofNullable((A) objects.remove(type));
         removedObject.ifPresent(a -> {
-            objects = ImmutableMap.copyOf(temp);
             log.info(() -> String.format("removed object : %s -> %s", type, a.getClass()));
             eventBus.post(new RemovedObject(type));
         });
         return removedObject;
     }
 
-    public synchronized void clear() {
-        final Set<TypeReference<?>> types = objects.keySet();
-        objects = ImmutableMap.of();
+    public void clear() {
+        final Set<TypeReference<?>> types = ImmutableSet.copyOf(objects.keySet());
+        objects.clear();
         log.info("cleared all objects");
         types.stream().forEach(type -> eventBus.post(new RemovedObject(type)));
     }
 
-    public <A> Optional<A> get(final TypeReference<A> type) {
-        checkNotNull(type);
+    public <A> Optional<A> get(@NonNull final TypeReference<A> type) {
         return Optional.ofNullable((A) objects.get(type));
     }
 

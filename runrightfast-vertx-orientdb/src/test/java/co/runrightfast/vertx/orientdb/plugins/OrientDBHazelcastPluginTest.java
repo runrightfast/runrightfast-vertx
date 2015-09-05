@@ -22,18 +22,20 @@ import co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
-import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBService;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
+import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableList;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -106,7 +108,7 @@ public class OrientDBHazelcastPluginTest {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "admin", "admin", 10, true))
+                .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
@@ -141,6 +143,12 @@ public class OrientDBHazelcastPluginTest {
     }
 
     private static void initDatabase() {
+        final OServerAdmin admin = service.getServerAdmin();
+        try {
+            OrientDBUtils.createDatabase(admin, CLASS_NAME);
+        } finally {
+            admin.close();
+        }
         try (final ODatabase db = service.getODatabaseDocumentTxSupplier(CLASS_NAME).get().get()) {
             final OClass timestampedClass = db.getMetadata().getSchema().createAbstractClass(Timestamped.class.getSimpleName());
             timestampedClass.createProperty(Timestamped.Field.created_on.name(), OType.DATETIME);

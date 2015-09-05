@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb.verticle;
 
+import co.runrightfast.core.TypeSafeObjectRegistry;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.core.crypto.EncryptionService;
@@ -30,6 +31,7 @@ import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer.addRunRightFastHeaders;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
+import static co.runrightfast.vertx.core.utils.ConcurrencyUtils.sleep;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
@@ -39,18 +41,21 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
+import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
+import co.runrightfast.vertx.orientdb.OrientDBService;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
-import co.runrightfast.vertx.orientdb.impl.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleDeploymentModule;
 import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
+import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import co.runrightfast.vertx.testSupport.EncryptionServiceWithDefaultCiphers;
 import com.codahale.metrics.MetricFilter;
 import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableList;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -76,9 +81,12 @@ import io.vertx.core.eventbus.ReplyException;
 import static io.vertx.core.eventbus.ReplyFailure.NO_HANDLERS;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Level.WARNING;
@@ -173,8 +181,8 @@ public class OrientDBVerticleTest {
                     .user(new OServerUserConfiguration("root", "root", "*"))
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                    .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10, true))
-                    .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, String.format("remote:localhost/%s", EventLogRepository.DB), "admin", "admin", 10, true, EventLogRecord.class))
+                    .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10))
+                    .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, String.format("remote:localhost/%s", EventLogRepository.DB), "admin", "admin", 10, EventLogRecord.class))
                     .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                     .hook(() -> new SetCreatedOnAndUpdatedOn())
                     .build();
@@ -245,10 +253,31 @@ public class OrientDBVerticleTest {
     private static RunRightFastVertxApplication app;
 
     @BeforeClass
-    public static void setUpClass() {
+    public static void setUpClass() throws InterruptedException, ExecutionException {
         metricRegistry.removeMatching(MetricFilter.ALL);
         app = DaggerOrientDBVerticleTest_TestApp.create();
         vertxService = app.vertxService();
+        initDatabase();
+    }
+
+    private static void initDatabase() {
+        Optional<OrientDBService> orientDBService = TypeSafeObjectRegistry.GLOBAL_OBJECT_REGISTRY.get(OrientDBService.ORIENTDB_SERVICE);
+        while (!orientDBService.isPresent()) {
+            log.log(Level.WARNING, "Waiting for OrientDBService ...");
+            sleep(Duration.ofSeconds(2));
+            orientDBService = TypeSafeObjectRegistry.GLOBAL_OBJECT_REGISTRY.get(OrientDBService.ORIENTDB_SERVICE);
+        }
+
+        final OServerAdmin admin = orientDBService.get().getServerAdmin();
+        try {
+            OrientDBUtils.createDatabase(admin, EventLogRepository.DB);
+        } catch (final Exception e) {
+            e.printStackTrace();
+        } finally {
+            admin.close();
+        }
+
+        EventLogRepository.initDatabase(orientDBService.get().getODatabaseDocumentTxSupplier(EventLogRepository.DB).get().get());
     }
 
     @AfterClass

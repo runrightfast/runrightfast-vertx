@@ -20,11 +20,15 @@ import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
+import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
+import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import com.google.common.collect.ImmutableList;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -41,6 +45,7 @@ import com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import java.io.File;
+import java.util.Optional;
 import static java.util.logging.Level.INFO;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
@@ -88,7 +93,7 @@ public class EmbeddedOrientDBServiceTest {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "remote:localhost/" + CLASS_NAME, "admin", "admin", 10, true))
+                .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "remote:localhost/" + CLASS_NAME, "admin", "admin", 10))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
@@ -120,7 +125,17 @@ public class EmbeddedOrientDBServiceTest {
     }
 
     private static void initDatabase() {
-        try (final ODatabase db = service.getODatabaseDocumentTxSupplier(CLASS_NAME).get().get()) {
+        final OServerAdmin admin = service.getServerAdmin();
+        try {
+            OrientDBUtils.createDatabase(admin, CLASS_NAME);
+        } finally {
+            admin.close();
+        }
+
+        final Optional<ODatabaseDocumentTxSupplier> dbSupplier = service.getODatabaseDocumentTxSupplier(CLASS_NAME);
+        assertThat(dbSupplier.isPresent(), is(true));
+
+        try (final ODatabase db = dbSupplier.get().get()) {
             final OClass timestampedClass = db.getMetadata().getSchema().createAbstractClass(Timestamped.class.getSimpleName());
             timestampedClass.createProperty(Timestamped.Field.created_on.name(), OType.DATETIME);
             timestampedClass.createProperty(Timestamped.Field.updated_on.name(), OType.DATETIME);
