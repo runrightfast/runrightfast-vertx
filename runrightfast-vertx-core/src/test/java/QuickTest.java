@@ -20,6 +20,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -32,6 +34,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.json.Json;
+import lombok.Builder;
+import lombok.Singular;
 import lombok.extern.java.Log;
 import org.apache.commons.io.IOUtils;
 import static org.hamcrest.CoreMatchers.is;
@@ -162,6 +166,25 @@ public class QuickTest {
     @Test
     public void testJsonArrayToString() {
         log.info(Json.createArrayBuilder().add(1).add(2).build().toString());
+    }
+
+    @Test
+    public void testGson() {
+        final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        final Foo foo = Foo.builder().count(10).success(true).message("message 1").message("message 2").build();
+        log.info(gson.toJson(foo));
+    }
+
+    @Builder
+    static class Foo {
+
+        private int count;
+
+        private boolean success;
+
+        @Singular
+        private List<String> messages;
+
     }
 
 }

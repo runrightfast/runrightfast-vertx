@@ -93,5 +93,4 @@ public class ProtobufUtilsTest {
         assertThat(json.getString(TYPE_FIELD), is(msg.getDescriptorForType().getFullName()));
         assertThat(json.getJsonObject("map_field").getJsonObject("test_app").getString(TYPE_FIELD), is(ApplicationInstance.getDescriptor().getFullName()));
     }
-
 }
