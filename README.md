@@ -9,4 +9,5 @@ Distributed, message based, multi-threaded, thread safe, type safe, scalable, se
 
 ## Developer Workspace Requirements
 1. JDK 8 with [Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy file](http://java.sun.com/javase/downloads/index.jsp) installed
-2. Docker
+2. [Docker](https://docs.docker.com/)
+3. [Weave](https://github.com/weaveworks/weave/)
