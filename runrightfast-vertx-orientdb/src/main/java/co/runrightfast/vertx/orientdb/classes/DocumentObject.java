@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb.classes;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import lombok.Getter;
 import lombok.NonNull;
@@ -42,6 +43,10 @@ public abstract class DocumentObject {
 
     public DocumentObject() {
         this.document = new ODocument(getDocumentClassName());
+    }
+
+    public ORID getIdentity() {
+        return document.getIdentity();
     }
 
     /**

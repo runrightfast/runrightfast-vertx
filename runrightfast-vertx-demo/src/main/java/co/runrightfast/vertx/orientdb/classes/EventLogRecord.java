@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb.classes;
 
+import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import static co.runrightfast.vertx.orientdb.classes.EventLogRecord.Field.event;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
