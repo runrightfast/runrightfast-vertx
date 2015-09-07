@@ -23,7 +23,7 @@ import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveCluster
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
 import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
-import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import co.runrightfast.vertx.orientdb.classes.demo.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;

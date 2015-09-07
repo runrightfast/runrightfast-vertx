@@ -22,7 +22,7 @@ import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
-import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;

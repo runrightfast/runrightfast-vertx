@@ -44,7 +44,7 @@ import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDep
 import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.OrientDBService;
-import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;

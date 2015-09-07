@@ -25,7 +25,7 @@ import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.WORKER_POOL_PARALLEL;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
-import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import co.runrightfast.vertx.orientdb.classes.demo.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.verticle.OrientDBRepositoryVerticle;
 import static com.google.common.base.Preconditions.checkArgument;

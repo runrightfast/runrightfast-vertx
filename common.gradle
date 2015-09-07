@@ -64,6 +64,23 @@ dependencyManagement {
         dependency group: 'org.projectlombok', name:'lombok', version:'1.16.4'
         
         dependency group:'org.elasticsearch', name:'elasticsearch', version:'1.7.1'
+        
+        dependencySet(group:'org.apache.solr', version: '5.3.0') {
+            entry 'solr-analysis-extras'
+            entry 'solr-analytics'
+            entry 'solr-cell'
+            entry 'solr-clustering'
+            entry 'solr-core'
+            entry 'solr-dataimporthandler'
+            entry 'solr-dataimporthandler-extras'
+            entry 'solr-langid'
+            entry 'solr-map-reduce'
+            entry 'solr-morphlines-cell'
+            entry 'solr-morphlines-core'
+            entry 'solr-solrj'
+            entry 'solr-uima'
+            entry 'solr-velocity'
+        }
                 
         dependencySet(group:'com.hazelcast', version: '3.5') {
             entry 'hazelcast-client'

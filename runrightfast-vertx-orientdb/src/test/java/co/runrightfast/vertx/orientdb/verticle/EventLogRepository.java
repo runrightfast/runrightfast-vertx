@@ -26,7 +26,7 @@ import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Executio
 import co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
-import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;

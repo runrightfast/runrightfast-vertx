@@ -19,7 +19,7 @@ import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
-import co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import com.google.common.collect.ImmutableList;
