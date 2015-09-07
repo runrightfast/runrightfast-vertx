@@ -22,7 +22,7 @@ import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
-import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import co.runrightfast.vertx.orientdb.OrientDBConstants;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
@@ -55,6 +55,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 
 /**
  *
@@ -93,6 +94,7 @@ public class EmbeddedOrientDBServiceTest {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
+                .globalConfigProperty(OrientDBConstants.GlobalConfigKey.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE, "0")
                 .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "remote:localhost/" + CLASS_NAME, "admin", "admin", 10))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .hook(() -> new SetCreatedOnAndUpdatedOn())

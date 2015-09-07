@@ -15,12 +15,13 @@
  */
 package co.runrightfast.vertx.orientdb.impl;
 
-import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_EMPTY;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_DOES_NOT_EXIST;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_A_DIRECTORY;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_READABLE;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_WRITEABLE;
+import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
+import co.runrightfast.vertx.orientdb.OrientDBConstants.GlobalConfigKey;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -88,6 +89,10 @@ public final class EmbeddedOrientDBServiceConfig {
     @Getter
     @Singular
     private final Map<OGlobalConfiguration, String> properties;
+
+    @Getter
+    @Singular
+    private final Map<GlobalConfigKey, String> globalConfigProperties;
 
     public void validate() {
         checkArgument(CollectionUtils.isNotEmpty(databasePoolConfigs), MUST_NOT_BE_EMPTY, "databasePoolConfigs");

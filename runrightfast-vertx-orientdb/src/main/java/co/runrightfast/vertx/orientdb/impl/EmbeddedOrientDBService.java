@@ -23,6 +23,7 @@ import static co.runrightfast.vertx.orientdb.OrientDBConstants.NETWORK_BINARY_PR
 import static co.runrightfast.vertx.orientdb.OrientDBConstants.ROOT_USER;
 import co.runrightfast.vertx.orientdb.OrientDBService;
 import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
@@ -70,9 +71,15 @@ public final class EmbeddedOrientDBService extends AbstractIdleService implement
         registerHandlers(serverConfig);
         serverConfig.network = config.getNetworkConfig();
         serverConfig.users = config.getUsers().stream().toArray(OServerUserConfiguration[]::new);
-        serverConfig.properties = config.getProperties().entrySet().stream()
+
+        final ImmutableList.Builder<OServerEntryConfiguration> propertiesBuilder = ImmutableList.builder();
+        config.getProperties().entrySet().stream()
                 .map(entry -> new OServerEntryConfiguration(entry.getKey().getKey(), entry.getValue()))
-                .toArray(OServerEntryConfiguration[]::new);
+                .forEach(propertiesBuilder::add);
+        config.getGlobalConfigProperties().entrySet().stream()
+                .map(entry -> new OServerEntryConfiguration(entry.getKey().key, entry.getValue()))
+                .forEach(propertiesBuilder::add);
+        serverConfig.properties = propertiesBuilder.build().stream().toArray(OServerEntryConfiguration[]::new);
 
         server.startup(serverConfig);
         server.activate();
