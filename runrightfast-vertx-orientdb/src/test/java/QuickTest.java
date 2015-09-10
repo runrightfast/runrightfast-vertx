@@ -1,6 +1,7 @@
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyStore;
 import static java.util.logging.Level.INFO;
 import lombok.extern.java.Log;
 import org.junit.Test;
@@ -32,6 +33,11 @@ public class QuickTest {
         final Path path = Paths.get("src", "main", "java");
         log.logp(INFO, getClass().getName(), "testPath", "path = {0}", path);
         log.logp(INFO, getClass().getName(), "testPath", "path.toAbsolutePath() = {0}", path.toAbsolutePath());
+    }
+
+    @Test
+    public void testDefaultKeyStoreType() {
+        log.info(String.format("Default KeyStore type = %s", KeyStore.getDefaultType()));
     }
 
 }
