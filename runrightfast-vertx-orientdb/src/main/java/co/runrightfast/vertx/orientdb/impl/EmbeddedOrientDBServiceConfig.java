@@ -20,12 +20,11 @@ import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_A_DIRECTORY;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_READABLE;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_WRITEABLE;
-import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBConstants.GlobalConfigKey;
+import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -53,7 +52,7 @@ public final class EmbeddedOrientDBServiceConfig {
     @NonNull
     @Getter
     @Singular
-    private final Set<DatabasePoolConfig> databasePoolConfigs;
+    private final Set<OrientDBPoolConfig> databasePoolConfigs;
 
     @Getter
     @NonNull
@@ -66,13 +65,6 @@ public final class EmbeddedOrientDBServiceConfig {
     @Getter
     @Singular
     private final Set<Supplier<ODatabaseLifecycleListener>> lifecycleListeners;
-
-    /**
-     * The hook can only be created while an OrientDB database instance is active, i.e., set on the current thread
-     */
-    @Getter
-    @Singular
-    private final Set<Supplier<ORecordHook>> hooks;
 
     @Getter
     @NonNull

@@ -17,19 +17,16 @@ package co.runrightfast.vertx.orientdb.impl;
 
 import co.runrightfast.core.ApplicationException;
 import co.runrightfast.vertx.core.utils.JvmProcess;
-import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
+import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import static co.runrightfast.vertx.orientdb.OrientDBConstants.NETWORK_BINARY_PROTOCOL;
 import static co.runrightfast.vertx.orientdb.OrientDBConstants.ROOT_USER;
+import co.runrightfast.vertx.orientdb.OrientDBPoolService;
 import co.runrightfast.vertx.orientdb.OrientDBService;
-import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -39,13 +36,11 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import static java.util.logging.Level.INFO;
-import static java.util.logging.Level.SEVERE;
+import static java.util.logging.Level.WARNING;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.CollectionUtils;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  *
@@ -57,8 +52,7 @@ public final class EmbeddedOrientDBService extends AbstractIdleService implement
 
     private OServer server;
 
-    private ImmutableMap<String, OPartitionedDatabasePool> databasePools;
-    private ImmutableMap<String, ODatabaseDocumentTxSupplier> oDatabaseDocumentTxSuppliers;
+    private OrientDBPoolService orientDBPoolService;
     private final EmbeddedOrientDBServiceConfig config;
 
     @Override
@@ -90,10 +84,13 @@ public final class EmbeddedOrientDBService extends AbstractIdleService implement
     @Override
     protected void shutDown() throws Exception {
         if (server != null) {
-            if (databasePools != null) {
-                databasePools.values().stream().forEach(OPartitionedDatabasePool::close);
+            ServiceUtils.stop(orientDBPoolService);
+            orientDBPoolService = null;
+            try {
+                server.shutdown();
+            } catch (final Exception e) {
+                log.logp(WARNING, getClass().getName(), "shutDown", "OServer.shutdown() failed", e);
             }
-            server.shutdown();
             server = null;
         }
     }
@@ -113,47 +110,19 @@ public final class EmbeddedOrientDBService extends AbstractIdleService implement
 
     @Override
     public Set<String> getDatabaseNames() {
-        return databasePools.keySet();
+        return orientDBPoolService.getDatabaseNames();
     }
 
     @Override
     public Optional<ODatabaseDocumentTxSupplier> getODatabaseDocumentTxSupplier(final String name) {
-        checkArgument(isNotBlank(name));
-        return Optional.ofNullable(oDatabaseDocumentTxSuppliers.get(name));
+        return orientDBPoolService.getODatabaseDocumentTxSupplier(name);
     }
 
     private void createDatabasePools() {
-        final ImmutableMap.Builder<String, OPartitionedDatabasePool> oPartitionedDatabasePoolMapBuilder = ImmutableMap.builder();
-        final ImmutableMap.Builder<String, ODatabaseDocumentTxSupplier> oDatabaseDocumentTxSupplierMapBuilder = ImmutableMap.builder();
-        config.getDatabasePoolConfigs().stream().forEach(poolConfig -> {
-            try {
-                final OPartitionedDatabasePool pool = createDatabasePool(poolConfig);
-                oPartitionedDatabasePoolMapBuilder.put(poolConfig.getDatabaseName(), pool);
-                oDatabaseDocumentTxSupplierMapBuilder.put(poolConfig.getDatabaseName(), createODatabaseDocumentTxSupplier(poolConfig.getDatabaseName(), pool));
-                log.logp(INFO, getClass().getName(), "createDatabasePools", () -> String.format("Created database pool for: %s", poolConfig));
-            } catch (final Exception e) {
-                log.logp(SEVERE, getClass().getName(), "createDatabasePools", e, () -> String.format("failed to create database pool for: %s", poolConfig));
-            }
-        });
-
-        this.databasePools = oPartitionedDatabasePoolMapBuilder.build();
-        this.oDatabaseDocumentTxSuppliers = oDatabaseDocumentTxSupplierMapBuilder.build();
-    }
-
-    private OPartitionedDatabasePool createDatabasePool(final DatabasePoolConfig poolConfig) {
-        return new OPartitionedDatabasePool(poolConfig.getDatabaseUrl(), poolConfig.getUserName(), poolConfig.getPassword(), poolConfig.getMaxPoolSize());
-    }
-
-    private ODatabaseDocumentTxSupplier createODatabaseDocumentTxSupplier(final String database, final OPartitionedDatabasePool pool) {
-        if (CollectionUtils.isNotEmpty(config.getHooks())) {
-            return () -> {
-                final ODatabaseDocumentTx db = pool.acquire();
-                config.getHooks().stream().forEach(hook -> db.registerHook(hook.get()));
-                return db;
-            };
-        } else {
-            return () -> pool.acquire();
-        }
+        final OrientDBPoolServiceImpl.OrientDBPoolServiceImplBuilder builder = OrientDBPoolServiceImpl.builder();
+        config.getDatabasePoolConfigs().stream().forEach(builder::databasePoolConfig);
+        this.orientDBPoolService = builder.build();
+        ServiceUtils.start(this.orientDBPoolService);
     }
 
     private void registerDatabaseLifeCycleListeners() {

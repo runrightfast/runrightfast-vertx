@@ -25,10 +25,10 @@ import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
-import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck.ODatabaseDocumentTxHealthCheckBuilder;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
+import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBService;
 import co.runrightfast.vertx.orientdb.classes.DocumentObject;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBService;
@@ -50,8 +50,8 @@ import org.apache.commons.lang3.ArrayUtils;
  *
  * Verticles that require use of the OrientDBService must be created by this verticle, which will provide them with the {@link OrientDBService} instance.
  *
- * Automatically creates health checks for each of the domain document classes ({@link DatabasePoolConfig#documentClasses }) listed for each
- * {@link DatabasePoolConfig}.
+ * Automatically creates health checks for each of the domain document classes ({@link OrientDBPoolConfig#documentClasses }) listed for each
+ * {@link OrientDBPoolConfig}.
  *
  * @author alfio
  */

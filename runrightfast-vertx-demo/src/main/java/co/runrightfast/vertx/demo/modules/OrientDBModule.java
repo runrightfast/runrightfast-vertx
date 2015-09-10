@@ -21,8 +21,8 @@ import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
-import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
+import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.demo.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
@@ -30,6 +30,7 @@ import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleLis
 import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
 import co.runrightfast.vertx.orientdb.verticle.OrientDBRepositoryVerticleDeployment;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -129,9 +130,8 @@ public class OrientDBModule {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, dbUrl, "admin", "admin", 10, EventLogRecord.class))
+                .databasePoolConfig(new OrientDBPoolConfig(EventLogRepository.DB, dbUrl, "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn()), EventLogRecord.class))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
-                .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
     }
 

@@ -20,14 +20,15 @@ import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
-import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import co.runrightfast.vertx.orientdb.OrientDBConstants;
+import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -95,9 +96,8 @@ public class EmbeddedOrientDBServiceTest {
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                 .globalConfigProperty(OrientDBConstants.GlobalConfigKey.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE, "0")
-                .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, "remote:localhost/" + CLASS_NAME, "admin", "admin", 10))
+                .databasePoolConfig(new OrientDBPoolConfig(CLASS_NAME, "remote:localhost/" + CLASS_NAME, "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn())))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
-                .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
 
         service = new EmbeddedOrientDBService(config);

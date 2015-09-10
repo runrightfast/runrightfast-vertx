@@ -41,10 +41,9 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
-import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
+import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBService;
-import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
@@ -55,6 +54,7 @@ import co.runrightfast.vertx.testSupport.EncryptionServiceWithDefaultCiphers;
 import com.codahale.metrics.MetricFilter;
 import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
@@ -99,6 +99,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
 import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
 
@@ -181,10 +182,9 @@ public class OrientDBVerticleTest {
                     .user(new OServerUserConfiguration("root", "root", "*"))
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                    .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10))
-                    .databasePoolConfig(new DatabasePoolConfig(EventLogRepository.DB, String.format("remote:localhost/%s", EventLogRepository.DB), "admin", "admin", 10, EventLogRecord.class))
+                    .databasePoolConfig(new OrientDBPoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn())))
+                    .databasePoolConfig(new OrientDBPoolConfig(EventLogRepository.DB, String.format("remote:localhost/%s", EventLogRepository.DB), "admin", "admin", 10, EventLogRecord.class))
                     .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
-                    .hook(() -> new SetCreatedOnAndUpdatedOn())
                     .build();
         }
 

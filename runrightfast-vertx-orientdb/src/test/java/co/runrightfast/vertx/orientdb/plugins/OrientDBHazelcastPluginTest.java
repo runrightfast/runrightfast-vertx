@@ -22,9 +22,8 @@ import co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
-import co.runrightfast.vertx.orientdb.DatabasePoolConfig;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxHealthCheck;
-import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBService;
@@ -33,6 +32,7 @@ import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleLis
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
@@ -62,6 +62,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 
 /**
  *
@@ -108,9 +109,8 @@ public class OrientDBHazelcastPluginTest {
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .databasePoolConfig(new DatabasePoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10))
+                .databasePoolConfig(new OrientDBPoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn())))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
-                .hook(() -> new SetCreatedOnAndUpdatedOn())
                 .build();
 
         service = new EmbeddedOrientDBService(config);

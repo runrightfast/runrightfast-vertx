@@ -20,11 +20,16 @@ import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates
 import co.runrightfast.vertx.orientdb.classes.DocumentObject;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableSet;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.hook.ORecordHook;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.Singular;
 import lombok.ToString;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -34,7 +39,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  */
 @EqualsAndHashCode(of = {"databaseName"})
 @ToString(exclude = "password")
-public class DatabasePoolConfig {
+public class OrientDBPoolConfig {
 
     @Getter
     private final String databaseName;
@@ -52,12 +57,27 @@ public class DatabasePoolConfig {
     private final int maxPoolSize;
 
     /**
+     * The hook can only be created while an OrientDB database instance is active, i.e., set on the current thread
+     */
+    @Getter
+    @Singular
+    private final Set<Supplier<ORecordHook>> hooks;
+
+    /**
      * domain classes that are managed by this database
      */
     @Getter
     private final Set<Class<? extends DocumentObject>> documentClasses;
 
-    public DatabasePoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize, final Class<? extends DocumentObject>... documentClasses) {
+    public OrientDBPoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize, final Class<? extends DocumentObject>... documentClasses) {
+        this(databaseName, databaseUrl, userName, password, maxPoolSize, new HashSet<>(0), ImmutableSet.copyOf(documentClasses));
+    }
+
+    public OrientDBPoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize, @NonNull final Set<Supplier<ORecordHook>> hooks, final Class<? extends DocumentObject>... documentClasses) {
+        this(databaseName, databaseUrl, userName, password, maxPoolSize, hooks, ImmutableSet.copyOf(documentClasses));
+    }
+
+    public OrientDBPoolConfig(final String databaseName, final String databaseUrl, final String userName, final String password, final int maxPoolSize, @NonNull final Set<Supplier<ORecordHook>> hooks, @NonNull final Set<Class<? extends DocumentObject>> documentClasses) {
         checkArgument(isNotBlank(databaseName), MUST_NOT_BE_BLANK, databaseName);
         checkArgument(isNotBlank(databaseUrl), MUST_NOT_BE_BLANK, databaseUrl);
         checkArgument(isNotBlank(userName), MUST_NOT_BE_BLANK, userName);
@@ -68,7 +88,8 @@ public class DatabasePoolConfig {
         this.userName = userName.trim();
         this.password = password.trim();
         this.maxPoolSize = maxPoolSize;
-        this.documentClasses = ArrayUtils.isNotEmpty(documentClasses) ? ImmutableSet.copyOf(documentClasses) : ImmutableSet.of();
+        this.hooks = hooks.isEmpty() ? ImmutableSet.of() : ImmutableSet.copyOf(hooks);
+        this.documentClasses = documentClasses.isEmpty() ? ImmutableSet.of() : ImmutableSet.copyOf(documentClasses);
     }
 
     /**
@@ -85,7 +106,7 @@ public class DatabasePoolConfig {
      * @param maxPoolSize
      * @param documentClasses
      */
-    public DatabasePoolConfig(final String databaseName, final String userName, final String password, final int maxPoolSize, final Class<? extends DocumentObject>... documentClasses) {
+    public OrientDBPoolConfig(final String databaseName, final String userName, final String password, final int maxPoolSize, final Class<? extends DocumentObject>... documentClasses) {
         this(databaseName, "plocal:" + databaseName, userName, password, maxPoolSize, documentClasses);
     }
 
@@ -97,6 +118,10 @@ public class DatabasePoolConfig {
         final String url = StringUtils.split(databaseUrl, ':')[1];
         final int startIndex = url.lastIndexOf('/') + 1;
         return url.substring(startIndex);
+    }
+
+    public OPartitionedDatabasePool createDatabasePool() {
+        return new OPartitionedDatabasePool(getDatabaseUrl(), getUserName(), getPassword(), getMaxPoolSize());
     }
 
 }
