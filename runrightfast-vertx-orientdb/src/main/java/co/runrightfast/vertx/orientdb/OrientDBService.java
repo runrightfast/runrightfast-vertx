@@ -18,8 +18,6 @@ package co.runrightfast.vertx.orientdb;
 import co.runrightfast.core.TypeReference;
 import co.runrightfast.core.TypeSafeObjectRegistry;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  *
@@ -30,12 +28,8 @@ public interface OrientDBService extends OrientDBPoolService {
     /**
      * Used to register the service with {@link TypeSafeObjectRegistry}
      */
-    public static final TypeReference<OrientDBService> ORIENTDB_SERVICE = new TypeReference<OrientDBService>() {
+    static final TypeReference<OrientDBService> ORIENTDB_SERVICE = new TypeReference<OrientDBService>() {
     };
-
-    Set<String> getDatabaseNames();
-
-    Optional<ODatabaseDocumentTxSupplier> getODatabaseDocumentTxSupplier(String name);
 
     /**
      *

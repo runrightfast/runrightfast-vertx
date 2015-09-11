@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb.impl;
+package co.runrightfast.vertx.orientdb.impl.embedded;
 
 import co.runrightfast.core.ApplicationException;
 import co.runrightfast.vertx.core.utils.JvmProcess;
@@ -23,6 +23,7 @@ import static co.runrightfast.vertx.orientdb.OrientDBConstants.NETWORK_BINARY_PR
 import static co.runrightfast.vertx.orientdb.OrientDBConstants.ROOT_USER;
 import co.runrightfast.vertx.orientdb.OrientDBPoolService;
 import co.runrightfast.vertx.orientdb.OrientDBService;
+import co.runrightfast.vertx.orientdb.impl.OrientDBPoolServiceImpl;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.orientechnologies.orient.client.remote.OServerAdmin;

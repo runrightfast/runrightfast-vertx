@@ -22,7 +22,7 @@ import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
-import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.verticle.OrientDBRepositoryVerticleDeployment;
 import co.runrightfast.vertx.orientdb.verticle.OrientDBVerticle;
 import com.typesafe.config.Config;

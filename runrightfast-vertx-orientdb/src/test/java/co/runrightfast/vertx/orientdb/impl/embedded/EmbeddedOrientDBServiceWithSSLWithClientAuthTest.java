@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb.impl;
+package co.runrightfast.vertx.orientdb.impl.embedded;
 
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
@@ -25,7 +25,7 @@ import co.runrightfast.vertx.orientdb.OrientDBConstants;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
-import static co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceWithSSLWithClientAuthTest.orientdbHome;
+import static co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceWithSSLWithClientAuthTest.orientdbHome;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import com.google.common.collect.ImmutableList;
@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
@@ -100,9 +99,10 @@ public class EmbeddedOrientDBServiceWithSSLWithClientAuthTest {
         final ApplicationId appId = ApplicationId.builder().group("co.runrightfast").name("runrightfast-vertx-orientdb").version("1.0.0").build();
         final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);
 
+        setSSLSystemProperties();
         final EmbeddedOrientDBServiceConfig config = EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(orientdbHome.toPath())
-                .handler(EmbeddedOrientDBServiceWithSSLWithClientAuthTest::oGraphServerHandler)
+                .handler(new OGraphServerHandlerConfig(false))
                 .handler(EmbeddedOrientDBServiceWithSSLWithClientAuthTest::oHazelcastPlugin)
                 .handler(EmbeddedOrientDBServiceWithSSLWithClientAuthTest::oServerSideScriptInterpreter)
                 .networkConfig(oServerNetworkConfiguration())
@@ -150,8 +150,6 @@ public class EmbeddedOrientDBServiceWithSSLWithClientAuthTest {
         binaryListener.socket = sslConfig.name;
         network.listeners = ImmutableList.of(binaryListener);
 
-        setSSLSystemProperties();
-
         return network;
     }
 
@@ -187,6 +185,9 @@ public class EmbeddedOrientDBServiceWithSSLWithClientAuthTest {
         return "qwerty90";
     }
 
+    /**
+     * The safest to do is to set the system properties before any OrientDB config classes are loaded.
+     */
     private static void setSSLSystemProperties() {
         System.setProperty("client.ssl.enabled", "true");
         System.setProperty("client.ssl.keyStore", clientKeyStorePath().toString());
@@ -214,16 +215,6 @@ public class EmbeddedOrientDBServiceWithSSLWithClientAuthTest {
             final OClass logRecordClass = db.getMetadata().getSchema().createClass(EventLogRecord.class.getSimpleName()).setSuperClasses(ImmutableList.of(timestampedClass));
             logRecordClass.createProperty(EventLogRecord.Field.event.name(), OType.STRING);
         }
-    }
-
-    private static OServerHandlerConfiguration oGraphServerHandler() {
-        final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
-        config.clazz = OGraphServerHandler.class.getName();
-        config.parameters = new OServerParameterConfiguration[]{
-            new OServerParameterConfiguration("enabled", "true"),
-            new OServerParameterConfiguration("graph.pool.max", "50")
-        };
-        return config;
     }
 
     private static OServerHandlerConfiguration oHazelcastPlugin() {

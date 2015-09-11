@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb.impl;
+package co.runrightfast.vertx.orientdb.impl.embedded;
 
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
@@ -25,7 +25,7 @@ import co.runrightfast.vertx.orientdb.OrientDBConstants;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
-import static co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceWithSSLTest.orientdbHome;
+import static co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceWithSSLTest.orientdbHome;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import com.google.common.collect.ImmutableList;
@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
@@ -102,7 +101,7 @@ public class EmbeddedOrientDBServiceWithSSLTest {
 
         final EmbeddedOrientDBServiceConfig config = EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(orientdbHome.toPath())
-                .handler(EmbeddedOrientDBServiceWithSSLTest::oGraphServerHandler)
+                .handler(new OGraphServerHandlerConfig())
                 .handler(EmbeddedOrientDBServiceWithSSLTest::oHazelcastPlugin)
                 .handler(EmbeddedOrientDBServiceWithSSLTest::oServerSideScriptInterpreter)
                 .networkConfig(oServerNetworkConfiguration())
@@ -214,16 +213,6 @@ public class EmbeddedOrientDBServiceWithSSLTest {
             final OClass logRecordClass = db.getMetadata().getSchema().createClass(EventLogRecord.class.getSimpleName()).setSuperClasses(ImmutableList.of(timestampedClass));
             logRecordClass.createProperty(EventLogRecord.Field.event.name(), OType.STRING);
         }
-    }
-
-    private static OServerHandlerConfiguration oGraphServerHandler() {
-        final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
-        config.clazz = OGraphServerHandler.class.getName();
-        config.parameters = new OServerParameterConfiguration[]{
-            new OServerParameterConfiguration("enabled", "true"),
-            new OServerParameterConfiguration("graph.pool.max", "50")
-        };
-        return config;
     }
 
     private static OServerHandlerConfiguration oHazelcastPlugin() {

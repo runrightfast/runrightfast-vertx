@@ -45,7 +45,7 @@ import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBService;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
-import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleDeploymentModule;
 import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
@@ -121,6 +121,7 @@ public class OrientDBVerticleTest {
 
     static {
         System.setProperty("config.resource", String.format("%s.conf", CLASS_NAME));
+        System.setProperty("runrightfast.orientdb.client.ssl.enabled", "false");
         ConfigFactory.invalidateCaches();
     }
 

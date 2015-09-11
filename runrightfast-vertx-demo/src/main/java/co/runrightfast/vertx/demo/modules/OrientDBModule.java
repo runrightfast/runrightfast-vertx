@@ -25,7 +25,7 @@ import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.demo.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
-import co.runrightfast.vertx.orientdb.impl.EmbeddedOrientDBServiceConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
 import co.runrightfast.vertx.orientdb.verticle.OrientDBRepositoryVerticleDeployment;
