@@ -228,7 +228,6 @@ public class EncryptionServiceImplTest {
             final EncryptionService service2 = new EncryptionServiceImpl(cipherService2, toKeyMap(SecretKeys.parseFrom(is)));
             assertThat("data", is(new String(service2.decrypt(encryptedData, keyName))));
         }
-
     }
 
 }

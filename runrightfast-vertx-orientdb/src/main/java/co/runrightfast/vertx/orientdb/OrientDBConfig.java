@@ -18,13 +18,17 @@ package co.runrightfast.vertx.orientdb;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.orientdb.impl.embedded.OGraphServerHandlerConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.OHazelcastPluginConfig;
+import com.google.common.collect.ImmutableList;
+import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.typesafe.config.Config;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.logging.Level;
+import java.util.List;
+import java.util.function.Supplier;
 import javax.inject.Qualifier;
 import lombok.Getter;
 import lombok.NonNull;
@@ -50,27 +54,35 @@ public final class OrientDBConfig {
     private final String nodeName;
 
     @Getter
-    private final OGraphServerHandlerConfig oGraphServerHandlerConfig;
+    private final List<Supplier<OServerHandlerConfiguration>> handlers;
 
     public OrientDBConfig(@NonNull final Config config) {
         this.homeDirectory = Paths.get(ConfigUtils.getString(config, "server", "home", "dir").orElse("/orientdb"));
         this.nodeName = ConfigUtils.getString(config, "server", "nodeName").orElseGet(this::defaultNodeName);
-        this.oGraphServerHandlerConfig = ConfigUtils.getConfig(config, "server", "handlers", "OGraphServerHandlerConfig").map(OGraphServerHandlerConfig::new).orElseGet(() -> new OGraphServerHandlerConfig());
-        loadClientSSLConfig(config);
+        ConfigUtils.getConfig(config, "client", "ssl").ifPresent(OrientDBClientConfig::loadClientSSLConfig);
+        handlers = ImmutableList.of(
+                oGraphServerHandlerConfig(config),
+                oHazelcastPluginConfig(config)
+        );
+
     }
 
-    private void loadClientSSLConfig(final Config config) {
-        ConfigUtils.getConfig(config, "client", "ssl").ifPresent(clientSSLConfig -> {
-            final boolean enabled = ConfigUtils.getBoolean(clientSSLConfig, "enabled").orElse(Boolean.FALSE);
-            log.logp(Level.INFO, getClass().getName(), "loadClientSSLConfig", "client.ssl.enabled = {0}", enabled);
-            if (enabled) {
-                System.setProperty("client.ssl.enabled", "true");
-                System.setProperty("client.ssl.keyStore", clientSSLConfig.getString("keyStore"));
-                System.setProperty("client.ssl.keyStorePass", clientSSLConfig.getString("keyStorePass"));
-                System.setProperty("client.ssl.trustStore", clientSSLConfig.getString("trustStore"));
-                System.setProperty("client.ssl.trustStorePass", clientSSLConfig.getString("trustStorePass"));
-            }
-        });
+    private OGraphServerHandlerConfig oGraphServerHandlerConfig(final Config config) {
+        return ConfigUtils.getConfig(config, "server", "handlers", "OGraphServerHandlerConfig")
+                .map(OGraphServerHandlerConfig::new)
+                .orElseGet(() -> new OGraphServerHandlerConfig());
+    }
+
+    private OHazelcastPluginConfig oHazelcastPluginConfig(final Config config) {
+        return ConfigUtils.getConfig(config, "server", "handlers", "OHazelcastPluginConfig")
+                .map(pluginConfig -> {
+                    final boolean enabled = pluginConfig.getBoolean("enabled");
+                    if (!enabled) {
+                        return new OHazelcastPluginConfig();
+                    }
+                    return new OHazelcastPluginConfig(this.nodeName, Paths.get(pluginConfig.getString("distributedDBConfigFilePath")));
+                })
+                .orElseGet(() -> new OHazelcastPluginConfig());
     }
 
     public String defaultNodeName() {

@@ -34,7 +34,7 @@ import lombok.ToString;
  */
 @ToString
 @EqualsAndHashCode
-public class OGraphServerHandlerConfig implements Supplier<OServerHandlerConfiguration> {
+public final class OGraphServerHandlerConfig implements Supplier<OServerHandlerConfiguration> {
 
     public static final int DEFAULT_GRAPH_POOL_MAZ_SIZE = 100;
 
