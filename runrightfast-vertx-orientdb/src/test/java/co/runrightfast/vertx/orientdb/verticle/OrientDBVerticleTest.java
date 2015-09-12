@@ -124,8 +124,7 @@ public class OrientDBVerticleTest {
     private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
 
     private static final ProtobufMessageCodec<GetVerticleDeployments.Response> getVerticleDeploymentsResponseCodec = new ProtobufMessageCodec(
-            GetVerticleDeployments.Response.getDefaultInstance(),
-            encryptionService.cipherFunctions(GetVerticleDeployments.getDescriptor().getFullName())
+            GetVerticleDeployments.Response.getDefaultInstance()
     );
 
     private static File orientdbHome;
@@ -378,7 +377,7 @@ public class OrientDBVerticleTest {
         final ProtobufMessageProducer<GetEventCount.Request> getEventCountMessageProducer = new ProtobufMessageProducer<>(
                 vertx.eventBus(),
                 EventBusAddress.eventBusAddress(verticleId, GetEventCount.class),
-                new ProtobufMessageCodec<>(GetEventCount.Request.getDefaultInstance(), encryptionService.cipherFunctions(GetEventCount.Request.getDescriptor().getFullName())),
+                new ProtobufMessageCodec<>(GetEventCount.Request.getDefaultInstance()),
                 metricRegistry
         );
 

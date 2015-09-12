@@ -128,7 +128,6 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                         .responseDefaultInstance(RunVerticleHealthChecks.Response.getDefaultInstance())
                         .build()
                 ).handler(this::handleRunVerticleHealthChecksMessage)
-                .ciphers(cipherFunctions(RunVerticleHealthChecks.getDefaultInstance()))
                 .build()
         );
     }
@@ -192,7 +191,6 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
                         .responseDefaultInstance(GetVerticleDeployments.Response.getDefaultInstance())
                         .build()
                 ).handler(this::handleGetVerticleDeploymentsMessage)
-                .ciphers(cipherFunctions(GetVerticleDeployments.getDefaultInstance()))
                 .build()
         );
     }

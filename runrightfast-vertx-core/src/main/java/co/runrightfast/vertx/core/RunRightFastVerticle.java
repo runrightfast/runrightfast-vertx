@@ -232,7 +232,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
                 )
                 .handler(this::handlePingMessageRequest)
                 .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
-                .ciphers(cipherFunctions(Ping.getDefaultInstance()))
                 .executionMode(WORKER_POOL_PARALLEL)
                 .build();
 
@@ -327,7 +326,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     private <REQ extends Message, RESP extends Message> void registerMessageCodecs(final MessageConsumerConfig<REQ, RESP> config) {
         final EventBus eventBus = vertx.eventBus();
         try {
-            final MessageCodec codec = new ProtobufMessageCodec(config.getAddressMessageMapping().getRequestDefaultInstance(), config.getCiphers());
+            final MessageCodec codec = new ProtobufMessageCodec(config.getAddressMessageMapping().getRequestDefaultInstance());
             eventBus.registerDefaultCodec(config.getAddressMessageMapping().getRequestDefaultInstance().getClass(), codec);
         } catch (final IllegalStateException e) {
             log.logp(FINE, CLASS_NAME, "registerMessageCodecs", "failed to register codec for request message", e.getCause());
@@ -336,7 +335,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
         config.getAddressMessageMapping().getResponseDefaultInstance().ifPresent(responseDefaultInstance -> {
             try {
                 // TODO: Investigate why Optional type is lost - forced to cast responseDefaultInstance to Message
-                final MessageCodec codec = new ProtobufMessageCodec((Message) responseDefaultInstance, config.getCiphers());
+                final MessageCodec codec = new ProtobufMessageCodec((Message) responseDefaultInstance);
                 eventBus.registerDefaultCodec(responseDefaultInstance.getClass(), codec);
             } catch (final IllegalStateException e) {
                 log.logp(FINE, CLASS_NAME, "registerMessageCodecs", "failed to register codec for response message", e.getCause());

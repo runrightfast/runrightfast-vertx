@@ -16,7 +16,6 @@
 package co.runrightfast.vertx.core.eventbus;
 
 import co.runrightfast.core.JsonRepresentation;
-import co.runrightfast.core.crypto.CipherFunctions;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.ExecutionMode.EVENT_LOOP;
 import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure.INTERNAL_SERVER_ERROR;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -124,11 +123,6 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
             return this;
         }
 
-        public Builder<REQUEST, RESPONSE> ciphers(@NonNull final CipherFunctions ciphers) {
-            this.config.ciphers = ciphers;
-            return this;
-        }
-
         public Builder<REQUEST, RESPONSE> executionMode(@NonNull final ExecutionMode executionMode) {
             this.config.executionMode = executionMode;
             return this;
@@ -173,9 +167,6 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     private Map<Class<? extends Throwable>, Failure> exceptionFailureMap = ImmutableMap.of();
 
     @Getter
-    private CipherFunctions ciphers;
-
-    @Getter
     private ExecutionMode executionMode = EVENT_LOOP;
 
     private MessageConsumerConfig() {
@@ -184,7 +175,6 @@ public final class MessageConsumerConfig<REQUEST extends com.google.protobuf.Mes
     public void validate() {
         checkNotNull(addressMessageMapping);
         checkNotNull(handler);
-        checkNotNull(ciphers);
         checkState(maxBufferedMessages >= 0);
     }
 

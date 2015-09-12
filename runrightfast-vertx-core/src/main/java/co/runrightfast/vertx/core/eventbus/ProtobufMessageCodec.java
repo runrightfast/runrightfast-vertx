@@ -16,7 +16,6 @@
 package co.runrightfast.vertx.core.eventbus;
 
 import co.runrightfast.core.ApplicationException;
-import co.runrightfast.core.crypto.CipherFunctions;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
@@ -46,19 +45,15 @@ public final class ProtobufMessageCodec<MSG extends Message> implements MessageC
     @Getter
     private final MSG defaultInstance;
 
-    private final CipherFunctions ciphers;
-
     /**
      * Each time an instance is created, it registers itself and becomes available via {@link ProtobufMessageCodec#getProtobufMessageCodec(com.google.protobuf.Message)
      * }. If a ProtobufMessageCodec for the same {@link Message} type exists, then it will be overwritten.
      *
      *
      * @param defaultInstance
-     * @param ciphers
      */
-    public ProtobufMessageCodec(@NonNull final MSG defaultInstance, @NonNull final CipherFunctions ciphers) {
+    public ProtobufMessageCodec(@NonNull final MSG defaultInstance) {
         this.defaultInstance = defaultInstance;
-        this.ciphers = ciphers;
 
         final Map<String, ProtobufMessageCodec> temp = new HashMap<>(protobufMessageCodecs);
         temp.put(defaultInstance.getDescriptorForType().getFullName(), this);
@@ -67,13 +62,13 @@ public final class ProtobufMessageCodec<MSG extends Message> implements MessageC
 
     @Override
     public void encodeToWire(final Buffer buffer, final MSG msg) {
-        buffer.appendBytes(ciphers.getEncryption().apply(msg.toByteArray()));
+        buffer.appendBytes(msg.toByteArray());
     }
 
     @Override
     public MSG decodeFromWire(final int pos, final Buffer buffer) {
         try {
-            return (MSG) defaultInstance.getParserForType().parseFrom(ciphers.getDecryption().apply(buffer.getBytes(pos, buffer.length())));
+            return (MSG) defaultInstance.getParserForType().parseFrom(buffer.getBytes(pos, buffer.length()));
         } catch (final InvalidProtocolBufferException ex) {
             throw new ApplicationException(ex);
         }

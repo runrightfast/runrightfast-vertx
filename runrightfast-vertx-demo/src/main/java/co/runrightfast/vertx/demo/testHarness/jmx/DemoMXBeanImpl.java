@@ -322,7 +322,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
             getEventCountMessageProducer = new ProtobufMessageProducer<>(
                     vertx.eventBus(),
                     EventBusAddress.eventBusAddress(EventLogRepository.VERTICLE_ID, GetEventCount.class),
-                    new ProtobufMessageCodec<>(GetEventCount.Request.getDefaultInstance(), encryptionService.cipherFunctions(GetEventCount.Request.getDescriptor().getFullName())),
+                    new ProtobufMessageCodec<>(GetEventCount.Request.getDefaultInstance()),
                     metricRegistry
             );
         }

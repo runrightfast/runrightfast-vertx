@@ -50,10 +50,7 @@ public class ProtobufMessageCodecTest {
             .setVersion("1.0.0")
             .build();
 
-    private final ProtobufMessageCodec<VerticleId> verticleIdMessageCodec = new ProtobufMessageCodec(
-            VerticleId.getDefaultInstance(),
-            encryptionService.cipherFunctions(VerticleId.getDescriptor().getFullName())
-    );
+    private final ProtobufMessageCodec<VerticleId> verticleIdMessageCodec = new ProtobufMessageCodec(VerticleId.getDefaultInstance());
 
     /**
      * Test of encodeToWire method, of class ProtobufMessageCodec.

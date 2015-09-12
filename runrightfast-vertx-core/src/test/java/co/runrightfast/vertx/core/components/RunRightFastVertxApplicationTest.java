@@ -108,8 +108,7 @@ public class RunRightFastVertxApplicationTest {
     private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
 
     private static final ProtobufMessageCodec<GetVerticleDeployments.Response> getVerticleDeploymentsResponseCodec = new ProtobufMessageCodec(
-            GetVerticleDeployments.Response.getDefaultInstance(),
-            encryptionService.cipherFunctions(GetVerticleDeployments.getDescriptor().getFullName())
+            GetVerticleDeployments.Response.getDefaultInstance()
     );
 
     static class TestVerticle extends RunRightFastVerticle {
@@ -145,7 +144,6 @@ public class RunRightFastVertxApplicationTest {
                     )
                     .handler(msg -> reply(msg, co.runrightfast.vertx.core.messages.Void.getDefaultInstance()))
                     .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
-                    .ciphers(cipherFunctions(co.runrightfast.vertx.core.messages.Void.getDefaultInstance()))
                     .executionMode(executionMode)
                     .build();
         }
@@ -163,7 +161,6 @@ public class RunRightFastVertxApplicationTest {
                     )
                     .handler(this::handleRunRightFastVertxApplicationTestMessageRequest)
                     .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
-                    .ciphers(cipherFunctions(RunRightFastVertxApplicationTestMessage.getDefaultInstance()))
                     .executionMode(executionMode)
                     .build();
         }
@@ -249,7 +246,6 @@ public class RunRightFastVertxApplicationTest {
                     )
                     .handler(this::handleRunRightFastVertxApplicationTestMessageRequest)
                     .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
-                    .ciphers(cipherFunctions(RunRightFastVertxApplicationTestMessage.getDefaultInstance()))
                     .build();
         }
 

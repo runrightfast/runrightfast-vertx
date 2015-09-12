@@ -26,7 +26,6 @@ import static co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Executio
 import co.runrightfast.vertx.core.utils.LoggingUtils.JsonLog;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
-import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
@@ -42,6 +41,7 @@ import javax.json.Json;
 import lombok.Getter;
 import lombok.NonNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
 import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
 import test.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.RecordId;
@@ -122,7 +122,6 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
                 )
                 .handler(this::handleGetEventCount)
                 .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
-                .ciphers(cipherFunctions(GetEventCount.getDefaultInstance()))
                 .executionMode(WORKER_POOL_PARALLEL)
                 .build();
         registerMessageConsumer(config);
@@ -146,7 +145,6 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
                 )
                 .handler(this::handleCreateEvent)
                 .addExceptionFailureMapping(IllegalArgumentException.class, MessageConsumerConfig.Failure.BAD_REQUEST)
-                .ciphers(cipherFunctions(CreateEvent.getDefaultInstance()))
                 .executionMode(WORKER_POOL_PARALLEL)
                 .build();
         registerMessageConsumer(config);

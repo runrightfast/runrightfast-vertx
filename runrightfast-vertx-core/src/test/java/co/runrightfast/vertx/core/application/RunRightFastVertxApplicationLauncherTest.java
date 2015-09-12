@@ -81,8 +81,7 @@ public class RunRightFastVertxApplicationLauncherTest {
     private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
 
     private static final ProtobufMessageCodec<GetVerticleDeployments.Response> getVerticleDeploymentsResponseCodec = new ProtobufMessageCodec(
-            GetVerticleDeployments.Response.getDefaultInstance(),
-            encryptionService.cipherFunctions(GetVerticleDeployments.getDescriptor().getFullName())
+            GetVerticleDeployments.Response.getDefaultInstance()
     );
 
     static class TestVerticle extends RunRightFastVerticle {
