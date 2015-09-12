@@ -26,7 +26,6 @@ import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
-import co.runrightfast.vertx.core.utils.ConcurrencyUtils;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
 import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
 import co.runrightfast.vertx.core.utils.JsonUtils;
@@ -54,7 +53,6 @@ import io.vertx.core.eventbus.MessageConsumer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
@@ -66,7 +64,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
-import static java.util.logging.Level.WARNING;
 import javax.json.Json;
 import javax.json.JsonObject;
 import lombok.NonNull;
@@ -119,18 +116,6 @@ public final class DemoMXBeanImpl implements DemoMXBean {
         final OrientDBConfig orientDBConfig = new OrientDBConfig(appConfig.getConfig().getConfig(configPath(CONFIG_NAMESPACE, "orientdb")));
         this.eventLogRepoDBUrl = String.format("plocal:%s/databases/%s", orientDBConfig.getHomeDirectory().toAbsolutePath(), EventLogRepository.DB);
         log.info("eventLogRepoDBUrl = " + eventLogRepoDBUrl);
-    }
-
-    private void waitForEventLogRepositoryVerticleToStartUp() {
-        while (true) {
-            try {
-                this.eventLogRecordCount();
-                break;
-            } catch (final Exception e) {
-                log.log(WARNING, "Waiting for EventLogRepository ... ", e);
-                ConcurrencyUtils.sleep(Duration.ofSeconds(2));
-            }
-        }
     }
 
     private void registerGetVerticleDeploymentsMessageConsumer() {
