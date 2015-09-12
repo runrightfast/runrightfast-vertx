@@ -27,20 +27,10 @@ import co.runrightfast.vertx.orientdb.classes.demo.EventLogRecord;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
-import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
 import co.runrightfast.vertx.orientdb.verticle.OrientDBRepositoryVerticleDeployment;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
-import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.DeploymentOptions;
@@ -123,63 +113,14 @@ public class OrientDBModule {
 
         return EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(orientdbHome.toPath())
-                .handler(this::oGraphServerHandler)
-                .handler(() -> this.oHazelcastPlugin(orientdbHome, orientDBConfig))
-                .handler(this::oServerSideScriptInterpreter)
-                .networkConfig(oServerNetworkConfiguration())
+                .handlers(orientDBConfig.getHandlers())
+                .networkConfig(orientDBConfig.getNetworkConfig().get())
                 .user(new OServerUserConfiguration("root", "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                 .databasePoolConfig(new OrientDBPoolConfig(EventLogRepository.DB, dbUrl, "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn()), EventLogRecord.class))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .build();
-    }
-
-    private OServerNetworkConfiguration oServerNetworkConfiguration() {
-        final OServerNetworkConfiguration network = new OServerNetworkConfiguration();
-        network.protocols = ImmutableList.<OServerNetworkProtocolConfiguration>builder()
-                .add(new OServerNetworkProtocolConfiguration("binary", ONetworkProtocolBinary.class.getName()))
-                .build();
-        final OServerNetworkListenerConfiguration binaryListener = new OServerNetworkListenerConfiguration();
-        binaryListener.ipAddress = getWeaveClusterHostIPAddress().orElse("0.0.0.0");
-        log.info(String.format("binaryListener.ipAddress = %s", binaryListener.ipAddress));
-        binaryListener.protocol = "binary";
-        binaryListener.portRange = "2424-2430";
-        binaryListener.socket = "default";
-        network.listeners = ImmutableList.<OServerNetworkListenerConfiguration>builder()
-                .add(binaryListener)
-                .build();
-        return network;
-    }
-
-    private OServerHandlerConfiguration oGraphServerHandler() {
-        final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
-        config.clazz = OGraphServerHandler.class.getName();
-        config.parameters = new OServerParameterConfiguration[]{
-            new OServerParameterConfiguration("enabled", "true"),
-            new OServerParameterConfiguration("graph.pool.max", "50")
-        };
-        return config;
-    }
-
-    private OServerHandlerConfiguration oHazelcastPlugin(final File orientdbHome, final OrientDBConfig orientDBConfig) {
-        final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
-        config.clazz = OrientDBPluginWithProvidedHazelcastInstance.class.getName();
-        config.parameters = new OServerParameterConfiguration[]{
-            new OServerParameterConfiguration("enabled", "true"),
-            new OServerParameterConfiguration("nodeName", orientDBConfig.getNodeName()),
-            new OServerParameterConfiguration("configuration.db.default", new File(orientdbHome, "config/default-distributed-db-config.json").getAbsolutePath()),};
-        return config;
-    }
-
-    private OServerHandlerConfiguration oServerSideScriptInterpreter() {
-        final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
-        config.clazz = OServerSideScriptInterpreter.class.getName();
-        config.parameters = new OServerParameterConfiguration[]{
-            new OServerParameterConfiguration("enabled", "true"),
-            new OServerParameterConfiguration("allowedLanguages", "SQL")
-        };
-        return config;
     }
 
 }
