@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OJMXPlugin;
+import com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin;
 import com.typesafe.config.Config;
 import static java.lang.Boolean.FALSE;
 import java.lang.annotation.Documented;
@@ -73,10 +74,22 @@ public final class OrientDBConfig {
                 oGraphServerHandlerConfig(config),
                 oHazelcastPluginConfig(config),
                 oServerSideScriptInterpreterConfig(config),
-                oJMXPlugin(config)
+                oJMXPlugin(config),
+                oLiveQueryPlugin(config)
         );
 
         this.networkConfig = oServerNetworkConfigurationSupplier(config);
+    }
+
+    private Supplier<OServerHandlerConfiguration> oLiveQueryPlugin(final Config config) {
+        return () -> {
+            final OServerHandlerConfiguration handlerConfig = new OServerHandlerConfiguration();
+            handlerConfig.clazz = OLiveQueryPlugin.class.getName();
+            final String enabled = ConfigUtils.getBoolean(config, "server", "handlers", "OLiveQueryPluginConfig", "enabled").orElse(FALSE).toString();
+            handlerConfig.parameters = new OServerParameterConfiguration[]{
+                new OServerParameterConfiguration("enabled", enabled),};
+            return handlerConfig;
+        };
     }
 
     private Supplier<OServerHandlerConfiguration> oJMXPlugin(final Config config) {
