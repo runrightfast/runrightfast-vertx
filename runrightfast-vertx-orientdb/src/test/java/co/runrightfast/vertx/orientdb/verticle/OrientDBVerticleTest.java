@@ -48,31 +48,18 @@ import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.impl.embedded.OGraphServerHandlerConfig;
 import co.runrightfast.vertx.orientdb.impl.embedded.OHazelcastPluginConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.OServerSideScriptInterpreterConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleDeploymentModule;
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import co.runrightfast.vertx.testSupport.EncryptionServiceWithDefaultCiphers;
 import com.codahale.metrics.MetricFilter;
 import static com.google.common.base.Preconditions.checkState;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter;
-import com.orientechnologies.orient.server.network.OServerSSLSocketFactory;
-import static com.orientechnologies.orient.server.network.OServerSSLSocketFactory.PARAM_NETWORK_SSL_CLIENT_AUTH;
-import static com.orientechnologies.orient.server.network.OServerSSLSocketFactory.PARAM_NETWORK_SSL_KEYSTORE;
-import static com.orientechnologies.orient.server.network.OServerSSLSocketFactory.PARAM_NETWORK_SSL_KEYSTORE_PASSWORD;
-import static com.orientechnologies.orient.server.network.OServerSSLSocketFactory.PARAM_NETWORK_SSL_TRUSTSTORE;
-import static com.orientechnologies.orient.server.network.OServerSSLSocketFactory.PARAM_NETWORK_SSL_TRUSTSTORE_PASSWORD;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import dagger.Component;
@@ -88,8 +75,6 @@ import io.vertx.core.eventbus.ReplyException;
 import static io.vertx.core.eventbus.ReplyFailure.NO_HANDLERS;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -196,8 +181,8 @@ public class OrientDBVerticleTest {
                     .orientDBRootDir(orientdbHome.toPath())
                     .handler(new OGraphServerHandlerConfig(false))
                     .handler(() -> this.oHazelcastPlugin(orientdbHome))
-                    .handler(this::oServerSideScriptInterpreter)
-                    .networkConfig(oServerNetworkConfiguration())
+                    .handler(new OServerSideScriptInterpreterConfig())
+                    .networkConfig(config.getNetworkConfig().get())
                     .user(new OServerUserConfiguration("root", "root", "*"))
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
@@ -207,80 +192,8 @@ public class OrientDBVerticleTest {
                     .build();
         }
 
-        private OServerNetworkConfiguration oServerNetworkConfigurationNoSSL() {
-            final OServerNetworkConfiguration network = new OServerNetworkConfiguration();
-            network.protocols = ImmutableList.<OServerNetworkProtocolConfiguration>builder()
-                    .add(new OServerNetworkProtocolConfiguration("binary", ONetworkProtocolBinary.class.getName()))
-                    .build();
-            final OServerNetworkListenerConfiguration binaryListener = new OServerNetworkListenerConfiguration();
-            binaryListener.ipAddress = "0.0.0.0";
-            binaryListener.protocol = "binary";
-            binaryListener.portRange = "2424-2430";
-            binaryListener.socket = "default";
-            network.listeners = ImmutableList.<OServerNetworkListenerConfiguration>builder()
-                    .add(binaryListener)
-                    .build();
-            return network;
-        }
-
-        private static OServerNetworkConfiguration oServerNetworkConfiguration() {
-            final OServerNetworkConfiguration network = new OServerNetworkConfiguration();
-
-            final OServerSocketFactoryConfiguration sslConfig = new OServerSocketFactoryConfiguration("ssl", OServerSSLSocketFactory.class.getName());
-            sslConfig.parameters = new OServerParameterConfiguration[]{
-                new OServerParameterConfiguration(PARAM_NETWORK_SSL_KEYSTORE, serverKeyStorePath().toString()),
-                new OServerParameterConfiguration(PARAM_NETWORK_SSL_KEYSTORE_PASSWORD, serverKeyStorePassword()),
-                // client auth config
-                new OServerParameterConfiguration(PARAM_NETWORK_SSL_CLIENT_AUTH, "true"),
-                new OServerParameterConfiguration(PARAM_NETWORK_SSL_TRUSTSTORE, serverTrustStorePath().toString()),
-                new OServerParameterConfiguration(PARAM_NETWORK_SSL_TRUSTSTORE_PASSWORD, serverTrustStorePassword())
-
-            };
-
-            network.sockets = ImmutableList.of(sslConfig);
-
-            network.protocols = ImmutableList.of(
-                    new OServerNetworkProtocolConfiguration("binary", ONetworkProtocolBinary.class.getName())
-            );
-
-            final OServerNetworkListenerConfiguration binaryListener = new OServerNetworkListenerConfiguration();
-            binaryListener.ipAddress = "0.0.0.0";
-            binaryListener.protocol = "binary";
-            binaryListener.portRange = "2434-2440";
-            binaryListener.socket = sslConfig.name;
-            network.listeners = ImmutableList.of(binaryListener);
-
-            return network;
-        }
-
-        private static Path serverKeyStorePath() {
-            return Paths.get(orientdbHome.getAbsolutePath(), "config", "cert", "orientdb.ks");
-        }
-
-        private static Path serverTrustStorePath() {
-            return Paths.get(orientdbHome.getAbsolutePath(), "config", "cert", "orientdb.ts");
-        }
-
-        private static String serverKeyStorePassword() {
-            return "qwerty90";
-        }
-
-        private static String serverTrustStorePassword() {
-            return "qwerty90";
-        }
-
         private OServerHandlerConfiguration oHazelcastPlugin(final File orientdbHome) {
             return new OHazelcastPluginConfig(HOST, new File(orientdbHome, "config/default-distributed-db-config.json").toPath()).get();
-        }
-
-        private OServerHandlerConfiguration oServerSideScriptInterpreter() {
-            final OServerHandlerConfiguration config = new OServerHandlerConfiguration();
-            config.clazz = OServerSideScriptInterpreter.class.getName();
-            config.parameters = new OServerParameterConfiguration[]{
-                new OServerParameterConfiguration("enabled", "true"),
-                new OServerParameterConfiguration("allowedLanguages", "SQL")
-            };
-            return config;
         }
 
     }

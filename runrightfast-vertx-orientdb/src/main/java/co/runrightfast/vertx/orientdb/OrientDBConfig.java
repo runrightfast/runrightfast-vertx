@@ -17,11 +17,15 @@ package co.runrightfast.vertx.orientdb;
 
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
+import co.runrightfast.vertx.orientdb.impl.embedded.NetworkSSLConfig;
 import co.runrightfast.vertx.orientdb.impl.embedded.OGraphServerHandlerConfig;
 import co.runrightfast.vertx.orientdb.impl.embedded.OHazelcastPluginConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.OServerNetworkConfigurationSupplier;
+import co.runrightfast.vertx.orientdb.impl.embedded.OServerSideScriptInterpreterConfig;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.typesafe.config.Config;
+import static java.lang.Boolean.FALSE;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -56,15 +60,27 @@ public final class OrientDBConfig {
     @Getter
     private final List<Supplier<OServerHandlerConfiguration>> handlers;
 
+    @Getter
+    private final OServerNetworkConfigurationSupplier networkConfig;
+
     public OrientDBConfig(@NonNull final Config config) {
         this.homeDirectory = Paths.get(ConfigUtils.getString(config, "server", "home", "dir").orElse("/orientdb"));
         this.nodeName = ConfigUtils.getString(config, "server", "nodeName").orElseGet(this::defaultNodeName);
         ConfigUtils.getConfig(config, "client", "ssl").ifPresent(OrientDBClientConfig::loadClientSSLConfig);
         handlers = ImmutableList.of(
                 oGraphServerHandlerConfig(config),
-                oHazelcastPluginConfig(config)
+                oHazelcastPluginConfig(config),
+                oServerSideScriptInterpreterConfig(config)
         );
 
+        this.networkConfig = oServerNetworkConfigurationSupplier(config);
+    }
+
+    private OServerNetworkConfigurationSupplier oServerNetworkConfigurationSupplier(final Config config) {
+        if (ConfigUtils.getBoolean(config, "server", "network-config", "ssl", "enabled").orElse(FALSE)) {
+            return new OServerNetworkConfigurationSupplier(new NetworkSSLConfig(config.getConfig(ConfigUtils.configPath("server", "network-config", "ssl"))));
+        }
+        return new OServerNetworkConfigurationSupplier(ConfigUtils.getInt(config, "server", "network-config", "port").orElse(OServerNetworkConfigurationSupplier.DEFAULT_PORT));
     }
 
     private OGraphServerHandlerConfig oGraphServerHandlerConfig(final Config config) {
@@ -83,6 +99,17 @@ public final class OrientDBConfig {
                     return new OHazelcastPluginConfig(this.nodeName, Paths.get(pluginConfig.getString("distributedDBConfigFilePath")));
                 })
                 .orElseGet(() -> new OHazelcastPluginConfig());
+    }
+
+    private OServerSideScriptInterpreterConfig oServerSideScriptInterpreterConfig(final Config config) {
+        return ConfigUtils.getConfig(config, "server", "handlers", "OServerSideScriptInterpreterConfig")
+                .map(pluginConfig -> {
+                    return new OServerSideScriptInterpreterConfig(
+                            pluginConfig.getBoolean("enabled"),
+                            pluginConfig.getStringList("allowedLanguages")
+                    );
+                })
+                .orElseGet(() -> new OServerSideScriptInterpreterConfig());
     }
 
     public String defaultNodeName() {
