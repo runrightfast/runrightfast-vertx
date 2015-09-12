@@ -24,6 +24,8 @@ import co.runrightfast.vertx.orientdb.impl.embedded.OServerNetworkConfigurationS
 import co.runrightfast.vertx.orientdb.impl.embedded.OServerSideScriptInterpreterConfig;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.handler.OJMXPlugin;
 import com.typesafe.config.Config;
 import static java.lang.Boolean.FALSE;
 import java.lang.annotation.Documented;
@@ -70,10 +72,24 @@ public final class OrientDBConfig {
         handlers = ImmutableList.of(
                 oGraphServerHandlerConfig(config),
                 oHazelcastPluginConfig(config),
-                oServerSideScriptInterpreterConfig(config)
+                oServerSideScriptInterpreterConfig(config),
+                oJMXPlugin(config)
         );
 
         this.networkConfig = oServerNetworkConfigurationSupplier(config);
+    }
+
+    private Supplier<OServerHandlerConfiguration> oJMXPlugin(final Config config) {
+        return () -> {
+            final OServerHandlerConfiguration handlerConfig = new OServerHandlerConfiguration();
+            handlerConfig.clazz = OJMXPlugin.class.getName();
+            final String enabled = ConfigUtils.getBoolean(config, "server", "handlers", "OJMXPluginConfig", "enabled").orElse(FALSE).toString();
+            handlerConfig.parameters = new OServerParameterConfiguration[]{
+                new OServerParameterConfiguration("enabled", enabled),
+                new OServerParameterConfiguration("profilerManaged", enabled)
+            };
+            return handlerConfig;
+        };
     }
 
     private OServerNetworkConfigurationSupplier oServerNetworkConfigurationSupplier(final Config config) {
