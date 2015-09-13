@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb.impl.embedded;
 
+import co.runrightfast.vertx.orientdb.config.OGraphServerHandlerConfig;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;

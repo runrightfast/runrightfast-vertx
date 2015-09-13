@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb;
+package co.runrightfast.vertx.orientdb.utils;
 
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import com.typesafe.config.Config;
@@ -26,7 +26,10 @@ import lombok.extern.java.Log;
  * @author alfio
  */
 @Log
-public class OrientDBClientConfig {
+public final class OrientDBClientUtils {
+
+    private OrientDBClientUtils() {
+    }
 
     /**
      * Sets JVM system properties required by OrientDB to configure SSL for remote client connections.
@@ -52,7 +55,7 @@ public class OrientDBClientConfig {
      */
     public static void loadClientSSLConfig(@NonNull final Config config) {
         final boolean enabled = ConfigUtils.getBoolean(config, "enabled").orElse(Boolean.FALSE);
-        log.logp(Level.INFO, OrientDBClientConfig.class.getName(), "loadClientSSLConfig", "client.ssl.enabled = {0}", enabled);
+        log.logp(Level.INFO, OrientDBClientUtils.class.getName(), "loadClientSSLConfig", "client.ssl.enabled = {0}", enabled);
         if (enabled) {
             System.setProperty("client.ssl.enabled", "true");
             System.setProperty("client.ssl.keyStore", config.getString("keyStore"));

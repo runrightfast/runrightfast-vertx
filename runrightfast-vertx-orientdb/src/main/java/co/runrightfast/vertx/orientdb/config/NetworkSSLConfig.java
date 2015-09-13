@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb.impl.embedded;
+package co.runrightfast.vertx.orientdb.config;
 
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;

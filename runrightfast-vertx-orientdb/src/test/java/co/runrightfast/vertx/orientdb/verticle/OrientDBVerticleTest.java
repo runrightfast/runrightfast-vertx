@@ -44,11 +44,11 @@ import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDep
 import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBService;
+import co.runrightfast.vertx.orientdb.config.OGraphServerHandlerConfig;
+import co.runrightfast.vertx.orientdb.config.OHazelcastPluginConfig;
+import co.runrightfast.vertx.orientdb.config.OServerSideScriptInterpreterConfig;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
-import co.runrightfast.vertx.orientdb.impl.embedded.OGraphServerHandlerConfig;
-import co.runrightfast.vertx.orientdb.impl.embedded.OHazelcastPluginConfig;
-import co.runrightfast.vertx.orientdb.impl.embedded.OServerSideScriptInterpreterConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleDeploymentModule;
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
@@ -108,16 +108,37 @@ public class OrientDBVerticleTest {
 
     private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
 
-    private static final ProtobufMessageCodec<GetVerticleDeployments.Response> getVerticleDeploymentsResponseCodec = new ProtobufMessageCodec(
-            GetVerticleDeployments.Response.getDefaultInstance()
-    );
-
-    private static File orientdbHome;
+    private static final File orientdbHome = new File("build/temp/OrientDBVerticleTest/orientdb");
 
     static {
         System.setProperty("config.resource", String.format("%s.conf", CLASS_NAME));
         //System.setProperty("runrightfast.orientdb.client.ssl.enabled", "false");
         ConfigFactory.invalidateCaches();
+
+        orientdbHome.mkdirs();
+        try {
+            FileUtils.cleanDirectory(orientdbHome);
+            FileUtils.deleteDirectory(orientdbHome);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+        log.logp(INFO, CLASS_NAME, "setUpClass", String.format("orientdbHome=%s .exists=%s", orientdbHome, orientdbHome.exists()));
+
+        final File configDirSrc = new File("src/test/resources/orientdb/config");
+        final File configDirTarget = new File(orientdbHome, "config");
+        try {
+            FileUtils.copyFileToDirectory(new File(configDirSrc, "default-distributed-db-config.json"), configDirTarget);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        final File configCertDirSrc = new File("src/test/resources/orientdb/config/cert");
+        final File configCertDirTarget = new File(orientdbHome, "config/cert");
+        try {
+            FileUtils.copyDirectory(configCertDirSrc, configCertDirTarget);
+        } catch (final IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Module
@@ -148,31 +169,6 @@ public class OrientDBVerticleTest {
         @Provides
         @Singleton
         public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig(final OrientDBConfig config) {
-            orientdbHome = config.getHomeDirectory().toFile();
-            orientdbHome.mkdirs();
-            try {
-                FileUtils.cleanDirectory(orientdbHome);
-                FileUtils.deleteDirectory(orientdbHome);
-            } catch (final IOException e) {
-                throw new RuntimeException(e);
-            }
-            log.logp(INFO, CLASS_NAME, "setUpClass", String.format("orientdbHome.exists() = %s", orientdbHome.exists()));
-
-            final File configDirSrc = new File("src/test/resources/orientdb/config");
-            final File configDirTarget = new File(orientdbHome, "config");
-            try {
-                FileUtils.copyFileToDirectory(new File(configDirSrc, "default-distributed-db-config.json"), configDirTarget);
-            } catch (final IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            final File configCertDirSrc = new File("src/test/resources/orientdb/config/cert");
-            final File configCertDirTarget = new File(orientdbHome, "config/cert");
-            try {
-                FileUtils.copyDirectory(configCertDirSrc, configCertDirTarget);
-            } catch (final IOException ex) {
-                throw new RuntimeException(ex);
-            }
 
             final ApplicationId appId = ApplicationId.builder().group("co.runrightfast").name("runrightfast-vertx-orientdb").version("1.0.0").build();
             final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);

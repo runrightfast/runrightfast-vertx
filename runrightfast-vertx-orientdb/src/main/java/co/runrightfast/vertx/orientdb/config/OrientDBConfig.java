@@ -15,15 +15,16 @@
  */
 package co.runrightfast.vertx.orientdb;
 
+import co.runrightfast.vertx.orientdb.utils.OrientDBClientUtils;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
-import co.runrightfast.vertx.orientdb.impl.embedded.NetworkSSLConfig;
-import co.runrightfast.vertx.orientdb.impl.embedded.OAutomaticBackupConfig;
-import co.runrightfast.vertx.orientdb.impl.embedded.OAutomaticBackupConfig.Delay;
-import co.runrightfast.vertx.orientdb.impl.embedded.OGraphServerHandlerConfig;
-import co.runrightfast.vertx.orientdb.impl.embedded.OHazelcastPluginConfig;
-import co.runrightfast.vertx.orientdb.impl.embedded.OServerNetworkConfigurationSupplier;
-import co.runrightfast.vertx.orientdb.impl.embedded.OServerSideScriptInterpreterConfig;
+import co.runrightfast.vertx.orientdb.config.NetworkSSLConfig;
+import co.runrightfast.vertx.orientdb.config.OAutomaticBackupConfig;
+import co.runrightfast.vertx.orientdb.config.OAutomaticBackupConfig.Delay;
+import co.runrightfast.vertx.orientdb.config.OGraphServerHandlerConfig;
+import co.runrightfast.vertx.orientdb.config.OHazelcastPluginConfig;
+import co.runrightfast.vertx.orientdb.config.OServerNetworkConfigurationSupplier;
+import co.runrightfast.vertx.orientdb.config.OServerSideScriptInterpreterConfig;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -72,7 +73,7 @@ public final class OrientDBConfig {
     public OrientDBConfig(@NonNull final Config config) {
         this.homeDirectory = Paths.get(ConfigUtils.getString(config, "server", "home", "dir").orElse("/orientdb"));
         this.nodeName = ConfigUtils.getString(config, "server", "nodeName").orElseGet(this::defaultNodeName);
-        ConfigUtils.getConfig(config, "client", "ssl").ifPresent(OrientDBClientConfig::loadClientSSLConfig);
+        ConfigUtils.getConfig(config, "client", "ssl").ifPresent(OrientDBClientUtils::loadClientSSLConfig);
         handlers = ImmutableList.of(
                 oGraphServerHandlerConfig(config),
                 oHazelcastPluginConfig(config),
