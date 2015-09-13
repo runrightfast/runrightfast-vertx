@@ -27,6 +27,7 @@ import java.util.Optional;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.extern.java.Log;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -36,6 +37,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
  */
 @Builder
 @Log
+@ToString(exclude = {"serverKeyStorePassword", "serverTrustStorePassword"})
 public class NetworkSSLConfig {
 
     public static final int DEFAULT_SSL_PORT = 2434;

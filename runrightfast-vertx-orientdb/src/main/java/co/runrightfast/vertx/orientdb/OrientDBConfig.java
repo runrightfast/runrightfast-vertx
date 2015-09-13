@@ -18,6 +18,8 @@ package co.runrightfast.vertx.orientdb;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.orientdb.impl.embedded.NetworkSSLConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.OAutomaticBackupConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.OAutomaticBackupConfig.Delay;
 import co.runrightfast.vertx.orientdb.impl.embedded.OGraphServerHandlerConfig;
 import co.runrightfast.vertx.orientdb.impl.embedded.OHazelcastPluginConfig;
 import co.runrightfast.vertx.orientdb.impl.embedded.OServerNetworkConfigurationSupplier;
@@ -36,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.Supplier;
+import static java.util.logging.Level.INFO;
 import javax.inject.Qualifier;
 import lombok.Getter;
 import lombok.NonNull;
@@ -75,10 +78,28 @@ public final class OrientDBConfig {
                 oHazelcastPluginConfig(config),
                 oServerSideScriptInterpreterConfig(config),
                 oJMXPlugin(config),
-                oLiveQueryPlugin(config)
+                oLiveQueryPlugin(config),
+                oAutomaticBackupConfig(config)
         );
 
         this.networkConfig = oServerNetworkConfigurationSupplier(config);
+    }
+
+    private Supplier<OServerHandlerConfiguration> oAutomaticBackupConfig(final Config config) {
+        final OAutomaticBackupConfig backupConfig = ConfigUtils.getConfig(config, "server", "handlers", "OAutomaticBackupConfig").map(pluginConfig -> {
+            return OAutomaticBackupConfig.builder()
+                    .enabled(pluginConfig.getBoolean("enabled"))
+                    .delay(new Delay(pluginConfig.getString("delay")))
+                    .firstTime(pluginConfig.getString("firstTime"))
+                    .backupDir(Paths.get(pluginConfig.getString("backup")))
+                    .compressionLevel(pluginConfig.getInt("compressionLevel"))
+                    .bufferSizeMB(pluginConfig.getInt("bufferSizeMB"))
+                    .databaseIncludes(pluginConfig.getStringList("databaseIncludes"))
+                    .databaseExcludes(pluginConfig.getStringList("databaseExcludes"))
+                    .build();
+        }).orElseGet(OAutomaticBackupConfig::disabledOAutomaticBackupConfig);
+        log.logp(INFO, getClass().getName(), "oAutomaticBackupConfig", backupConfig.toString());
+        return backupConfig;
     }
 
     private Supplier<OServerHandlerConfiguration> oLiveQueryPlugin(final Config config) {
@@ -86,8 +107,10 @@ public final class OrientDBConfig {
             final OServerHandlerConfiguration handlerConfig = new OServerHandlerConfiguration();
             handlerConfig.clazz = OLiveQueryPlugin.class.getName();
             final String enabled = ConfigUtils.getBoolean(config, "server", "handlers", "OLiveQueryPluginConfig", "enabled").orElse(FALSE).toString();
+            log.logp(INFO, getClass().getName(), "oLiveQueryPlugin", "enabled = {}", enabled);
             handlerConfig.parameters = new OServerParameterConfiguration[]{
-                new OServerParameterConfiguration("enabled", enabled),};
+                new OServerParameterConfiguration("enabled", enabled)
+            };
             return handlerConfig;
         };
     }
@@ -97,6 +120,7 @@ public final class OrientDBConfig {
             final OServerHandlerConfiguration handlerConfig = new OServerHandlerConfiguration();
             handlerConfig.clazz = OJMXPlugin.class.getName();
             final String enabled = ConfigUtils.getBoolean(config, "server", "handlers", "OJMXPluginConfig", "enabled").orElse(FALSE).toString();
+            log.logp(INFO, getClass().getName(), "oJMXPlugin", "enabled = {}", enabled);
             handlerConfig.parameters = new OServerParameterConfiguration[]{
                 new OServerParameterConfiguration("enabled", enabled),
                 new OServerParameterConfiguration("profilerManaged", enabled)
@@ -109,17 +133,21 @@ public final class OrientDBConfig {
         if (ConfigUtils.getBoolean(config, "server", "network-config", "ssl", "enabled").orElse(FALSE)) {
             return new OServerNetworkConfigurationSupplier(new NetworkSSLConfig(config.getConfig(ConfigUtils.configPath("server", "network-config", "ssl"))));
         }
-        return new OServerNetworkConfigurationSupplier(ConfigUtils.getInt(config, "server", "network-config", "port").orElse(OServerNetworkConfigurationSupplier.DEFAULT_PORT));
+        final OServerNetworkConfigurationSupplier networkConfig = new OServerNetworkConfigurationSupplier(ConfigUtils.getInt(config, "server", "network-config", "port").orElse(OServerNetworkConfigurationSupplier.DEFAULT_PORT));
+        log.logp(INFO, getClass().getName(), "oServerNetworkConfigurationSupplier", networkConfig.toString());
+        return networkConfig;
     }
 
     private OGraphServerHandlerConfig oGraphServerHandlerConfig(final Config config) {
-        return ConfigUtils.getConfig(config, "server", "handlers", "OGraphServerHandlerConfig")
+        final OGraphServerHandlerConfig handlerConfig = ConfigUtils.getConfig(config, "server", "handlers", "OGraphServerHandlerConfig")
                 .map(OGraphServerHandlerConfig::new)
                 .orElseGet(() -> new OGraphServerHandlerConfig());
+        log.logp(INFO, getClass().getName(), "oGraphServerHandlerConfig", handlerConfig.toString());
+        return handlerConfig;
     }
 
     private OHazelcastPluginConfig oHazelcastPluginConfig(final Config config) {
-        return ConfigUtils.getConfig(config, "server", "handlers", "OHazelcastPluginConfig")
+        final OHazelcastPluginConfig handlerConfig = ConfigUtils.getConfig(config, "server", "handlers", "OHazelcastPluginConfig")
                 .map(pluginConfig -> {
                     final boolean enabled = pluginConfig.getBoolean("enabled");
                     if (!enabled) {
@@ -128,10 +156,12 @@ public final class OrientDBConfig {
                     return new OHazelcastPluginConfig(this.nodeName, Paths.get(pluginConfig.getString("distributedDBConfigFilePath")));
                 })
                 .orElseGet(() -> new OHazelcastPluginConfig());
+        log.logp(INFO, getClass().getName(), "oGraphServerHandlerConfig", handlerConfig.toString());
+        return handlerConfig;
     }
 
     private OServerSideScriptInterpreterConfig oServerSideScriptInterpreterConfig(final Config config) {
-        return ConfigUtils.getConfig(config, "server", "handlers", "OServerSideScriptInterpreterConfig")
+        final OServerSideScriptInterpreterConfig handlerConfig = ConfigUtils.getConfig(config, "server", "handlers", "OServerSideScriptInterpreterConfig")
                 .map(pluginConfig -> {
                     return new OServerSideScriptInterpreterConfig(
                             pluginConfig.getBoolean("enabled"),
@@ -139,6 +169,8 @@ public final class OrientDBConfig {
                     );
                 })
                 .orElseGet(() -> new OServerSideScriptInterpreterConfig());
+        log.logp(INFO, getClass().getName(), "oGraphServerHandlerConfig", handlerConfig.toString());
+        return handlerConfig;
     }
 
     public String defaultNodeName() {

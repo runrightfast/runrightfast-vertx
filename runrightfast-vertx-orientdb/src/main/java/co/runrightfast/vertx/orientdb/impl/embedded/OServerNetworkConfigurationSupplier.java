@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.extern.java.Log;
 
 /**
@@ -42,6 +43,7 @@ import lombok.extern.java.Log;
  * @author alfio
  */
 @Log
+@ToString
 public class OServerNetworkConfigurationSupplier implements Supplier<OServerNetworkConfiguration> {
 
     public static final int DEFAULT_PORT = 2424;
