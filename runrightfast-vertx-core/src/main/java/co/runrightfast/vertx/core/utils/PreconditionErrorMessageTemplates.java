@@ -23,10 +23,12 @@ public interface PreconditionErrorMessageTemplates {
 
     // string validation
     static final String MUST_NOT_BE_BLANK = "'%s' must not be blank";
+    static final String PATTERN_DOES_NOT_MATCH = "'%s': pattern does not match: %s";
 
     // numeric validation
     static final String MUST_BE_GREATER_THAN_ZERO = "'%s' must be greater than 0";
     static final String MUST_BE_GREATER_THAN = "'%s' must be greater than %d";
+    static final String MUST_BE_WITHIN_RANGE = "'%s' must be within the range (%d-%d)";
 
     // collection validation
     static final String MUST_NOT_BE_EMPTY = "'%s' must not be empty";
