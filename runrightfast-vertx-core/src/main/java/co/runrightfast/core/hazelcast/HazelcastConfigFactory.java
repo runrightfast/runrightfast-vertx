@@ -13,9 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.hazelcast;
+package co.runrightfast.core.hazelcast;
 
-import co.runrightfast.vertx.core.hazelcast.impl.TypesafeHazelcastConfig;
+import co.runrightfast.core.hazelcast.impl.TypesafeHazelcastConfig;
 import com.hazelcast.config.SerializerConfig;
 import com.typesafe.config.Config;
 import java.util.Set;

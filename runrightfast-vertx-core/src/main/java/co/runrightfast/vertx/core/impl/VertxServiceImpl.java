@@ -29,7 +29,7 @@ import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.LOG;
 import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.core.eventbus.VoidMessageCodec;
-import static co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
+import static co.runrightfast.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;

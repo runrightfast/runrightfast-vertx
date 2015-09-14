@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.hazelcast.impl;
+package co.runrightfast.core.hazelcast.impl;
 
 import co.runrightfast.core.ConfigurationException.ConfigurationExceptionSupplier;
 import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;

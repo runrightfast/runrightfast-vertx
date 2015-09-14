@@ -18,7 +18,7 @@ package co.runrightfast.vertx.orientdb.plugins;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
-import co.runrightfast.vertx.core.hazelcast.HazelcastConfigFactory;
+import co.runrightfast.core.hazelcast.HazelcastConfigFactory;
 import co.runrightfast.vertx.core.utils.JsonUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;

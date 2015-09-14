@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.hazelcast.impl;
 
+import co.runrightfast.core.hazelcast.impl.TypesafeHazelcastConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.typesafe.config.ConfigFactory;

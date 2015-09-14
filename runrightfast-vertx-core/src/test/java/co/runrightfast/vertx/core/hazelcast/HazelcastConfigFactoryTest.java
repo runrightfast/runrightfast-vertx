@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.hazelcast;
 
+import co.runrightfast.core.hazelcast.HazelcastConfigFactory;
 import co.runrightfast.vertx.core.hazelcast.serializers.JsonObjectSerializer;
 import com.google.common.collect.ImmutableSet;
 import com.hazelcast.config.SerializerConfig;

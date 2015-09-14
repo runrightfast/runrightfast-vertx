@@ -16,7 +16,7 @@
 package co.runrightfast.vertx.orientdb.plugins;
 
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
-import static co.runrightfast.vertx.core.hazelcast.HazelcastInstanceWithNoopShutdown.hazelcastInstanceWithNoopShutdown;
+import static co.runrightfast.core.hazelcast.HazelcastInstanceWithNoopShutdown.hazelcastInstanceWithNoopShutdown;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import java.util.function.Supplier;

@@ -593,17 +593,16 @@ public class RunRightFastVertxApplicationTest {
         );
 
         final String replyTo = UUID.randomUUID().toString();
-        messageProducer.publish(
-                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(IllegalArgumentException.class.getSimpleName()).build(),
-                new DeliveryOptions().setHeaders(MultiMap.caseInsensitiveMultiMap().set(MessageHeader.REPLY_TO_ADDRESS.header, replyTo))
-        );
-
         final CompletableFuture<Message> future = new CompletableFuture();
         vertx.eventBus().consumer(replyTo, msg -> {
             final co.runrightfast.vertx.core.messages.Void response = (co.runrightfast.vertx.core.messages.Void) msg.body();
             log.info(JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(response)).encodePrettily());
             future.complete(msg);
         });
+        messageProducer.publish(
+                RunRightFastVertxApplicationTestMessage.Request.newBuilder().setMessage(IllegalArgumentException.class.getSimpleName()).build(),
+                new DeliveryOptions().setHeaders(MultiMap.caseInsensitiveMultiMap().set(MessageHeader.REPLY_TO_ADDRESS.header, replyTo))
+        );
 
         final Message result = future.get(2000L, TimeUnit.MILLISECONDS);
         Optional<Failure> failure = MessageHeader.getFailure(result);
