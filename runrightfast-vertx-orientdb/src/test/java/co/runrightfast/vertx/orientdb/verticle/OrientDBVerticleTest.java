@@ -41,12 +41,10 @@ import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticleHealthChecks;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
-import co.runrightfast.vertx.orientdb.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBService;
-import co.runrightfast.vertx.orientdb.config.OGraphServerHandlerConfig;
 import co.runrightfast.vertx.orientdb.config.OHazelcastPluginConfig;
-import co.runrightfast.vertx.orientdb.config.OServerSideScriptInterpreterConfig;
+import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
@@ -59,7 +57,6 @@ import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import dagger.Component;
@@ -175,11 +172,9 @@ public class OrientDBVerticleTest {
 
             return EmbeddedOrientDBServiceConfig.builder()
                     .orientDBRootDir(orientdbHome.toPath())
-                    .handler(new OGraphServerHandlerConfig(false))
-                    .handler(() -> this.oHazelcastPlugin(orientdbHome))
-                    .handler(new OServerSideScriptInterpreterConfig())
+                    .handlers(config.getHandlers())
                     .networkConfig(config.getNetworkConfig().get())
-                    .user(new OServerUserConfiguration("root", "root", "*"))
+                    .users(config.getServerUsers())
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                     .databasePoolConfig(new OrientDBPoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn())))

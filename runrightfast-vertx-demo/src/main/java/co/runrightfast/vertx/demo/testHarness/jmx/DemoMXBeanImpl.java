@@ -34,7 +34,7 @@ import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
-import co.runrightfast.vertx.orientdb.OrientDBConfig;
+import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;

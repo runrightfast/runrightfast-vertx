@@ -13,21 +13,20 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb;
+package co.runrightfast.vertx.orientdb.config;
 
-import co.runrightfast.vertx.orientdb.utils.OrientDBClientUtils;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
-import co.runrightfast.vertx.orientdb.config.NetworkSSLConfig;
-import co.runrightfast.vertx.orientdb.config.OAutomaticBackupConfig;
+import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_EMPTY;
 import co.runrightfast.vertx.orientdb.config.OAutomaticBackupConfig.Delay;
-import co.runrightfast.vertx.orientdb.config.OGraphServerHandlerConfig;
-import co.runrightfast.vertx.orientdb.config.OHazelcastPluginConfig;
-import co.runrightfast.vertx.orientdb.config.OServerNetworkConfigurationSupplier;
-import co.runrightfast.vertx.orientdb.config.OServerSideScriptInterpreterConfig;
+import static co.runrightfast.vertx.orientdb.config.ServerResource.serverUserConfiguration;
+import co.runrightfast.vertx.orientdb.utils.OrientDBClientUtils;
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.handler.OJMXPlugin;
 import com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin;
 import com.typesafe.config.Config;
@@ -37,13 +36,16 @@ import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 import static java.util.logging.Level.INFO;
 import javax.inject.Qualifier;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.java.Log;
+import org.apache.commons.collections4.CollectionUtils;
 
 /**
  *
@@ -70,6 +72,9 @@ public final class OrientDBConfig {
     @Getter
     private final OServerNetworkConfigurationSupplier networkConfig;
 
+    @Getter
+    private final Set<OServerUserConfiguration> serverUsers;
+
     public OrientDBConfig(@NonNull final Config config) {
         this.homeDirectory = Paths.get(ConfigUtils.getString(config, "server", "home", "dir").orElse("/orientdb"));
         this.nodeName = ConfigUtils.getString(config, "server", "nodeName").orElseGet(this::defaultNodeName);
@@ -84,6 +89,33 @@ public final class OrientDBConfig {
         );
 
         this.networkConfig = oServerNetworkConfigurationSupplier(config);
+        this.serverUsers = serverUsers(config);
+    }
+
+    private Set<OServerUserConfiguration> serverUsers(final Config config) {
+        final ImmutableSet.Builder<OServerUserConfiguration> serverUsersBuilder = ImmutableSet.builder();
+        config.getConfigList(ConfigUtils.configPath("server", "server-users")).stream().map(serverUserConfig -> {
+            return serverUserConfiguration(
+                    serverUserConfig.getString("user"),
+                    serverUserConfig.getString("password"),
+                    serverUserConfig.getStringList("resources").stream().toArray(String[]::new)
+            );
+        }).forEach(serverUsersBuilder::add);
+        return serverUsersBuilder.build();
+    }
+
+    private EnumSet<ServerResource> serverResources(final List<String> resources) {
+        checkArgument(CollectionUtils.isNotEmpty(resources), MUST_NOT_BE_EMPTY, "resources");
+        if (resources.size() == 1) {
+            return EnumSet.of(ServerResource.valueOf(ServerResource.class, resources.get(0)));
+        }
+
+        final ServerResource first = ServerResource.valueOf(ServerResource.class, resources.get(0));
+        final ServerResource[] rest = resources.stream()
+                .skip(1)
+                .map(resource -> ServerResource.valueOf(ServerResource.class, resource))
+                .toArray(ServerResource[]::new);
+        return EnumSet.of(first, rest);
     }
 
     private Supplier<OServerHandlerConfiguration> oAutomaticBackupConfig(final Config config) {
