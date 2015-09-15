@@ -42,6 +42,13 @@ public enum ServerResource {
         this.resource = resource;
     }
 
+    /**
+     *
+     * @param user user name
+     * @param password user password
+     * @param resources at least 1 is required
+     * @return
+     */
     public static OServerUserConfiguration serverUserConfiguration(final String user, final String password, final ServerResource... resources) {
         checkArgument(isNotBlank(user), MUST_NOT_BE_BLANK, "user");
         checkArgument(isNotBlank(password), MUST_NOT_BE_BLANK, "password");
@@ -49,6 +56,13 @@ public enum ServerResource {
         return new OServerUserConfiguration(user, password, Arrays.stream(resources).map(resource -> resource.resource).collect(Collectors.joining(",")));
     }
 
+    /**
+     *
+     * @param user user name
+     * @param password user password
+     * @param resources at least 1 is required. The resource names must match the enum names.
+     * @return
+     */
     public static OServerUserConfiguration serverUserConfiguration(final String user, final String password, final String... resources) {
         return serverUserConfiguration(
                 user,

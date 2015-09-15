@@ -170,11 +170,7 @@ public class OrientDBVerticleTest {
             final ApplicationId appId = ApplicationId.builder().group("co.runrightfast").name("runrightfast-vertx-orientdb").version("1.0.0").build();
             final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);
 
-            return EmbeddedOrientDBServiceConfig.builder()
-                    .orientDBRootDir(orientdbHome.toPath())
-                    .handlers(config.getHandlers())
-                    .networkConfig(config.getNetworkConfig().get())
-                    .users(config.getServerUsers())
+            return EmbeddedOrientDBServiceConfig.newBuilder(config)
                     .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                     .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                     .databasePoolConfig(new OrientDBPoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn())))

@@ -22,6 +22,7 @@ import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_WRITEABLE;
 import co.runrightfast.vertx.orientdb.OrientDBConstants.GlobalConfigKey;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
+import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -85,6 +86,14 @@ public final class EmbeddedOrientDBServiceConfig {
     @Getter
     @Singular
     private final Map<GlobalConfigKey, String> globalConfigProperties;
+
+    public static EmbeddedOrientDBServiceConfigBuilder newBuilder(@NonNull final OrientDBConfig config) {
+        return EmbeddedOrientDBServiceConfig.builder()
+                .orientDBRootDir(config.getHomeDirectory())
+                .handlers(config.getHandlers())
+                .networkConfig(config.getNetworkConfig().get())
+                .users(config.getServerUsers());
+    }
 
     public void validate() {
         checkArgument(CollectionUtils.isNotEmpty(databasePoolConfigs), MUST_NOT_BE_EMPTY, "databasePoolConfigs");
