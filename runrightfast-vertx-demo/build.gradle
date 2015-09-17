@@ -56,6 +56,9 @@ applicationDefaultJvmArgs = [
 //    "-Dapp.log.dir=${buildDir}/app/logs",   
     "-Drunrightfast.app.version=${version}",
     
+    // To disable it define the setting orientdb.installCustomFormatter to false
+    "-Dorientdb.installCustomFormatter=false"
+    
 //    "-Dconfig.resource=application_local.conf"
     
 //    "-Dvertx.cluster.public.host=192.168.0.100",
