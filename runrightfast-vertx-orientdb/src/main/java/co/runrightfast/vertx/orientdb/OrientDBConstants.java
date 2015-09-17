@@ -34,7 +34,11 @@ public interface OrientDBConstants {
          * NOTE: If an attacker have access to the JVM memory dump, he could access to this map containing all the passwords. If you want to protect against
          * this attack, disable the in memory password cache.
          */
-        SECURITY_USER_PASSWORD_SALT_CACHE_SIZE("security.userPasswordSaltCacheSize");
+        SECURITY_USER_PASSWORD_SALT_CACHE_SIZE("security.userPasswordSaltCacheSize"),
+        /**
+         * LogFormatter is installed automatically by Server. To disable it define the setting <b>orientdb.installCustomFormatter</b> to false.
+         */
+        LOGGING_INSTALL_CUSTOM_FORMATTER("orientdb.installCustomFormatter");
 
         public final String key;
 

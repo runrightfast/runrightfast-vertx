@@ -121,4 +121,8 @@
             # connect via JMX - assuming weave ip address is 10.128.0.2
             jconsole 10.128.0.2:7410
 
-
+### 2015-09-17 - Running the runrightfast-vertx-demo app outside of Docker
+- In order for the app to startup the ${ORIENTDB_HOME}/config/default-distributed-db-config.json file must exist - this is required by OrientDBConfig
+- When running the app via NetBeans, simply run the LocalDemoAppSetup unit test
+  - the unit test will be run by the build automatcally, so you don't need to run it manually
+  - if you change the config file, do a clean build because the file will not be replaced if it already exists.
