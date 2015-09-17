@@ -33,7 +33,6 @@ import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import static co.runrightfast.vertx.core.utils.ConcurrencyUtils.sleep;
 import co.runrightfast.vertx.core.utils.JsonUtils;
-import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.utils.VertxUtils;
@@ -43,7 +42,6 @@ import co.runrightfast.vertx.core.verticles.verticleManager.messages.RunVerticle
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.VerticleDeployment;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.OrientDBService;
-import co.runrightfast.vertx.orientdb.config.OHazelcastPluginConfig;
 import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
@@ -55,8 +53,6 @@ import com.codahale.metrics.MetricFilter;
 import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import dagger.Component;
@@ -171,16 +167,10 @@ public class OrientDBVerticleTest {
             final AppEventLogger appEventLogger = new AppEventJDKLogger(appId);
 
             return EmbeddedOrientDBServiceConfig.newBuilder(config)
-                    .property(OGlobalConfiguration.DB_POOL_MIN, "1")
-                    .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                     .databasePoolConfig(new OrientDBPoolConfig(CLASS_NAME, String.format("remote:localhost/%s", CLASS_NAME), "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn())))
                     .databasePoolConfig(new OrientDBPoolConfig(EventLogRepository.DB, String.format("remote:localhost/%s", EventLogRepository.DB), "admin", "admin", 10, EventLogRecord.class))
                     .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                     .build();
-        }
-
-        private OServerHandlerConfiguration oHazelcastPlugin(final File orientdbHome) {
-            return new OHazelcastPluginConfig(HOST, new File(orientdbHome, "config/default-distributed-db-config.json").toPath()).get();
         }
 
     }

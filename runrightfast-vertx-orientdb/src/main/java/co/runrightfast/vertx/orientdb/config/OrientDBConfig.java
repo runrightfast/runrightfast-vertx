@@ -20,8 +20,11 @@ import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.orientdb.config.OAutomaticBackupConfig.Delay;
 import static co.runrightfast.vertx.orientdb.config.ServerResource.serverUserConfiguration;
 import co.runrightfast.vertx.orientdb.utils.OrientDBClientUtils;
+import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -35,6 +38,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 import static java.util.logging.Level.INFO;
@@ -71,6 +75,9 @@ public final class OrientDBConfig {
     @Getter
     private final Set<OServerUserConfiguration> serverUsers;
 
+    @Getter
+    private final Map<OGlobalConfiguration, String> properties;
+
     public OrientDBConfig(@NonNull final Config config) {
         this.homeDirectory = Paths.get(ConfigUtils.getString(config, "server", "home", "dir").orElse("/orientdb"));
         this.nodeName = ConfigUtils.getString(config, "server", "nodeName").orElseGet(this::defaultNodeName);
@@ -86,6 +93,21 @@ public final class OrientDBConfig {
 
         this.networkConfig = oServerNetworkConfigurationSupplier(config);
         this.serverUsers = serverUsers(config);
+        this.properties = properties(config);
+    }
+
+    private Map<OGlobalConfiguration, String> properties(final Config config) {
+        return ConfigUtils.getConfigList(config, "server", "properties").map(configs -> {
+            final ImmutableMap.Builder<OGlobalConfiguration, String> mapBuilder = ImmutableMap.builder();
+            configs.stream().forEach(propConfig -> mapBuilder.put(getOGlobalConfiguration(propConfig.getString("name")), propConfig.getString("value")));
+            return mapBuilder.build();
+        }).orElseGet(() -> ImmutableMap.of());
+    }
+
+    private OGlobalConfiguration getOGlobalConfiguration(final String property) {
+        final OGlobalConfiguration configKey = OGlobalConfiguration.findByKey(property);
+        checkNotNull(configKey, "Property not defined within OGlobalConfiguration : %s", property);
+        return configKey;
     }
 
     private Set<OServerUserConfiguration> serverUsers(final Config config) {
@@ -148,9 +170,9 @@ public final class OrientDBConfig {
         if (ConfigUtils.getBoolean(config, "server", "network-config", "ssl", "enabled").orElse(FALSE)) {
             return new OServerNetworkConfigurationSupplier(new NetworkSSLConfig(config.getConfig(ConfigUtils.configPath("server", "network-config", "ssl"))));
         }
-        final OServerNetworkConfigurationSupplier networkConfig = new OServerNetworkConfigurationSupplier(ConfigUtils.getInt(config, "server", "network-config", "port").orElse(OServerNetworkConfigurationSupplier.DEFAULT_PORT));
-        log.logp(INFO, getClass().getName(), "oServerNetworkConfigurationSupplier", networkConfig.toString());
-        return networkConfig;
+        final OServerNetworkConfigurationSupplier networkConfigSupplier = new OServerNetworkConfigurationSupplier(ConfigUtils.getInt(config, "server", "network-config", "port").orElse(OServerNetworkConfigurationSupplier.DEFAULT_PORT));
+        log.logp(INFO, getClass().getName(), "oServerNetworkConfigurationSupplier", networkConfigSupplier.toString());
+        return networkConfigSupplier;
     }
 
     private OGraphServerHandlerConfig oGraphServerHandlerConfig(final Config config) {

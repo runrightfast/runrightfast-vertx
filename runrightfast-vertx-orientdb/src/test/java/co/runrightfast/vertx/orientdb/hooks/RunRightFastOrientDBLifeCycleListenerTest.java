@@ -19,7 +19,7 @@ import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
-import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
+import static co.runrightfast.vertx.orientdb.OrientDBConstants.DBA_USER;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import com.google.common.collect.ImmutableList;
@@ -53,6 +53,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import test.co.runrightfast.vertx.orientdb.classes.EventLogRecord;
 
 /**
  *
@@ -121,7 +122,7 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
                 .build();
 
         config.users = new OServerUserConfiguration[]{
-            new OServerUserConfiguration("root", "root", "*")
+            new OServerUserConfiguration(DBA_USER, "root", "*")
         };
 
         config.properties = new OServerEntryConfiguration[]{
@@ -174,7 +175,7 @@ public class RunRightFastOrientDBLifeCycleListenerTest {
 
     @Test
     public void testLifeCycleListener() throws Exception {
-        try (final ODatabase db = server.openDatabase("document", getClass().getSimpleName(), "root", "root")
+        try (final ODatabase db = server.openDatabase("document", getClass().getSimpleName(), DBA_USER, "root")
                 .registerHook(new SetCreatedOnAndUpdatedOn())
                 .activateOnCurrentThread()) {
             testSavingEventLogRecord(db, "testLifeCycleListener");

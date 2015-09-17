@@ -20,7 +20,6 @@ import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_A_DIRECTORY;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_READABLE;
 import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_WRITEABLE;
-import co.runrightfast.vertx.orientdb.OrientDBConstants.GlobalConfigKey;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -83,16 +82,13 @@ public final class EmbeddedOrientDBServiceConfig {
     @Singular
     private final Map<OGlobalConfiguration, String> properties;
 
-    @Getter
-    @Singular
-    private final Map<GlobalConfigKey, String> globalConfigProperties;
-
     public static EmbeddedOrientDBServiceConfigBuilder newBuilder(@NonNull final OrientDBConfig config) {
         return EmbeddedOrientDBServiceConfig.builder()
                 .orientDBRootDir(config.getHomeDirectory())
                 .handlers(config.getHandlers())
                 .networkConfig(config.getNetworkConfig().get())
-                .users(config.getServerUsers());
+                .users(config.getServerUsers())
+                .properties(config.getProperties());
     }
 
     public void validate() {

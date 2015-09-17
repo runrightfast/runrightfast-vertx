@@ -21,27 +21,8 @@ package co.runrightfast.vertx.orientdb;
  */
 public interface OrientDBConstants {
 
-    static final String ROOT_USER = "root";
+    static final String DBA_USER = "dba";
 
     static final String NETWORK_BINARY_PROTOCOL = "binary";
-
-    static enum GlobalConfigKey {
-
-        /**
-         * In order to speedup the hashing of password, OrientDB uses a password cache implemented as a LRU with maximum 500 entries. To change this setting,
-         * set the global configuration security.userPasswordSaltCacheSize to the entries to cache. Use 0 to completely disable the cache.
-         *
-         * NOTE: If an attacker have access to the JVM memory dump, he could access to this map containing all the passwords. If you want to protect against
-         * this attack, disable the in memory password cache.
-         */
-        SECURITY_USER_PASSWORD_SALT_CACHE_SIZE("security.userPasswordSaltCacheSize");
-
-        public final String key;
-
-        private GlobalConfigKey(final String key) {
-            this.key = key;
-        }
-
-    }
 
 }

@@ -21,7 +21,6 @@ import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
-import co.runrightfast.vertx.orientdb.OrientDBConstants;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.demo.EventLogRecord;
 import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
@@ -69,7 +68,6 @@ public class OrientDBModule {
         return EmbeddedOrientDBServiceConfig.newBuilder(orientDBConfig)
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .globalConfigProperty(OrientDBConstants.GlobalConfigKey.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE, "0")
                 .databasePoolConfig(new OrientDBPoolConfig(EventLogRepository.DB, dbUrl, "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn()), EventLogRecord.class))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .build();

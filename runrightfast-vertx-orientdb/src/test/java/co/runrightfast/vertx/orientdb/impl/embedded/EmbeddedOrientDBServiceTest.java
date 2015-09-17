@@ -15,16 +15,16 @@
  */
 package co.runrightfast.vertx.orientdb.impl.embedded;
 
-import co.runrightfast.vertx.orientdb.config.OGraphServerHandlerConfig;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
-import co.runrightfast.vertx.orientdb.OrientDBConstants;
+import static co.runrightfast.vertx.orientdb.OrientDBConstants.DBA_USER;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
+import co.runrightfast.vertx.orientdb.config.OGraphServerHandlerConfig;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
@@ -92,10 +92,9 @@ public class EmbeddedOrientDBServiceTest {
                 .handler(EmbeddedOrientDBServiceTest::oHazelcastPlugin)
                 .handler(EmbeddedOrientDBServiceTest::oServerSideScriptInterpreter)
                 .networkConfig(oServerNetworkConfiguration())
-                .user(new OServerUserConfiguration("root", "root", "*"))
+                .user(new OServerUserConfiguration(DBA_USER, "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
-                .globalConfigProperty(OrientDBConstants.GlobalConfigKey.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE, "0")
                 .databasePoolConfig(new OrientDBPoolConfig(CLASS_NAME, "remote:localhost/" + CLASS_NAME, "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn())))
                 .lifecycleListener(() -> new RunRightFastOrientDBLifeCycleListener(appEventLogger))
                 .build();

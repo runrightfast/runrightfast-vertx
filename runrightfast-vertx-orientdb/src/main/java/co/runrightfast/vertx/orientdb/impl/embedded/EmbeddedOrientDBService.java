@@ -20,7 +20,7 @@ import co.runrightfast.vertx.core.utils.JvmProcess;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import static co.runrightfast.vertx.orientdb.OrientDBConstants.NETWORK_BINARY_PROTOCOL;
-import static co.runrightfast.vertx.orientdb.OrientDBConstants.ROOT_USER;
+import static co.runrightfast.vertx.orientdb.OrientDBConstants.DBA_USER;
 import co.runrightfast.vertx.orientdb.OrientDBPoolService;
 import co.runrightfast.vertx.orientdb.OrientDBService;
 import co.runrightfast.vertx.orientdb.impl.OrientDBPoolServiceImpl;
@@ -70,9 +70,6 @@ public final class EmbeddedOrientDBService extends AbstractIdleService implement
         final ImmutableList.Builder<OServerEntryConfiguration> propertiesBuilder = ImmutableList.builder();
         config.getProperties().entrySet().stream()
                 .map(entry -> new OServerEntryConfiguration(entry.getKey().getKey(), entry.getValue()))
-                .forEach(propertiesBuilder::add);
-        config.getGlobalConfigProperties().entrySet().stream()
-                .map(entry -> new OServerEntryConfiguration(entry.getKey().key, entry.getValue()))
                 .forEach(propertiesBuilder::add);
         serverConfig.properties = propertiesBuilder.build().stream().toArray(OServerEntryConfiguration[]::new);
 
@@ -142,7 +139,7 @@ public final class EmbeddedOrientDBService extends AbstractIdleService implement
 
         try {
             final OServerAdmin serverAdmin = new OServerAdmin(String.format("remote:%s", ipAddress));
-            final OServerUserConfiguration userConfig = server.getUser(ROOT_USER);
+            final OServerUserConfiguration userConfig = server.getUser(DBA_USER);
             serverAdmin.connect(userConfig.name, userConfig.password);
             return serverAdmin;
         } catch (final IOException ex) {
