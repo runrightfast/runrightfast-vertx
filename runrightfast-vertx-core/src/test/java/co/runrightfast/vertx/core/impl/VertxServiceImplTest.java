@@ -90,8 +90,8 @@ public class VertxServiceImplTest {
                 .version("1.0.0")
                 .build();
 
-        public TestVerticle(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
-            super(appEventLogger, encryptionService);
+        public TestVerticle(final AppEventLogger appEventLogger) {
+            super(appEventLogger);
         }
 
         @Override
@@ -119,15 +119,15 @@ public class VertxServiceImplTest {
                 .version("1.0.0")
                 .build();
 
-        public TestVerticleParent(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
-            super(appEventLogger, encryptionService);
+        public TestVerticleParent(final AppEventLogger appEventLogger) {
+            super(appEventLogger);
         }
 
         @Override
         protected void startUp() {
             deployVerticles(ImmutableSet.of(
                     new RunRightFastVerticleDeployment(
-                            () -> new TestVerticle(appEventLogger, encryptionService),
+                            () -> new TestVerticle(appEventLogger),
                             TestVerticle.class,
                             new DeploymentOptions())
             ));
@@ -152,12 +152,12 @@ public class VertxServiceImplTest {
 
     private final Set<RunRightFastVerticleDeployment> deployments = ImmutableSet.of(
             new RunRightFastVerticleDeployment(
-                    () -> new TestVerticle(appEventLogger, encryptionService),
+                    () -> new TestVerticle(appEventLogger),
                     TestVerticle.class,
                     new DeploymentOptions()
             ),
             new RunRightFastVerticleDeployment(
-                    () -> new TestVerticleParent(appEventLogger, encryptionService),
+                    () -> new TestVerticleParent(appEventLogger),
                     TestVerticleParent.class,
                     new DeploymentOptions()
             )
@@ -190,7 +190,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_reference_default_options() {
         log.info("test_vertx_default_options");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx")), deployments, appEventLogger, encryptionService);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx")), deployments, appEventLogger);
         ServiceUtils.start(service);
         services.add(service);
         log.info("service.getVertxOptions().getClusterHost() = " + service.getVertxOptions().getClusterHost());
@@ -205,7 +205,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_default_options() {
         log.info("test_vertx_default_options");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-default")), deployments, appEventLogger, encryptionService);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-default")), deployments, appEventLogger);
         ServiceUtils.start(service);
         services.add(service);
         final Vertx vertx = service.getVertx();
@@ -216,7 +216,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_metrics_options() {
         log.info("test_vertx_metrics_options");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-with-metrics")), deployments, appEventLogger, encryptionService);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-with-metrics")), deployments, appEventLogger);
         ServiceUtils.start(service);
         services.add(service);
         final Vertx vertx = service.getVertx();
@@ -244,7 +244,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_custom_options() {
         log.info("test_vertx_custom_options");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-custom-non-clustered")), deployments, appEventLogger, encryptionService);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-custom-non-clustered")), deployments, appEventLogger);
         ServiceUtils.start(service);
         services.add(service);
         final Vertx vertx = service.getVertx();
@@ -273,7 +273,7 @@ public class VertxServiceImplTest {
     @Test
     public void test_vertx_clustered() throws InterruptedException {
         log.info("test_vertx_clustered");
-        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-1")), deployments, appEventLogger, encryptionService);
+        service = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-1")), deployments, appEventLogger);
         ServiceUtils.start(service);
         services.add(service);
         final Vertx vertx = service.getVertx();
@@ -284,7 +284,7 @@ public class VertxServiceImplTest {
         final ClusterManager clusterManager1 = vertxOptions.getClusterManager();
         log.log(INFO, "clusterManager1.getNodeID() = {0}", clusterManager1.getNodeID());
 
-        final VertxService service2 = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-2")), deployments, appEventLogger, encryptionService);
+        final VertxService service2 = new VertxServiceImpl(config.getConfig(ConfigUtils.configPath(CONFIG_NAMESPACE, "vertx-clustered-2")), deployments, appEventLogger);
         ServiceUtils.start(service2);
         services.add(service2);
         final Vertx vertx2 = service.getVertx();

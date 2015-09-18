@@ -16,7 +16,6 @@
 package co.runrightfast.vertx.orientdb.verticle;
 
 import co.runrightfast.core.application.event.AppEventLogger;
-import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.orientdb.OrientDBService;
 import lombok.Getter;
@@ -38,8 +37,8 @@ public abstract class OrientDBRepositoryVerticle extends RunRightFastVerticle {
     @Setter
     protected OrientDBService orientDBService;
 
-    public OrientDBRepositoryVerticle(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
-        super(appEventLogger, encryptionService);
+    public OrientDBRepositoryVerticle(final AppEventLogger appEventLogger) {
+        super(appEventLogger);
     }
 
 }

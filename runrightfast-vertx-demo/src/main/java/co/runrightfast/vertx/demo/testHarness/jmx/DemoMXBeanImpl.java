@@ -16,9 +16,11 @@
 package co.runrightfast.vertx.demo.testHarness.jmx;
 
 import co.runrightfast.core.AppConfig;
+import static co.runrightfast.core.crypto.AESKeySizes.KEY_SIZE_256;
 import co.runrightfast.core.crypto.Decryption;
 import co.runrightfast.core.crypto.Encryption;
 import co.runrightfast.core.crypto.EncryptionService;
+import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusUtils;
 import static co.runrightfast.vertx.core.eventbus.EventBusUtils.deliveryOptions;
@@ -39,6 +41,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.CreateEvent;
 import demo.co.runrightfast.vertx.orientdb.verticle.eventLogRepository.messages.GetEventCount;
@@ -69,6 +72,7 @@ import javax.json.JsonObject;
 import lombok.NonNull;
 import lombok.extern.java.Log;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
+import org.apache.shiro.crypto.AesCipherService;
 
 /**
  *
@@ -82,8 +86,6 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(DemoMXBean.class.getName());
 
     private ProtobufMessageProducer getVerticleDeploymentsMessageSender;
-
-    private final EncryptionService encryptionService;
 
     private final Encryption encryption;
 
@@ -101,12 +103,16 @@ public final class DemoMXBeanImpl implements DemoMXBean {
 
     private final String eventLogRepoDBUrl;
 
-    public DemoMXBeanImpl(@NonNull final Vertx vertx, @NonNull final EncryptionService encryptionService, final AppConfig appConfig) {
+    public DemoMXBeanImpl(@NonNull final Vertx vertx, final AppConfig appConfig) {
         this.vertx = vertx;
-        this.encryptionService = encryptionService;
         initJmxReporter();
 
-        final String KEY = GetEventCount.Request.getDescriptor().getFullName();
+        final AesCipherService cipherService = new AesCipherService();
+        cipherService.setKeySize(KEY_SIZE_256);
+
+        final String KEY = UUID.randomUUID().toString();
+        final EncryptionService encryptionService = new EncryptionServiceImpl(cipherService, ImmutableMap.of(KEY, cipherService.generateNewKey()));
+
         encryption = encryptionService.encryption(KEY);
         decryption = encryptionService.decryption(KEY);
 

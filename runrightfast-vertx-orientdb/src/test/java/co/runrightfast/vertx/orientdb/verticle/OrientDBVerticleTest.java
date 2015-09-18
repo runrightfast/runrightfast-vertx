@@ -46,7 +46,7 @@ import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.hooks.SetCreatedOnAndUpdatedOn;
 import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
-import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleDeploymentModule;
+import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleWithRepositoriesDeploymentModule;
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
 import co.runrightfast.vertx.testSupport.EncryptionServiceWithDefaultCiphers;
 import com.codahale.metrics.MetricFilter;
@@ -139,9 +139,9 @@ public class OrientDBVerticleTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public OrientDBRepositoryVerticleDeployment provideEventLogRepositoryDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
+        public OrientDBRepositoryVerticleDeployment provideEventLogRepositoryDeployment(final AppEventLogger logger) {
             return new OrientDBRepositoryVerticleDeployment(
-                    () -> new EventLogRepository(logger, encryptionService),
+                    () -> new EventLogRepository(logger),
                     EventLogRepository.class,
                     new DeploymentOptions()
             );
@@ -180,7 +180,7 @@ public class OrientDBVerticleTest {
                 RunRightFastApplicationModule.class,
                 VertxServiceModule.class,
                 RunRightFastVerticleDeploymentModule.class,
-                OrientDBVerticleDeploymentModule.class
+                OrientDBVerticleWithRepositoriesDeploymentModule.class
             }
     )
     @Singleton

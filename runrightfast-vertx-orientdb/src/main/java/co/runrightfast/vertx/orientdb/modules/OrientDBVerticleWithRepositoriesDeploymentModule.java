@@ -13,41 +13,42 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.demo.modules;
+package co.runrightfast.vertx.orientdb.modules;
 
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
-import co.runrightfast.vertx.demo.verticles.TestVerticle;
-import co.runrightfast.vertx.demo.verticles.TestVerticleParent;
+import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
+import co.runrightfast.vertx.orientdb.verticle.OrientDBRepositoryVerticleDeployment;
+import co.runrightfast.vertx.orientdb.verticle.OrientDBVerticle;
 import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.DeploymentOptions;
+import java.util.Set;
 import javax.inject.Singleton;
 
 /**
  *
  * @author alfio
  */
-@Module
-public class RunRightFastVerticleDeploymentModule {
+@Module(includes = {OrientDBConfigModule.class})
+public final class OrientDBVerticleWithRepositoriesDeploymentModule {
 
     @Provides(type = Provides.Type.SET)
     @Singleton
-    public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
+    public RunRightFastVerticleDeployment provideOrientDBVerticleRunRightFastVerticleDeployment(
+            final AppEventLogger logger,
+            final EmbeddedOrientDBServiceConfig embeddedOrientDBServiceConfig,
+            final Set<OrientDBRepositoryVerticleDeployment> repositoryDeployments
+    ) {
         return new RunRightFastVerticleDeployment(
-                () -> new TestVerticle(logger),
-                TestVerticle.class,
-                new DeploymentOptions().setInstances(2)
-        );
-    }
-
-    @Provides(type = Provides.Type.SET)
-    @Singleton
-    public RunRightFastVerticleDeployment provideTestVerticleParentRunRightFastVerticleDeployment(final AppEventLogger logger) {
-        return new RunRightFastVerticleDeployment(
-                () -> new TestVerticleParent(logger),
-                TestVerticleParent.class,
+                () -> new OrientDBVerticle(
+                        logger,
+                        embeddedOrientDBServiceConfig,
+                        repositoryDeployments.stream().toArray(OrientDBRepositoryVerticleDeployment[]::new)
+                ),
+                OrientDBVerticle.class,
                 new DeploymentOptions()
         );
     }
+
 }

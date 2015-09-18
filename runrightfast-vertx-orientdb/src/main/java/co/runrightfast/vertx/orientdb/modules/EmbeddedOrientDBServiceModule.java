@@ -13,16 +13,18 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb;
+package co.runrightfast.vertx.orientdb.modules;
+
+import dagger.Module;
 
 /**
  *
  * @author alfio
  */
-public interface OrientDBConstants {
-
-    static final String ROOT_USER = "root";
-
-    static final String NETWORK_BINARY_PROTOCOL = "binary";
+@Module(includes = {
+    EmbeddedOrientDBServiceConfigModule.class,
+    OrientDBVerticleDeploymentModule.class
+})
+public class EmbeddedOrientDBServiceModule {
 
 }

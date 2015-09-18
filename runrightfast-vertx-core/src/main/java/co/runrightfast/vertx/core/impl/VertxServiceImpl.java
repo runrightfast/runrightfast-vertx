@@ -22,14 +22,13 @@ import static co.runrightfast.core.application.event.ApplicationEvents.APP_START
 import static co.runrightfast.core.application.event.ApplicationEvents.APP_STOPPED;
 import static co.runrightfast.core.application.event.ApplicationEvents.APP_STOPPING;
 import static co.runrightfast.core.application.event.ApplicationEvents.APP_STOP_EXCEPTION;
-import co.runrightfast.core.crypto.EncryptionService;
+import static co.runrightfast.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
 import co.runrightfast.vertx.core.VertxConstants;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_HAZELCAST_INSTANCE_ID;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.LOG;
 import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.core.eventbus.VoidMessageCodec;
-import static co.runrightfast.core.hazelcast.HazelcastConfigFactory.hazelcastConfigFactory;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
 import co.runrightfast.vertx.core.utils.ConfigUtils;
 import co.runrightfast.vertx.core.utils.JsonUtils;
@@ -84,11 +83,10 @@ public final class VertxServiceImpl extends AbstractIdleService implements Vertx
     public VertxServiceImpl(
             @NonNull @VertxServiceConfig final Config config,
             @NonNull final Set<RunRightFastVerticleDeployment> deployments,
-            @NonNull final AppEventLogger appEventLogger,
-            @NonNull final EncryptionService encryptionService) {
+            @NonNull final AppEventLogger appEventLogger) {
         this.config = config;
         this.appEventLogger = appEventLogger;
-        this.verticleManager = new RunRightFastVerticleManager(appEventLogger, encryptionService, deployments);
+        this.verticleManager = new RunRightFastVerticleManager(appEventLogger, deployments);
     }
 
     @Override

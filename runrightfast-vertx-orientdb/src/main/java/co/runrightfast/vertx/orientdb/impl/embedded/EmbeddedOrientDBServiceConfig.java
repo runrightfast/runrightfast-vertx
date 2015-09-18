@@ -92,7 +92,6 @@ public final class EmbeddedOrientDBServiceConfig {
     }
 
     public void validate() {
-        checkArgument(CollectionUtils.isNotEmpty(databasePoolConfigs), MUST_NOT_BE_EMPTY, "databasePoolConfigs");
         checkArgument(CollectionUtils.isNotEmpty(handlers), MUST_NOT_BE_EMPTY, "handlers");
         checkArgument(CollectionUtils.isNotEmpty(users), MUST_NOT_BE_EMPTY, "users");
         if (Files.exists(orientDBRootDir)) {

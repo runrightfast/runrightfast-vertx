@@ -86,8 +86,8 @@ public class RunRightFastVertxApplicationLauncherTest {
 
     static class TestVerticle extends RunRightFastVerticle {
 
-        public TestVerticle(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
-            super(appEventLogger, encryptionService);
+        public TestVerticle(final AppEventLogger appEventLogger) {
+            super(appEventLogger);
         }
 
         @Getter
@@ -118,9 +118,9 @@ public class RunRightFastVertxApplicationLauncherTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
+        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
             return new RunRightFastVerticleDeployment(
-                    () -> new RunRightFastVertxApplicationLauncherTest.TestVerticle(logger, encryptionService),
+                    () -> new RunRightFastVertxApplicationLauncherTest.TestVerticle(logger),
                     RunRightFastVertxApplicationLauncherTest.TestVerticle.class,
                     new DeploymentOptions()
             );

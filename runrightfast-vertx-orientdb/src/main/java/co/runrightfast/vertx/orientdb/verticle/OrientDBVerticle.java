@@ -19,7 +19,6 @@ import co.runrightfast.core.TypeSafeObjectRegistry;
 import co.runrightfast.core.application.event.AppEventLogger;
 import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
-import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
@@ -76,10 +75,9 @@ public final class OrientDBVerticle extends RunRightFastVerticle {
 
     public OrientDBVerticle(
             final AppEventLogger appEventLogger,
-            final EncryptionService encryptionService,
             @NonNull final EmbeddedOrientDBServiceConfig config,
             final OrientDBRepositoryVerticleDeployment... orientDBRepositoryVerticleDeployments) {
-        super(appEventLogger, encryptionService);
+        super(appEventLogger);
         config.validate();
 
         this.config = config;

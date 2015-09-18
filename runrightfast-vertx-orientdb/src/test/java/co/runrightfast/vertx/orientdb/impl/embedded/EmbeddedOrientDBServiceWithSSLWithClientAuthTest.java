@@ -21,7 +21,7 @@ import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
-import static co.runrightfast.vertx.orientdb.OrientDBConstants.DBA_USER;
+import static co.runrightfast.vertx.orientdb.OrientDBConstants.ROOT_USER;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.config.OGraphServerHandlerConfig;
@@ -107,7 +107,7 @@ public class EmbeddedOrientDBServiceWithSSLWithClientAuthTest {
                 .handler(EmbeddedOrientDBServiceWithSSLWithClientAuthTest::oHazelcastPlugin)
                 .handler(EmbeddedOrientDBServiceWithSSLWithClientAuthTest::oServerSideScriptInterpreter)
                 .networkConfig(oServerNetworkConfiguration())
-                .user(new OServerUserConfiguration(DBA_USER, "root", "*"))
+                .user(new OServerUserConfiguration(ROOT_USER, "root", "*"))
                 .property(OGlobalConfiguration.DB_POOL_MIN, "1")
                 .property(OGlobalConfiguration.DB_POOL_MAX, "50")
                 .databasePoolConfig(new OrientDBPoolConfig(CLASS_NAME, "remote:localhost/" + CLASS_NAME, "admin", "admin", 10, ImmutableSet.of(() -> new SetCreatedOnAndUpdatedOn())))

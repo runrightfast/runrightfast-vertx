@@ -13,16 +13,24 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.orientdb;
+package co.runrightfast.vertx.orientdb.modules;
+
+import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
+import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
+import dagger.Module;
+import dagger.Provides;
+import javax.inject.Singleton;
 
 /**
  *
  * @author alfio
  */
-public interface OrientDBConstants {
+@Module
+public class EmbeddedOrientDBServiceConfigModule {
 
-    static final String ROOT_USER = "root";
-
-    static final String NETWORK_BINARY_PROTOCOL = "binary";
-
+    @Provides
+    @Singleton
+    public EmbeddedOrientDBServiceConfig providesEmbeddedOrientDBServiceConfig(final OrientDBConfig orientDBConfig) {
+        return EmbeddedOrientDBServiceConfig.newBuilder(orientDBConfig).build();
+    }
 }

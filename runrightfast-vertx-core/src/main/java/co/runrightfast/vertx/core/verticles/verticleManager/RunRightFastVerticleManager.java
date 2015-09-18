@@ -21,7 +21,6 @@ import static co.runrightfast.core.application.event.ApplicationEvents.VERTICLE_
 import static co.runrightfast.core.application.event.ApplicationEvents.VERTICLE_DEPLOYMENT_SUCCESS;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
-import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
@@ -95,8 +94,8 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
     private static final Lock lock = new ReentrantLock();
 
     @Inject
-    public RunRightFastVerticleManager(final AppEventLogger appEventLogger, final EncryptionService encryptionService, final Set<RunRightFastVerticleDeployment> deployments) {
-        super(appEventLogger, encryptionService);
+    public RunRightFastVerticleManager(final AppEventLogger appEventLogger, final Set<RunRightFastVerticleDeployment> deployments) {
+        super(appEventLogger);
         checkArgument(CollectionUtils.isNotEmpty(deployments));
         this.deployments = ImmutableSet.copyOf(deployments);
     }

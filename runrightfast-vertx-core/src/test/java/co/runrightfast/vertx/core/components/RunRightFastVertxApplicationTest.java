@@ -122,8 +122,8 @@ public class RunRightFastVertxApplicationTest {
         @Getter
         private final RunRightFastVerticleId runRightFastVerticleId = VERTICLE_ID;
 
-        public TestVerticle(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
-            super(appEventLogger, encryptionService);
+        public TestVerticle(final AppEventLogger appEventLogger) {
+            super(appEventLogger);
         }
 
         @Override
@@ -227,8 +227,8 @@ public class RunRightFastVertxApplicationTest {
         @Getter
         private final RunRightFastVerticleId runRightFastVerticleId = VERTICLE_ID;
 
-        public TestVerticle2(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
-            super(appEventLogger, encryptionService);
+        public TestVerticle2(final AppEventLogger appEventLogger) {
+            super(appEventLogger);
         }
 
         @Override
@@ -305,9 +305,9 @@ public class RunRightFastVertxApplicationTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
+        public RunRightFastVerticleDeployment provideTestVerticleRunRightFastVerticleDeployment(final AppEventLogger logger) {
             return new RunRightFastVerticleDeployment(
-                    () -> new TestVerticle(logger, encryptionService),
+                    () -> new TestVerticle(logger),
                     TestVerticle.class,
                     new DeploymentOptions()
             );
@@ -316,9 +316,9 @@ public class RunRightFastVertxApplicationTest {
 
         @Provides(type = Provides.Type.SET)
         @Singleton
-        public RunRightFastVerticleDeployment provideTestVerticle2RunRightFastVerticleDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
+        public RunRightFastVerticleDeployment provideTestVerticle2RunRightFastVerticleDeployment(final AppEventLogger logger) {
             return new RunRightFastVerticleDeployment(
-                    () -> new TestVerticle2(logger, encryptionService),
+                    () -> new TestVerticle2(logger),
                     TestVerticle2.class,
                     new DeploymentOptions().setInstances(5)
             );

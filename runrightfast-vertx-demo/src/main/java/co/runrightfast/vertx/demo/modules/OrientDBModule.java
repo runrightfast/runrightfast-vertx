@@ -17,7 +17,6 @@ package co.runrightfast.vertx.demo.modules;
 
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
-import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.application.ApplicationId;
 import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
@@ -46,9 +45,9 @@ public class OrientDBModule {
 
     @Provides(type = Provides.Type.SET)
     @Singleton
-    public OrientDBRepositoryVerticleDeployment provideEventLogRepositoryDeployment(final AppEventLogger logger, final EncryptionService encryptionService) {
+    public OrientDBRepositoryVerticleDeployment provideEventLogRepositoryDeployment(final AppEventLogger logger) {
         return new OrientDBRepositoryVerticleDeployment(
-                () -> new EventLogRepository(logger, encryptionService),
+                () -> new EventLogRepository(logger),
                 EventLogRepository.class,
                 new DeploymentOptions()
         );

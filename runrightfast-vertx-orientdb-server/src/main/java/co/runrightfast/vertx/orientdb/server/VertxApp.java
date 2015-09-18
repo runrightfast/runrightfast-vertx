@@ -13,16 +13,13 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.demo.components;
+package co.runrightfast.vertx.orientdb.server;
 
+import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationLauncher;
 import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
-import co.runrightfast.vertx.core.modules.CryptographyModule;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
-import co.runrightfast.vertx.demo.modules.EncryptionServiceModule;
-import co.runrightfast.vertx.demo.modules.OrientDBModule;
-import co.runrightfast.vertx.demo.modules.RunRightFastVerticleDeploymentModule;
-import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleWithRepositoriesDeploymentModule;
+import co.runrightfast.vertx.orientdb.modules.EmbeddedOrientDBServiceModule;
 import dagger.Component;
 import javax.inject.Singleton;
 
@@ -30,18 +27,21 @@ import javax.inject.Singleton;
  *
  * @author alfio
  */
-@Component(
-        modules = {
-            RunRightFastApplicationModule.class,
-            VertxServiceModule.class,
-            RunRightFastVerticleDeploymentModule.class,
-            EncryptionServiceModule.class,
-            CryptographyModule.class,
-            OrientDBModule.class,
-            OrientDBVerticleWithRepositoriesDeploymentModule.class
-        }
-)
-@Singleton
-public interface DemoApp extends RunRightFastVertxApplication {
+public class VertxApp {
+
+    @Component(
+            modules = {
+                RunRightFastApplicationModule.class,
+                VertxServiceModule.class,
+                EmbeddedOrientDBServiceModule.class
+            }
+    )
+    @Singleton
+    public static interface App extends RunRightFastVertxApplication {
+    }
+
+    public static void main(final String[] args) {
+        System.exit(RunRightFastVertxApplicationLauncher.run(() -> DaggerVertxApp_App.create(), args));
+    }
 
 }

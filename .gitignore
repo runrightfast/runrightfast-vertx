@@ -7,3 +7,6 @@
 /runrightfast-vertx-demo/orientdb/
 /runrightfast-docker-orientdb/build/
 /runrightfast-vertx-orientdb/OrientDBHazelcastPluginTest/
+/runrightfast-vertx-orientdb-server/build/
+/runrightfast-vertx-orientdb-server/plugins/
+/runrightfast-vertx-orientdb-server/backup/

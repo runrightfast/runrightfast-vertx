@@ -31,6 +31,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public enum ServerResource {
 
     ANY("*"),
+    SERVER_INFO("server.info"),
     DATABASES_LIST("server.listDatabases"),
     DATABASE_CREATE("database.create"),
     DATABASE_DROP("database.drop"),

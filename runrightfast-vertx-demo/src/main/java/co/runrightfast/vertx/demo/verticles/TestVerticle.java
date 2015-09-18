@@ -18,7 +18,6 @@ package co.runrightfast.vertx.demo.verticles;
 import co.runrightfast.core.application.event.AppEventLogger;
 import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
-import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import com.codahale.metrics.health.HealthCheck;
@@ -40,8 +39,8 @@ public final class TestVerticle extends RunRightFastVerticle {
             .version("1.0.0")
             .build();
 
-    public TestVerticle(final AppEventLogger logger, final EncryptionService encryptionService) {
-        super(logger, encryptionService);
+    public TestVerticle(final AppEventLogger logger) {
+        super(logger);
     }
 
     @Override

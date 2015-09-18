@@ -97,5 +97,16 @@
       </task-args>
       <task-jvm-args/>
     </task>
+    <task>
+      <display-name>run</display-name>
+      <non-blocking>no</non-blocking>
+      <task-names>
+        <name must-exist="no">run</name>
+      </task-names>
+      <task-args>
+        <arg>--info</arg>
+      </task-args>
+      <task-jvm-args/>
+    </task>
   </built-in-tasks>
 </gradle-project-properties>

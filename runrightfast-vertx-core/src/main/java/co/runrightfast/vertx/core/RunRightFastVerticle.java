@@ -21,8 +21,6 @@ import co.runrightfast.core.application.event.ApplicationEvents.RunRightFastVert
 import static co.runrightfast.core.application.event.ApplicationEvents.VERTICLE_DEPLOYMENT_FAILED;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
-import co.runrightfast.core.crypto.CipherFunctions;
-import co.runrightfast.core.crypto.EncryptionService;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_FAILURE;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_PROCESSING;
 import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Counters.MESSAGE_CONSUMER_MESSAGE_SUCCESS;
@@ -147,9 +145,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
 
     @NonNull
     protected final AppEventLogger appEventLogger;
-
-    @NonNull
-    protected final EncryptionService encryptionService;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // ABSTRACT METHODS                                                                             //
@@ -303,17 +298,6 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
                 messageConsumerRegistration
         ).build();
         return messageConsumerRegistration;
-    }
-
-    /**
-     * The message's descriptor full name will be used as the key to retrieve the {@link CipherFunctions} from the {@link EncryptionService}
-     *
-     * @param msg
-     * @return
-     * @throws IllegalArgumentException if there is no registered ciphers with the {@link EncryptionService} for the message type
-     */
-    protected CipherFunctions cipherFunctions(@NonNull final Message msg) {
-        return encryptionService.cipherFunctions(msg.getDescriptorForType().getFullName());
     }
 
     /**
@@ -582,7 +566,7 @@ public abstract class RunRightFastVerticle extends AbstractVerticle {
     }
 
     protected void deployVerticles(final Set<RunRightFastVerticleDeployment> deployments) {
-        final RunRightFastVerticleManager verticleManager = new RunRightFastVerticleManager(appEventLogger, encryptionService, deployments);
+        final RunRightFastVerticleManager verticleManager = new RunRightFastVerticleManager(appEventLogger, deployments);
         verticleManager.setParentVerticleInstanceId(Optional.of(this.verticleInstanceId));
         vertx.deployVerticle(verticleManager, result -> {
             if (result.succeeded()) {

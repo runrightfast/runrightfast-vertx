@@ -16,7 +16,6 @@
 package co.runrightfast.vertx.core.modules;
 
 import co.runrightfast.core.application.event.AppEventLogger;
-import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.VertxService;
 import co.runrightfast.vertx.core.impl.VertxServiceImpl;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
@@ -37,8 +36,8 @@ public class VertxServiceModule {
 
     @Provides
     @Singleton
-    public VertxService vertxService(@VertxServiceConfig final Config config, final Set<RunRightFastVerticleDeployment> deployments, final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
-        final VertxService service = new VertxServiceImpl(config, deployments, appEventLogger, encryptionService);
+    public VertxService vertxService(@VertxServiceConfig final Config config, final Set<RunRightFastVerticleDeployment> deployments, final AppEventLogger appEventLogger) {
+        final VertxService service = new VertxServiceImpl(config, deployments, appEventLogger);
         ServiceUtils.start(service);
         return service;
     }

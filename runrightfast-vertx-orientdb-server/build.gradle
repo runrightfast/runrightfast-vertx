@@ -1,0 +1,82 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.7.0'
+    }
+}
+
+apply plugin: 'application'
+apply plugin: 'docker'
+
+dependencies {
+    compile project(':runrightfast-vertx-orientdb')
+}
+
+mainClassName = 'co.runrightfast.vertx.orientdb.server.VertxApp'
+
+ext {
+    ORIENTDB_HOME = '/orientdb'    
+}
+
+applicationDefaultJvmArgs = [    
+    // enable remote debugging
+//    "-Xdebug",
+//    "-Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n",
+    
+    // JMX
+    "-Dcom.sun.management.jmxremote.authenticate=false",
+    "-Dcom.sun.management.jmxremote.ssl=false",
+    "-Dcom.sun.management.jmxremote.port=7410",
+    
+//    "-Dapp.log.dir=${buildDir}/app/logs",   
+    "-Drunrightfast.app.version=${version}",
+    
+    // To disable it define the setting orientdb.installCustomFormatter to false
+    "-Dorientdb.installCustomFormatter=false",
+    
+    // uncomment for local testing
+//    "-Drunrightfast.orientdb.server.home.dir=/home/alfio/Documents/work/data/orientdb-1",
+//    "-Drunrightfast.orientdb.server.network-config.ssl.keyStorePass=qwerty90",
+//    "-Drunrightfast.orientdb.server.network-config.ssl.trustStorePass=qwerty90",
+//    "-Drunrightfast.orientdb.client.ssl.keyStorePass=qwerty90",
+//    "-Drunrightfast.orientdb.client.ssl.trustStorePass=qwerty90",
+//    "-Drunrightfast.orientdb.server.dba.password=dba"
+]
+
+docker {
+    maintainer = 'Alfio Zappala <alfio.a.z.2@gamil.com>'
+    // OpenJDK
+    //baseImage = 'java:8u45-jre'
+    
+    // Oracle JDKs
+    baseImage = 'andreptb/oracle-java:8'
+    // baseImage = 'isuper/java-oracle:jre_8'
+}
+
+task appDocker(type: Docker) {
+    dependsOn installDist
+    
+    project.group = "runrightfast"
+    applicationName = "${project.name}"
+    
+    entryPoint(["/runrightfast/apps/${project.name}/bin/${project.name}"])
+    
+    // when a new database is created remotely, it is created within the working directory
+    // in order to get it created in the proper location, we set the working directory to the ${ORIENTDB_HOME}/databases directory
+    workingDir "${ORIENTDB_HOME}/databases"
+    
+    // JMX port
+    exposePort 7410
+    // Remote debug port
+//    exposePort 4000        
+    // OrientDB
+    exposePort 2424
+    
+    volume "${ORIENTDB_HOME}"
+    
+    addFile("${buildDir}/install/${project.name}", "/runrightfast/apps/${project.name}")
+}

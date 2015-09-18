@@ -17,7 +17,6 @@ package co.runrightfast.vertx.orientdb.verticle;
 
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
-import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.RunRightFastVerticleId.RUNRIGHTFAST_GROUP;
 import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
@@ -65,8 +64,8 @@ public class EventLogRepository extends OrientDBRepositoryVerticle {
 
     private ODatabaseDocumentTxSupplier dbSupplier;
 
-    public EventLogRepository(final AppEventLogger appEventLogger, final EncryptionService encryptionService) {
-        super(appEventLogger, encryptionService);
+    public EventLogRepository(final AppEventLogger appEventLogger) {
+        super(appEventLogger);
     }
 
     @Override

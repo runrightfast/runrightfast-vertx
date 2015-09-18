@@ -16,56 +16,31 @@
 package co.runrightfast.vertx.orientdb.modules;
 
 import co.runrightfast.core.application.event.AppEventLogger;
-import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.vertx.core.inject.qualifiers.ApplicationConfig;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
-import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfig;
-import co.runrightfast.vertx.orientdb.verticle.OrientDBRepositoryVerticleDeployment;
 import co.runrightfast.vertx.orientdb.verticle.OrientDBVerticle;
-import com.typesafe.config.Config;
 import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.DeploymentOptions;
-import java.util.Set;
 import javax.inject.Singleton;
 
 /**
  *
  * @author alfio
  */
-@Module
-public class OrientDBVerticleDeploymentModule {
-
-    @Provides
-    @Singleton
-    @OrientDBConfig.OrientDBConfiguration
-    public Config provideOrientDBConfiguration(@ApplicationConfig final Config config) {
-        return config.getConfig(configPath(CONFIG_NAMESPACE, "orientdb"));
-    }
-
-    @Provides
-    @Singleton
-    public OrientDBConfig provideOrientDBConfig(@OrientDBConfig.OrientDBConfiguration final Config config) {
-        return new OrientDBConfig(config);
-    }
+@Module(includes = {OrientDBConfigModule.class})
+public final class OrientDBVerticleDeploymentModule {
 
     @Provides(type = Provides.Type.SET)
     @Singleton
     public RunRightFastVerticleDeployment provideOrientDBVerticleRunRightFastVerticleDeployment(
             final AppEventLogger logger,
-            final EncryptionService encryptionService,
-            final EmbeddedOrientDBServiceConfig embeddedOrientDBServiceConfig,
-            final Set<OrientDBRepositoryVerticleDeployment> repositoryDeployments
+            final EmbeddedOrientDBServiceConfig embeddedOrientDBServiceConfig
     ) {
         return new RunRightFastVerticleDeployment(
                 () -> new OrientDBVerticle(
                         logger,
-                        encryptionService,
-                        embeddedOrientDBServiceConfig,
-                        repositoryDeployments.stream().toArray(OrientDBRepositoryVerticleDeployment[]::new)
+                        embeddedOrientDBServiceConfig
                 ),
                 OrientDBVerticle.class,
                 new DeploymentOptions()
