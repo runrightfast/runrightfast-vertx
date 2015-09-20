@@ -16,7 +16,7 @@
 package co.runrightfast.vertx.demo.components;
 
 import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
-import co.runrightfast.vertx.core.modules.CryptographyModule;
+import co.runrightfast.core.security.modules.CryptographyModule;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
 import co.runrightfast.vertx.demo.modules.EncryptionServiceModule;

@@ -13,19 +13,15 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.core.crypto;
+package co.runrightfast.core.security.crypto;
+
+import java.util.function.Function;
 
 /**
- * The AES algorithm can support key sizes of 128, 192 and 256 bits*
- *
- * Generating and using AES key sizes greater than 128 require installation of the <a href="http://java.sun.com/javase/downloads/index.jsp">Java Cryptography
- * Extension (JCE) Unlimited Strength Jurisdiction Policy files</a>.
  *
  * @author alfio
  */
-public interface AESKeySizes {
+@FunctionalInterface
+public interface Encryption extends Function<byte[], byte[]> {
 
-    static final int KEY_SIZE_128 = 128;
-    static final int KEY_SIZE_192 = 192;
-    static final int KEY_SIZE_256 = 256;
 }

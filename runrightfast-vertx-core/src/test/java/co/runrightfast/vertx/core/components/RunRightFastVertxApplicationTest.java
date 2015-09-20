@@ -19,8 +19,6 @@ import co.runrightfast.core.ApplicationException;
 import co.runrightfast.core.application.event.AppEventLogger;
 import static co.runrightfast.core.application.services.healthchecks.HealthCheckConfig.FailureSeverity.FATAL;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
-import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.core.crypto.impl.EncryptionServiceWithDefaultCiphers;
 import co.runrightfast.protobuf.test.RunRightFastVertxApplicationTestMessage;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
@@ -104,8 +102,6 @@ import org.junit.Test;
  */
 @Log
 public class RunRightFastVertxApplicationTest {
-
-    private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
 
     private static final ProtobufMessageCodec<GetVerticleDeployments.Response> getVerticleDeploymentsResponseCodec = new ProtobufMessageCodec(
             GetVerticleDeployments.Response.getDefaultInstance()
@@ -323,12 +319,6 @@ public class RunRightFastVertxApplicationTest {
                     new DeploymentOptions().setInstances(5)
             );
 
-        }
-
-        @Provides
-        @Singleton
-        public EncryptionService provideEncryptionService() {
-            return encryptionService;
         }
 
     }

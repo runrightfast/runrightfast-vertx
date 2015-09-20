@@ -38,4 +38,7 @@ sourceSets {
 }
 
 dependencies {
+    compile 'org.apache.shiro:shiro-core'
+    compile 'org.bouncycastle:bcprov-jdk15on'
+    compile 'org.bouncycastle:bcpkix-jdk15on'  
 }

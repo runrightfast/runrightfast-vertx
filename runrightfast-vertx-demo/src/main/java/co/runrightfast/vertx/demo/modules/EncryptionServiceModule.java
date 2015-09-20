@@ -15,14 +15,13 @@
  */
 package co.runrightfast.vertx.demo.modules;
 
-import co.runrightfast.core.crypto.CipherFunctions;
-import co.runrightfast.core.crypto.Decryption;
-import co.runrightfast.core.crypto.Encryption;
-import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.core.crypto.EncryptionServiceException;
-import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
-import co.runrightfast.vertx.core.messages.SecretKeys;
-import static co.runrightfast.vertx.core.protobuf.MessageConversions.toKeyMap;
+import co.runrightfast.core.security.crypto.CipherFunctions;
+import co.runrightfast.core.security.crypto.Decryption;
+import co.runrightfast.core.security.crypto.Encryption;
+import co.runrightfast.core.security.crypto.EncryptionService;
+import co.runrightfast.core.security.crypto.EncryptionServiceException;
+import co.runrightfast.core.security.crypto.impl.EncryptionServiceImpl;
+import co.runrightfast.core.security.messages.SecretKeys;
 import dagger.Module;
 import dagger.Provides;
 import java.io.InputStream;
@@ -46,10 +45,7 @@ public class EncryptionServiceModule {
 
         public EncryptionServiceWithDefaultCiphers(@NonNull final AesCipherService cipherService) {
             try (final InputStream is = getClass().getResourceAsStream("/secretKeys")) {
-                encryptionService = new EncryptionServiceImpl(
-                        cipherService,
-                        toKeyMap(SecretKeys.parseFrom(is))
-                );
+                encryptionService = new EncryptionServiceImpl(cipherService, SecretKeys.parseFrom(is));
             } catch (final Exception e) {
                 throw new RuntimeException(e);
             }

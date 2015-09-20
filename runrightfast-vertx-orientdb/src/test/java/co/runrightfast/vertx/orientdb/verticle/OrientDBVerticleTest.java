@@ -18,7 +18,6 @@ package co.runrightfast.vertx.orientdb.verticle;
 import co.runrightfast.core.TypeSafeObjectRegistry;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
-import co.runrightfast.core.crypto.EncryptionService;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.VertxService;
 import static co.runrightfast.vertx.core.VertxService.metricRegistry;
@@ -48,7 +47,6 @@ import co.runrightfast.vertx.orientdb.impl.embedded.EmbeddedOrientDBServiceConfi
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;
 import co.runrightfast.vertx.orientdb.modules.OrientDBVerticleWithRepositoriesDeploymentModule;
 import co.runrightfast.vertx.orientdb.utils.OrientDBUtils;
-import co.runrightfast.vertx.testSupport.EncryptionServiceWithDefaultCiphers;
 import com.codahale.metrics.MetricFilter;
 import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableSet;
@@ -99,8 +97,6 @@ public class OrientDBVerticleTest {
 
     static final String CLASS_NAME = OrientDBVerticleTest.class.getSimpleName();
 
-    private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
-
     private static final File orientdbHome = new File("build/temp/OrientDBVerticleTest/orientdb");
 
     static {
@@ -145,12 +141,6 @@ public class OrientDBVerticleTest {
                     EventLogRepository.class,
                     new DeploymentOptions()
             );
-        }
-
-        @Provides
-        @Singleton
-        public EncryptionService provideEncryptionService() {
-            return encryptionService;
         }
 
         @Provides

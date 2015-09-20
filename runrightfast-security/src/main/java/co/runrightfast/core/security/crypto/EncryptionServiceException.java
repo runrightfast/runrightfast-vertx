@@ -13,15 +13,29 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.core.crypto;
-
-import java.util.function.Function;
+package co.runrightfast.core.security.crypto;
 
 /**
  *
  * @author alfio
  */
-@FunctionalInterface
-public interface Decryption extends Function<byte[], byte[]> {
+public class EncryptionServiceException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    public EncryptionServiceException() {
+    }
+
+    public EncryptionServiceException(final String message) {
+        super(message);
+    }
+
+    public EncryptionServiceException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
+
+    public EncryptionServiceException(final Throwable cause) {
+        super(cause);
+    }
 
 }

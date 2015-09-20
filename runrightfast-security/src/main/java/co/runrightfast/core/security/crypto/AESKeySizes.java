@@ -13,31 +13,19 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.core.crypto;
-
-import co.runrightfast.core.ApplicationException;
+package co.runrightfast.core.security.crypto;
 
 /**
+ * The AES algorithm can support key sizes of 128, 192 and 256 bits*
+ *
+ * Generating and using AES key sizes greater than 128 require installation of the <a href="http://java.sun.com/javase/downloads/index.jsp">Java Cryptography
+ * Extension (JCE) Unlimited Strength Jurisdiction Policy files</a>.
  *
  * @author alfio
  */
-public class EncryptionServiceException extends ApplicationException {
+public interface AESKeySizes {
 
-    private static final long serialVersionUID = 1L;
-
-    public EncryptionServiceException() {
-    }
-
-    public EncryptionServiceException(final String message) {
-        super(message);
-    }
-
-    public EncryptionServiceException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
-
-    public EncryptionServiceException(final Throwable cause) {
-        super(cause);
-    }
-
+    static final int KEY_SIZE_128 = 128;
+    static final int KEY_SIZE_192 = 192;
+    static final int KEY_SIZE_256 = 256;
 }

@@ -67,6 +67,7 @@ applicationDefaultJvmArgs = [
 
 dependencies {
    compile project(':runrightfast-vertx-orientdb')
+   compile project(':runrightfast-security')
 }
 
 

@@ -13,10 +13,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.modules;
+package co.runrightfast.core.security.modules;
 
-import co.runrightfast.core.crypto.AESKeySizes;
-import co.runrightfast.core.crypto.KeyGenerator;
+import co.runrightfast.core.security.crypto.AESKeySizes;
+import co.runrightfast.core.security.crypto.KeyGenerator;
 import dagger.Module;
 import dagger.Provides;
 import javax.inject.Singleton;

@@ -15,16 +15,16 @@
  */
 package co.runrightfast.core.crypto.impl;
 
-import co.runrightfast.core.crypto.AESKeySizes;
-import co.runrightfast.core.crypto.Decryption;
-import co.runrightfast.core.crypto.Encryption;
-import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.core.crypto.EncryptionServiceException;
-import co.runrightfast.core.crypto.UnknownSecretKeyException;
-import co.runrightfast.vertx.core.messages.SecretKeys;
-import static co.runrightfast.vertx.core.protobuf.MessageConversions.toKeyMap;
-import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
-import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
+import co.runrightfast.core.security.crypto.AESKeySizes;
+import co.runrightfast.core.security.crypto.Decryption;
+import co.runrightfast.core.security.crypto.Encryption;
+import co.runrightfast.core.security.crypto.EncryptionService;
+import co.runrightfast.core.security.crypto.EncryptionServiceException;
+import co.runrightfast.core.security.crypto.UnknownSecretKeyException;
+import co.runrightfast.core.security.crypto.impl.EncryptionServiceImpl;
+import static co.runrightfast.core.security.crypto.impl.EncryptionServiceImpl.toKeyMap;
+import co.runrightfast.core.security.messages.SecretKeys;
+import co.runrightfast.core.security.messages.test.RunRightFastApplicationInstance;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Key;
+import java.time.Instant;
 import java.util.Map;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
@@ -52,12 +53,16 @@ import org.junit.Test;
 @Log
 public class EncryptionServiceImplTest {
 
-    private final GetVerticleDeployments.Request request = GetVerticleDeployments.Request.newBuilder()
-            .addGroups(RunRightFastVerticleManager.VERTICLE_ID.getGroup())
-            .addNames(RunRightFastVerticleManager.VERTICLE_ID.getName())
+    private final RunRightFastApplicationInstance appInstance = RunRightFastApplicationInstance.newBuilder()
+            .setAppDeploymentVersion("201509-1")
+            .setAppName(getClass().getSimpleName())
+            .setAppVersion("1.0.0")
+            .setHost("test-01")
+            .setJvmId("123@test-01")
+            .setStartedOn(Instant.now().toString())
             .build();
 
-    private final byte[] requestBytes = request.toByteArray();
+    private final byte[] appInstanceBytes = appInstance.toByteArray();
 
     private AesCipherService aesCipherService(final int keySize) {
         final AesCipherService aes = new AesCipherService();
@@ -88,14 +93,14 @@ public class EncryptionServiceImplTest {
                 .put("a", aes.generateNewKey())
                 .build();
         final EncryptionService service = new EncryptionServiceImpl(aes, keys);
-        byte[] encrypted = service.encrypt(requestBytes, "a");
-        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("uncrypted length = %d", requestBytes.length));
+        byte[] encrypted = service.encrypt(appInstanceBytes, "a");
+        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("uncrypted length = %d", appInstanceBytes.length));
         log.logp(Level.INFO, getClass().getName(), METHOD, String.format("encrypted length = %d", encrypted.length));
 
         final byte[] decrypted = service.decrypt(encrypted, "a");
-        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("decrypted length = %d", requestBytes.length));
-        final GetVerticleDeployments.Request request2 = GetVerticleDeployments.Request.parseFrom(decrypted);
-        assertThat(request2, is(equalTo(request)));
+        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("decrypted length = %d", appInstanceBytes.length));
+        final RunRightFastApplicationInstance appInstance2 = RunRightFastApplicationInstance.parseFrom(decrypted);
+        assertThat(appInstance2, is(equalTo(appInstance)));
     }
 
     @Test
@@ -108,14 +113,14 @@ public class EncryptionServiceImplTest {
         final EncryptionService service = new EncryptionServiceImpl(aes, keys);
         final Encryption encryption = service.encryption("a");
         final Decryption decryption = service.decryption("a");
-        byte[] encrypted = encryption.apply(requestBytes);
-        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("uncrypted length = %d", requestBytes.length));
+        byte[] encrypted = encryption.apply(appInstanceBytes);
+        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("uncrypted length = %d", appInstanceBytes.length));
         log.logp(Level.INFO, getClass().getName(), METHOD, String.format("encrypted length = %d", encrypted.length));
 
         final byte[] decrypted = decryption.apply(encrypted);
-        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("decrypted length = %d", requestBytes.length));
-        final GetVerticleDeployments.Request request2 = GetVerticleDeployments.Request.parseFrom(decrypted);
-        assertThat(request2, is(equalTo(request)));
+        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("decrypted length = %d", appInstanceBytes.length));
+        final RunRightFastApplicationInstance appInstance2 = RunRightFastApplicationInstance.parseFrom(decrypted);
+        assertThat(appInstance2, is(equalTo(appInstance)));
     }
 
     @Test
@@ -126,14 +131,14 @@ public class EncryptionServiceImplTest {
                 .put("a", aes.generateNewKey())
                 .build();
         final EncryptionService service = new EncryptionServiceImpl(aes, keys);
-        byte[] encrypted = service.encrypt(requestBytes, "a");
-        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("uncrypted length = %d", requestBytes.length));
+        byte[] encrypted = service.encrypt(appInstanceBytes, "a");
+        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("uncrypted length = %d", appInstanceBytes.length));
         log.logp(Level.INFO, getClass().getName(), METHOD, String.format("encrypted length = %d", encrypted.length));
 
         final byte[] decrypted = service.decrypt(encrypted, "a");
-        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("decrypted length = %d", requestBytes.length));
-        final GetVerticleDeployments.Request request2 = GetVerticleDeployments.Request.parseFrom(decrypted);
-        assertThat(request2, is(equalTo(request)));
+        log.logp(Level.INFO, getClass().getName(), METHOD, String.format("decrypted length = %d", appInstanceBytes.length));
+        final RunRightFastApplicationInstance appInstance2 = RunRightFastApplicationInstance.parseFrom(decrypted);
+        assertThat(appInstance2, is(equalTo(appInstance)));
     }
 
     @Test(expected = UnknownSecretKeyException.class)

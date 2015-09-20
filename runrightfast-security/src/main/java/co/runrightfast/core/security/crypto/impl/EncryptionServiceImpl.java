@@ -13,14 +13,15 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.core.crypto.impl;
+package co.runrightfast.core.security.crypto.impl;
 
-import co.runrightfast.core.crypto.CipherFunctions;
-import co.runrightfast.core.crypto.Decryption;
-import co.runrightfast.core.crypto.Encryption;
-import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.core.crypto.EncryptionServiceException;
-import co.runrightfast.core.crypto.UnknownSecretKeyException;
+import co.runrightfast.core.security.crypto.CipherFunctions;
+import co.runrightfast.core.security.crypto.Decryption;
+import co.runrightfast.core.security.crypto.Encryption;
+import co.runrightfast.core.security.crypto.EncryptionService;
+import co.runrightfast.core.security.crypto.EncryptionServiceException;
+import co.runrightfast.core.security.crypto.UnknownSecretKeyException;
+import co.runrightfast.core.security.messages.SecretKeys;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableMap;
 import java.security.Key;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.NonNull;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.shiro.crypto.CipherService;
 
 /**
@@ -36,11 +38,23 @@ import org.apache.shiro.crypto.CipherService;
  */
 public final class EncryptionServiceImpl implements EncryptionService {
 
+    public static Map<String, Key> toKeyMap(@NonNull final SecretKeys keys) {
+        final ImmutableMap.Builder<String, Key> mapBuilder = ImmutableMap.builder();
+        keys.getKeys().entrySet().stream().forEach(entry -> mapBuilder.put(entry.getKey(), SerializationUtils.deserialize(entry.getValue().toByteArray())));
+        return mapBuilder.build();
+    }
+
     private final Map<String, CipherFunctions> cipherFunctions;
 
     public EncryptionServiceImpl(@NonNull final CipherService cipherService, final Map<String, Key> secretKeys) {
         checkSecretKeys(secretKeys);
         this.cipherFunctions = cipherFunctions(cipherService, secretKeys);
+    }
+
+    public EncryptionServiceImpl(@NonNull final CipherService cipherService, @NonNull final SecretKeys secretKeys) {
+        final Map<String, Key> secretKeysMap = toKeyMap(secretKeys);
+        checkSecretKeys(secretKeysMap);
+        this.cipherFunctions = cipherFunctions(cipherService, secretKeysMap);
     }
 
     private Map<String, CipherFunctions> cipherFunctions(@NonNull final CipherService cipherService, final Map<String, Key> secretKeys) {

@@ -13,29 +13,15 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.core.crypto;
+package co.runrightfast.core.security.crypto;
+
+import java.util.function.Function;
 
 /**
  *
  * @author alfio
  */
-public class UnknownSecretKeyException extends EncryptionServiceException {
-
-    private static final long serialVersionUID = 1L;
-
-    public UnknownSecretKeyException() {
-    }
-
-    public UnknownSecretKeyException(final String message) {
-        super(message);
-    }
-
-    public UnknownSecretKeyException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
-
-    public UnknownSecretKeyException(final Throwable cause) {
-        super(cause);
-    }
+@FunctionalInterface
+public interface Decryption extends Function<byte[], byte[]> {
 
 }

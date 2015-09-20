@@ -16,11 +16,11 @@
 package co.runrightfast.vertx.demo.testHarness.jmx;
 
 import co.runrightfast.core.AppConfig;
-import static co.runrightfast.core.crypto.AESKeySizes.KEY_SIZE_256;
-import co.runrightfast.core.crypto.Decryption;
-import co.runrightfast.core.crypto.Encryption;
-import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
+import static co.runrightfast.core.security.crypto.AESKeySizes.KEY_SIZE_256;
+import co.runrightfast.core.security.crypto.Decryption;
+import co.runrightfast.core.security.crypto.Encryption;
+import co.runrightfast.core.security.crypto.EncryptionService;
+import co.runrightfast.core.security.crypto.impl.EncryptionServiceImpl;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusUtils;
 import static co.runrightfast.vertx.core.eventbus.EventBusUtils.deliveryOptions;

@@ -171,6 +171,13 @@ dependencyManagement {
             entry 'shiro-aspectj'
             entry 'shiro-cas'
         }
+        
+        dependencySet(group:'org.bouncycastle', version: '1.52') {
+            entry 'bcprov-jdk15on'
+            entry 'bcpkix-jdk15on'
+            entry 'bcmail-jdk15on'
+            entry 'bcpg-jdk15on'
+        }
      }
 }
 

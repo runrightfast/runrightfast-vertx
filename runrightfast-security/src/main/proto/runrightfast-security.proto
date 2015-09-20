@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package co.runrightfast.core.security.messages;
+
+option java_generate_equals_and_hash = true;
+option java_string_check_utf8 = true;
+option java_multiple_files = true;
+
+message SecretKeys {
+
+    map<string,bytes> keys = 1;
+}

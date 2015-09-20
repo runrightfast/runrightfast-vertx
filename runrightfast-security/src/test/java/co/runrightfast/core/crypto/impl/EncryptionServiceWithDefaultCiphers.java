@@ -1,5 +1,3 @@
-package co.runrightfast.vertx.testSupport;
-
 /*
  Copyright 2015 Alfio Zappala
 
@@ -15,12 +13,14 @@ package co.runrightfast.vertx.testSupport;
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import co.runrightfast.core.crypto.CipherFunctions;
-import co.runrightfast.core.crypto.Decryption;
-import co.runrightfast.core.crypto.Encryption;
-import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.core.crypto.EncryptionServiceException;
-import co.runrightfast.core.crypto.impl.EncryptionServiceImpl;
+package co.runrightfast.core.crypto.impl;
+
+import co.runrightfast.core.security.crypto.CipherFunctions;
+import co.runrightfast.core.security.crypto.Decryption;
+import co.runrightfast.core.security.crypto.Encryption;
+import co.runrightfast.core.security.crypto.EncryptionService;
+import co.runrightfast.core.security.crypto.EncryptionServiceException;
+import co.runrightfast.core.security.crypto.impl.EncryptionServiceImpl;
 import com.google.common.collect.ImmutableMap;
 import java.util.Set;
 import org.apache.shiro.crypto.AesCipherService;

@@ -18,8 +18,6 @@ package co.runrightfast.vertx.core.impl;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
-import co.runrightfast.core.crypto.EncryptionService;
-import co.runrightfast.core.crypto.impl.EncryptionServiceWithDefaultCiphers;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import static co.runrightfast.vertx.core.VertxConstants.VERTX_METRIC_REGISTRY_NAME;
@@ -77,8 +75,6 @@ import org.junit.Test;
  */
 @Log
 public class VertxServiceImplTest {
-
-    private final static EncryptionService encryptionService = new EncryptionServiceWithDefaultCiphers();
 
     static class TestVerticle extends RunRightFastVerticle {
 
