@@ -29,9 +29,12 @@ import org.junit.Test;
 @Log
 public class QuickTest {
 
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
+
     @Test
     public void testListSecurityProviders() {
-        Security.addProvider(new BouncyCastleProvider());
         Arrays.stream(Security.getProviders()).forEach(provider -> log.info(String.format("%s : %s", provider.getName(), provider.getInfo())));
         assertThat(Arrays.stream(Security.getProviders()).filter(provider -> provider.getName().equals("BC")).findFirst().isPresent(), is(true));
     }
