@@ -49,8 +49,6 @@ applicationDefaultJvmArgs = [
 
 docker {
     maintainer = 'Alfio Zappala <alfio.a.z.2@gamil.com>'
-    // OpenJDK
-    //baseImage = 'java:8u45-jre'
     
     // Oracle JDKs
     baseImage = 'andreptb/oracle-java:8'
