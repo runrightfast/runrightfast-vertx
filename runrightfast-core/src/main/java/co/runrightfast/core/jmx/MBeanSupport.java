@@ -3,7 +3,7 @@
  * Proprietary and confidential
  * Written by Alfio Zappala azappala@azaptree.com, March 2014
  */
-package co.runrightfast.vertx.core.application.jmx;
+package co.runrightfast.core.jmx;
 
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;

@@ -13,9 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.docker.weave;
+package co.runrightfast.core.docker.weave;
 
-import co.runrightfast.vertx.core.utils.ConfigUtils;
+import co.runrightfast.core.utils.ConfigUtils;
 import com.typesafe.config.Config;
 import java.net.Inet4Address;
 import java.net.NetworkInterface;

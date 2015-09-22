@@ -28,7 +28,6 @@ import co.runrightfast.vertx.core.eventbus.EventBusAddressMessageMapping;
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig;
 import co.runrightfast.vertx.core.protobuf.MessageConversions;
 import static co.runrightfast.vertx.core.protobuf.MessageConversions.toVerticleId;
-import static co.runrightfast.vertx.core.utils.JmxUtils.verticleJmxDomain;
 import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.HealthCheckResult;
@@ -294,7 +293,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
 
         final RunRightFastVerticleId verticleId = deployment.getRunRightFastVerticleId();
         final JmxReporter jmxReporter = JmxReporter.forRegistry(deployment.getMetricRegistry())
-                .inDomain(verticleJmxDomain(verticleId, "metrics"))
+                .inDomain(verticleId.verticleJmxDomain("metrics"))
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .build();
@@ -310,7 +309,7 @@ public final class RunRightFastVerticleManager extends RunRightFastVerticle {
             return;
         }
         jmxReporterForSelf = JmxReporter.forRegistry(this.metricRegistry)
-                .inDomain(verticleJmxDomain(runRightFastVerticleId, "metrics"))
+                .inDomain(runRightFastVerticleId.verticleJmxDomain("metrics"))
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .convertRatesTo(TimeUnit.SECONDS)
                 .build();

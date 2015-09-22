@@ -13,17 +13,15 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.utils;
+package co.runrightfast.core.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import io.vertx.core.MultiMap;
 import io.vertx.core.json.JsonObject;
 import java.io.StringReader;
 import java.util.List;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
@@ -76,17 +74,6 @@ public interface JsonUtils {
             builder.add(stringList[i]);
         }
         return builder.build();
-    }
-
-    static javax.json.JsonObject toJsonObject(final MultiMap map) {
-        if (map == null || map.isEmpty()) {
-            return EMPTY_OBJECT;
-        }
-        final JsonObjectBuilder json = Json.createObjectBuilder();
-        map.names().forEach(name -> {
-            json.add(name, toJsonArray(map.getAll(name)));
-        });
-        return json.build();
     }
 
 }

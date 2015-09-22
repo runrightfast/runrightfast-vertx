@@ -15,8 +15,8 @@
  */
 package co.runrightfast.vertx.orientdb.config;
 
-import co.runrightfast.vertx.core.utils.ConfigUtils;
-import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
+import co.runrightfast.core.utils.ConfigUtils;
+import static co.runrightfast.core.utils.JvmProcess.HOST;
 import co.runrightfast.vertx.orientdb.config.OAutomaticBackupConfig.Delay;
 import static co.runrightfast.vertx.orientdb.config.ServerResource.serverUserConfiguration;
 import co.runrightfast.vertx.orientdb.utils.OrientDBClientUtils;

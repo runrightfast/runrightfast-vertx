@@ -15,10 +15,10 @@
  */
 package co.runrightfast.vertx.core.application;
 
-import co.runrightfast.vertx.core.utils.ConfigUtils;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
-import co.runrightfast.vertx.core.utils.JmxUtils;
-import static co.runrightfast.vertx.core.utils.JmxUtils.RUNRIGHTFAST_JMX_DOMAIN;
+import co.runrightfast.core.utils.ConfigUtils;
+import static co.runrightfast.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import co.runrightfast.core.utils.JmxUtils;
+import static co.runrightfast.core.utils.JmxUtils.RUNRIGHTFAST_JMX_DOMAIN;
 import com.typesafe.config.Config;
 import javax.management.ObjectName;
 import lombok.Builder;

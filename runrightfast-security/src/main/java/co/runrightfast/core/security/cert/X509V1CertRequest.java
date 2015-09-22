@@ -24,7 +24,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 /**
- * The combination of the {@link X509V1CertRequest#getIssuerPrincipal() } {@link X509V1CertRequest#getSerialNumber() } must be unique.
+ * The combination of the {@link X509V1CertRequest#issuerPrincipal } {@link X509V1CertRequest#serialNumber} must be unique.
  *
  *
  * @author alfio

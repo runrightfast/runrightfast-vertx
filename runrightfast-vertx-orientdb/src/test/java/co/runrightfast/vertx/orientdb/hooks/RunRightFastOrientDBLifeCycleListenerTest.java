@@ -18,7 +18,7 @@ package co.runrightfast.vertx.orientdb.hooks;
 import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.impl.AppEventJDKLogger;
 import co.runrightfast.vertx.core.application.ApplicationId;
-import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
+import static co.runrightfast.core.utils.JvmProcess.HOST;
 import static co.runrightfast.vertx.orientdb.OrientDBConstants.ROOT_USER;
 import co.runrightfast.vertx.orientdb.classes.Timestamped;
 import co.runrightfast.vertx.orientdb.lifecycle.RunRightFastOrientDBLifeCycleListener;

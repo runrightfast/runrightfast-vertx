@@ -16,6 +16,9 @@
 package co.runrightfast.core;
 
 /**
+ * The purpose of this class is to provide an application specific runtime exception in order to avoid declaring checked exceptions.
+ *
+ * All application exceptions should extend this exception.
  *
  * @author alfio
  */

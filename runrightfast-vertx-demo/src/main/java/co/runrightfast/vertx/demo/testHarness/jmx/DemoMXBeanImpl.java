@@ -21,6 +21,11 @@ import co.runrightfast.core.security.crypto.Decryption;
 import co.runrightfast.core.security.crypto.Encryption;
 import co.runrightfast.core.security.crypto.EncryptionService;
 import co.runrightfast.core.security.crypto.impl.EncryptionServiceImpl;
+import static co.runrightfast.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import static co.runrightfast.core.utils.ConfigUtils.configPath;
+import co.runrightfast.core.utils.JsonUtils;
+import co.runrightfast.core.utils.JvmProcess;
+import co.runrightfast.core.utils.ProtobufUtils;
 import co.runrightfast.vertx.core.eventbus.EventBusAddress;
 import co.runrightfast.vertx.core.eventbus.EventBusUtils;
 import static co.runrightfast.vertx.core.eventbus.EventBusUtils.deliveryOptions;
@@ -28,11 +33,7 @@ import co.runrightfast.vertx.core.eventbus.MessageHeader;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
 import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
-import co.runrightfast.vertx.core.utils.JsonUtils;
-import co.runrightfast.vertx.core.utils.JvmProcess;
-import co.runrightfast.vertx.core.utils.ProtobufUtils;
+import static co.runrightfast.core.utils.VertxUtils.toJsonObject;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import co.runrightfast.vertx.demo.orientdb.EventLogRepository;
@@ -170,7 +171,7 @@ public final class DemoMXBeanImpl implements DemoMXBean {
     void handleGetVerticleDeploymentsResponse(final Message<GetVerticleDeployments.Response> responseMessage) {
         final GetVerticleDeployments.Response response = responseMessage.body();
         final JsonObject json = Json.createObjectBuilder()
-                .add("headers", JsonUtils.toJsonObject(responseMessage.headers()))
+                .add("headers", toJsonObject(responseMessage.headers()))
                 .add("body", ProtobufUtils.protobuMessageToJson(response))
                 .build();
         log.info(JsonUtils.toVertxJsonObject(json).encodePrettily());

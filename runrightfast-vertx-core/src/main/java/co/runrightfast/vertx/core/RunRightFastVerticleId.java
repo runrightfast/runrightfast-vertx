@@ -15,13 +15,16 @@
  */
 package co.runrightfast.vertx.core;
 
+import static co.runrightfast.core.utils.JmxUtils.RUNRIGHTFAST_JMX_DOMAIN;
 import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import static com.google.common.base.Preconditions.checkArgument;
+import java.util.Arrays;
 import javax.json.Json;
 import javax.json.JsonObject;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
+import org.apache.commons.lang3.ArrayUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
@@ -63,6 +66,16 @@ public final class RunRightFastVerticleId {
                 .add("name", name)
                 .add("version", version)
                 .build();
+    }
+
+    public String verticleJmxDomain(final String... subDomains) {
+        final StringBuilder sb = new StringBuilder(80)
+                .append(RUNRIGHTFAST_JMX_DOMAIN)
+                .append(String.format(".vertx/%s-%s-%s", group, name, version));
+        if (ArrayUtils.isNotEmpty(subDomains)) {
+            Arrays.stream(subDomains).forEach(subDomain -> sb.append('/').append(subDomain));
+        }
+        return sb.toString();
     }
 
     /**

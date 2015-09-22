@@ -15,7 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb.utils;
 
-import co.runrightfast.vertx.core.utils.ConfigUtils;
+import co.runrightfast.core.utils.ConfigUtils;
 import com.typesafe.config.Config;
 import java.util.logging.Level;
 import lombok.NonNull;

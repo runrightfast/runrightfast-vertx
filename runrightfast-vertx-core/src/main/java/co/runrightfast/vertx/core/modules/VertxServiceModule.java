@@ -19,7 +19,7 @@ import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.vertx.core.VertxService;
 import co.runrightfast.vertx.core.impl.VertxServiceImpl;
 import co.runrightfast.vertx.core.inject.qualifiers.VertxServiceConfig;
-import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.core.utils.ServiceUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import com.typesafe.config.Config;
 import dagger.Module;

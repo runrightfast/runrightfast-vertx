@@ -16,8 +16,8 @@
 package co.runrightfast.core.hazelcast.impl;
 
 import co.runrightfast.core.ConfigurationException.ConfigurationExceptionSupplier;
-import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
-import co.runrightfast.vertx.core.utils.ConfigUtils;
+import static co.runrightfast.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
+import co.runrightfast.core.utils.ConfigUtils;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableSet;
 import com.hazelcast.config.Config;

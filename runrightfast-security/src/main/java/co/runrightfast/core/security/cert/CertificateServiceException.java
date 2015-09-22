@@ -15,11 +15,13 @@
  */
 package co.runrightfast.core.security.cert;
 
+import co.runrightfast.core.ApplicationException;
+
 /**
  *
  * @author alfio
  */
-public class CertificateServiceException extends RuntimeException {
+public class CertificateServiceException extends ApplicationException {
 
     private static final long serialVersionUID = 1L;
 

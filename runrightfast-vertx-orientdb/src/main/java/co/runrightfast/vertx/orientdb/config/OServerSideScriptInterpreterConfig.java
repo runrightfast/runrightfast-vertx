@@ -15,7 +15,7 @@
  */
 package co.runrightfast.vertx.orientdb.config;
 
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_EMPTY;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_EMPTY;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;

@@ -19,7 +19,7 @@ import co.runrightfast.core.JsonRepresentation;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticle;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
-import static co.runrightfast.vertx.core.utils.JsonUtils.toJsonObject;
+import static co.runrightfast.core.utils.JsonUtils.toJsonObject;
 import com.codahale.metrics.MetricRegistry;
 import static com.google.common.base.Preconditions.checkArgument;
 import io.vertx.core.DeploymentOptions;

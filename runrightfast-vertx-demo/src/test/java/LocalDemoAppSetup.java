@@ -1,6 +1,6 @@
 
-import co.runrightfast.vertx.core.utils.ConfigUtils;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import co.runrightfast.core.utils.ConfigUtils;
+import static co.runrightfast.core.utils.ConfigUtils.CONFIG_NAMESPACE;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;

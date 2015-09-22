@@ -15,6 +15,7 @@
  */
 package co.runrightfast.vertx.core.utils;
 
+import co.runrightfast.core.utils.LoggingUtils;
 import static java.util.logging.Level.INFO;
 import javax.json.Json;
 import lombok.extern.java.Log;

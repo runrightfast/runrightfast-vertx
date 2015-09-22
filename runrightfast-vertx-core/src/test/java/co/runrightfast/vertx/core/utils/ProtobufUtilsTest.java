@@ -15,9 +15,11 @@
  */
 package co.runrightfast.vertx.core.utils;
 
+import co.runrightfast.core.utils.JsonUtils;
+import co.runrightfast.core.utils.ProtobufUtils;
 import co.runrightfast.protobuf.test.ApplicationInstance;
 import co.runrightfast.protobuf.test.ProtobufUtilsToJsonTestMessage;
-import static co.runrightfast.vertx.core.utils.ProtobufUtils.TYPE_FIELD;
+import static co.runrightfast.core.utils.ProtobufUtils.TYPE_FIELD;
 import com.google.protobuf.ByteString;
 import java.util.Base64;
 import javax.json.JsonObject;

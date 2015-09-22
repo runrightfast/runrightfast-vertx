@@ -18,7 +18,7 @@ package co.runrightfast.vertx.core.protobuf;
 import co.runrightfast.core.application.services.healthchecks.HealthCheckConfig;
 import co.runrightfast.core.application.services.healthchecks.RunRightFastHealthCheck;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
-import co.runrightfast.vertx.core.utils.JsonUtils;
+import co.runrightfast.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.verticles.messages.VerticleId;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.DeploymentOptions;

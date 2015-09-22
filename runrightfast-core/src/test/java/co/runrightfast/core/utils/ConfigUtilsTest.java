@@ -13,9 +13,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.utils;
+package co.runrightfast.core.utils;
 
-import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import co.runrightfast.core.utils.ConfigUtils;
+import static co.runrightfast.core.utils.ConfigUtils.CONFIG_NAMESPACE;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;

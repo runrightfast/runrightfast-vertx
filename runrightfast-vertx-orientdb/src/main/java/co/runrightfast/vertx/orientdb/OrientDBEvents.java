@@ -16,7 +16,7 @@
 package co.runrightfast.vertx.orientdb;
 
 import co.runrightfast.core.JsonRepresentation;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
 import static com.google.common.base.Preconditions.checkArgument;
 import javax.json.Json;
 import javax.json.JsonObject;

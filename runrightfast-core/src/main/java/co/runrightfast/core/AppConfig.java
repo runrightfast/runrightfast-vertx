@@ -13,22 +13,24 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.utils;
+package co.runrightfast.core;
 
-import java.time.Duration;
+import com.typesafe.config.Config;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
  *
+ * The purpose is to wrap a Config in order to mark it as the app's main config to add an extra layer of strong typing for dependency injection.
+ *
  * @author alfio
  */
-public interface ConcurrencyUtils {
+@RequiredArgsConstructor
+public final class AppConfig {
 
-    static void sleep(@NonNull final Duration sleepDuration) {
-        try {
-            Thread.sleep(sleepDuration.toMillis());
-        } catch (final InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
+    @NonNull
+    @Getter
+    private final Config config;
+
 }

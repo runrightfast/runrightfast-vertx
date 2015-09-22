@@ -20,6 +20,7 @@ import static co.runrightfast.core.security.BouncyCastle.BOUNCY_CASTLE;
 import static co.runrightfast.core.security.KeyPairGeneratorAlgorithm.RSA;
 import co.runrightfast.core.security.auth.x500.DistinguishedName;
 import co.runrightfast.core.security.cert.CertificateService;
+import co.runrightfast.core.security.cert.SelfSignedX509V1CertRequest;
 import co.runrightfast.core.security.cert.X509V1CertRequest;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -88,6 +89,42 @@ public class CertificateServiceImplTest {
                 .build();
         final PrivateKey privateKey = keyPair.getPrivate();
         final X509Certificate result = certificateService.generateX509CertificateV1(request, privateKey);
+        log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", result.getSigAlgName(), result.getVersion()));
+        assertThat(result.getVersion(), is(1));
+
+        result.checkValidity();
+        assertThat(Arrays.areEqual(principal.getEncoded(), result.getIssuerX500Principal().getEncoded()), is(true));
+        result.verify(keyPair.getPublic());
+    }
+
+    @Test
+    public void test_generateSelfSignedX509CertificateV1() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
+        final DistinguishedName issuer = DistinguishedName.builder()
+                .commonName("Alfio Zappala")
+                .country("US")
+                .domain("www.runrightfast.co")
+                .localityName("Rochester")
+                .organizationName("RunRightFast.co")
+                .organizationalUnitName("Executive")
+                .stateOrProvinceName("NY")
+                .streetAddress("123 Main St.")
+                .userid("0123456789")
+                .build();
+
+        final X500Principal principal = issuer.toX500Principal();
+
+        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
+        final KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+        final SelfSignedX509V1CertRequest request = SelfSignedX509V1CertRequest.builder()
+                .issuerPrincipal(principal)
+                .notAfter(Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)))
+                .notBefore(Instant.now())
+                .keyPair(keyPair)
+                .serialNumber(BigInteger.ONE)
+                .build();
+        final PrivateKey privateKey = keyPair.getPrivate();
+        final X509Certificate result = certificateService.generateSelfSignedX509CertificateV1(request);
         log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", result.getSigAlgName(), result.getVersion()));
         assertThat(result.getVersion(), is(1));
 

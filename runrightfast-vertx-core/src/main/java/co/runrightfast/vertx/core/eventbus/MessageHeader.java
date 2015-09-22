@@ -16,7 +16,7 @@
 package co.runrightfast.vertx.core.eventbus;
 
 import co.runrightfast.vertx.core.eventbus.MessageConsumerConfig.Failure;
-import co.runrightfast.vertx.core.utils.JsonUtils;
+import co.runrightfast.core.utils.JsonUtils;
 import io.vertx.core.eventbus.Message;
 import java.time.Instant;
 import java.util.Optional;

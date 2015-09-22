@@ -13,15 +13,13 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.utils;
+package co.runrightfast.core.utils;
 
 import co.runrightfast.core.ApplicationException;
-import co.runrightfast.vertx.core.RunRightFastVerticleId;
-import co.runrightfast.vertx.core.application.jmx.MBeanRegistration;
+import co.runrightfast.core.jmx.MBeanRegistration;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.typesafe.config.Config;
 import java.lang.management.ManagementFactory;
-import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Set;
 import static java.util.logging.Level.WARNING;
@@ -35,7 +33,6 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -57,20 +54,6 @@ public interface JmxUtils {
      */
     static String applicationJmxDomain(@NonNull final Config config) {
         return ConfigUtils.getString(config, ConfigUtils.CONFIG_NAMESPACE, "jmx", "default-domain").orElse(RUNRIGHTFAST_JMX_DOMAIN);
-    }
-
-    static String verticleJmxDomain(@NonNull final RunRightFastVerticleId verticleId, final String... subDomains) {
-        final StringBuilder sb = new StringBuilder(80)
-                .append(RUNRIGHTFAST_JMX_DOMAIN)
-                .append(String.format(".vertx/%s-%s-%s",
-                                verticleId.getGroup(),
-                                verticleId.getName(),
-                                verticleId.getVersion()
-                        ));
-        if (ArrayUtils.isNotEmpty(subDomains)) {
-            Arrays.stream(subDomains).forEach(subDomain -> sb.append('/').append(subDomain));
-        }
-        return sb.toString();
     }
 
     /**

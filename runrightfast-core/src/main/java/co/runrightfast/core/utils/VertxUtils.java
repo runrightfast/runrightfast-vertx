@@ -13,8 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.utils;
+package co.runrightfast.core.utils;
 
+import static co.runrightfast.core.utils.JsonUtils.EMPTY_OBJECT;
 import io.vertx.core.MultiMap;
 import java.util.List;
 import javax.json.Json;
@@ -28,7 +29,11 @@ import lombok.NonNull;
  */
 public interface VertxUtils {
 
-    static JsonObject toJson(@NonNull final MultiMap map) {
+    static JsonObject toJsonObject(@NonNull final MultiMap map) {
+        if (map.isEmpty()) {
+            return EMPTY_OBJECT;
+        }
+
         final JsonObjectBuilder json = Json.createObjectBuilder();
         map.names().stream().forEach(name -> {
             final List<String> values = map.getAll(name);

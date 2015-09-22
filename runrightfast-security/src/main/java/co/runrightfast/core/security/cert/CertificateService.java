@@ -24,5 +24,15 @@ import java.security.cert.X509Certificate;
  */
 public interface CertificateService {
 
+    /**
+     *
+     * @param request X509V1CertRequest
+     * @param privateKey used to sign the certificate
+     * @return X509Certificate
+     * @throws CertificateServiceException
+     */
     X509Certificate generateX509CertificateV1(X509V1CertRequest request, PrivateKey privateKey) throws CertificateServiceException;
+
+    X509Certificate generateSelfSignedX509CertificateV1(SelfSignedX509V1CertRequest request) throws CertificateServiceException;
+
 }

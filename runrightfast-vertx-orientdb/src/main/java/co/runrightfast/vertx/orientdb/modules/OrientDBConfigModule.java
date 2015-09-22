@@ -16,8 +16,8 @@
 package co.runrightfast.vertx.orientdb.modules;
 
 import co.runrightfast.vertx.core.inject.qualifiers.ApplicationConfig;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
+import static co.runrightfast.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import static co.runrightfast.core.utils.ConfigUtils.configPath;
 import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import com.typesafe.config.Config;
 import dagger.Module;

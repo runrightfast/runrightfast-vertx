@@ -17,7 +17,7 @@ package co.runrightfast.vertx.demo;
 
 import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationLauncher;
 import co.runrightfast.vertx.core.components.RunRightFastVertxApplication;
-import co.runrightfast.vertx.core.utils.JmxUtils;
+import co.runrightfast.core.utils.JmxUtils;
 import co.runrightfast.vertx.demo.components.DaggerDemoApp;
 import co.runrightfast.vertx.demo.testHarness.jmx.DemoMXBean;
 import co.runrightfast.vertx.demo.testHarness.jmx.DemoMXBeanImpl;
@@ -45,5 +45,4 @@ public final class VertxApp {
         final DemoMXBean mbean = new DemoMXBeanImpl(vertx, app.getConfig());
         JmxUtils.registerApplicationMBean(jmxDomain, mbean, DemoMXBean.class);
     }
-
 }

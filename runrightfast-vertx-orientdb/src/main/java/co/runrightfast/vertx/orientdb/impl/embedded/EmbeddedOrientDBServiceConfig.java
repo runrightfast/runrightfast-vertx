@@ -15,11 +15,11 @@
  */
 package co.runrightfast.vertx.orientdb.impl.embedded;
 
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_EMPTY;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_DOES_NOT_EXIST;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_A_DIRECTORY;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_READABLE;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_WRITEABLE;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_EMPTY;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.PATH_DOES_NOT_EXIST;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_A_DIRECTORY;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_READABLE;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.PATH_IS_NOT_WRITEABLE;
 import co.runrightfast.vertx.orientdb.OrientDBPoolConfig;
 import co.runrightfast.vertx.orientdb.config.OrientDBConfig;
 import static com.google.common.base.Preconditions.checkArgument;

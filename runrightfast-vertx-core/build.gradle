@@ -38,4 +38,5 @@ sourceSets {
 }
 
 dependencies {
+    compile project(':runrightfast-core')
 }

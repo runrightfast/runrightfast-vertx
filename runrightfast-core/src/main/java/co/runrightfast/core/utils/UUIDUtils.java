@@ -13,22 +13,23 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.core;
+package co.runrightfast.core.utils;
 
-import com.typesafe.config.Config;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
  * @author alfio
  */
-@RequiredArgsConstructor
-public final class AppConfig {
+public interface UUIDUtils {
 
-    @NonNull
-    @Getter
-    private final Config config;
+    /**
+     *
+     * @return 32 char UUID
+     */
+    static String uuid() {
+        return StringUtils.remove(UUID.randomUUID().toString(), '-');
+    }
 
 }

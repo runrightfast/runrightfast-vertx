@@ -8,9 +8,9 @@ package co.runrightfast.vertx.core.application.jmx.impl;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
 import co.runrightfast.vertx.core.application.RunRightFastVertxApplicationLauncher;
 import co.runrightfast.vertx.core.application.jmx.ApplicationMXBean;
-import co.runrightfast.vertx.core.application.jmx.MBeanSupport;
-import co.runrightfast.vertx.core.utils.ConfigUtils;
-import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.core.jmx.MBeanSupport;
+import co.runrightfast.core.utils.ConfigUtils;
+import co.runrightfast.core.utils.ServiceUtils;
 import com.typesafe.config.Config;
 import lombok.NonNull;
 

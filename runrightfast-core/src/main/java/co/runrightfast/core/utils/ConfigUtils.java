@@ -13,9 +13,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.utils;
+package co.runrightfast.core.utils;
 
-import static co.runrightfast.vertx.core.utils.JvmProcess.HOST;
+import static co.runrightfast.core.utils.JvmProcess.HOST;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;

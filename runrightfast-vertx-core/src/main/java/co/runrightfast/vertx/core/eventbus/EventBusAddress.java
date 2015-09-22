@@ -16,7 +16,7 @@
 package co.runrightfast.vertx.core.eventbus;
 
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
-import co.runrightfast.vertx.core.utils.JvmProcess;
+import co.runrightfast.core.utils.JvmProcess;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.protobuf.Message;
 import java.util.Arrays;

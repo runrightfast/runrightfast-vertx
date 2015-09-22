@@ -38,7 +38,9 @@ sourceSets {
 }
 
 dependencies {
+    compile project(':runrightfast-core')
+    
     compile 'org.apache.shiro:shiro-core'
     compile 'org.bouncycastle:bcprov-jdk15on'
-    compile 'org.bouncycastle:bcpkix-jdk15on'  
+    compile 'org.bouncycastle:bcpkix-jdk15on'
 }

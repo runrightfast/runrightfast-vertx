@@ -16,8 +16,8 @@
 package co.runrightfast.vertx.orientdb.config;
 
 import co.runrightfast.vertx.orientdb.config.NetworkSSLConfig;
-import static co.runrightfast.vertx.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
+import static co.runrightfast.core.docker.weave.WeaveUtils.getWeaveClusterHostIPAddress;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;

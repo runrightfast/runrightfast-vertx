@@ -23,7 +23,7 @@ import co.runrightfast.core.application.event.AppEventLogger;
 import co.runrightfast.core.application.event.ApplicationEvents;
 import co.runrightfast.core.application.services.healthchecks.HealthChecksMXBean;
 import co.runrightfast.core.application.services.healthchecks.HealthChecksService;
-import static co.runrightfast.vertx.core.utils.JmxUtils.registerApplicationMBean;
+import static co.runrightfast.core.utils.JmxUtils.registerApplicationMBean;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codahale.metrics.health.SharedHealthCheckRegistries;

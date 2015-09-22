@@ -15,8 +15,8 @@
  */
 package co.runrightfast.vertx.core;
 
-import co.runrightfast.vertx.core.utils.ConfigUtils;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.CONFIG_NAMESPACE;
+import co.runrightfast.core.utils.ConfigUtils;
+import static co.runrightfast.core.utils.ConfigUtils.CONFIG_NAMESPACE;
 
 /**
  *

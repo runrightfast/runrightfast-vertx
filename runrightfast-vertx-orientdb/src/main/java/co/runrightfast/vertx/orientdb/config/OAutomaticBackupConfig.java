@@ -15,10 +15,10 @@
  */
 package co.runrightfast.vertx.orientdb.config;
 
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_BE_WITHIN_RANGE;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATTERN_DOES_NOT_MATCH;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_BE_WITHIN_RANGE;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.PATTERN_DOES_NOT_MATCH;
 import static co.runrightfast.vertx.orientdb.config.OAutomaticBackupConfig.DelayTimeUnit.DAY;
 import static co.runrightfast.vertx.orientdb.config.OAutomaticBackupConfig.DelayTimeUnit.toDelayTimeUnit;
 import static com.google.common.base.Preconditions.checkArgument;

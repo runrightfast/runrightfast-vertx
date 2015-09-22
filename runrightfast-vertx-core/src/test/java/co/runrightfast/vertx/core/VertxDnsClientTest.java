@@ -1,3 +1,5 @@
+package co.runrightfast.vertx.core;
+
 /*
  Copyright 2015 Alfio Zappala
 
@@ -13,7 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.core;
+
 
 import io.vertx.core.Vertx;
 import io.vertx.core.dns.DnsClient;

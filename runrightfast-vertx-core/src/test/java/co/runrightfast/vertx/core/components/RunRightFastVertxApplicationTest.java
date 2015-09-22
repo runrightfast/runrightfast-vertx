@@ -42,11 +42,11 @@ import co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageProducer.addRunRightFastHeaders;
 import co.runrightfast.vertx.core.modules.RunRightFastApplicationModule;
 import co.runrightfast.vertx.core.modules.VertxServiceModule;
-import co.runrightfast.vertx.core.utils.ConfigUtils;
-import co.runrightfast.vertx.core.utils.JsonUtils;
-import co.runrightfast.vertx.core.utils.ProtobufUtils;
-import co.runrightfast.vertx.core.utils.ServiceUtils;
-import co.runrightfast.vertx.core.utils.VertxUtils;
+import co.runrightfast.core.utils.ConfigUtils;
+import co.runrightfast.core.utils.JsonUtils;
+import co.runrightfast.core.utils.ProtobufUtils;
+import co.runrightfast.core.utils.ServiceUtils;
+import co.runrightfast.core.utils.VertxUtils;
 import co.runrightfast.vertx.core.verticles.messages.Ping;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleDeployment;
 import co.runrightfast.vertx.core.verticles.verticleManager.RunRightFastVerticleManager;
@@ -767,7 +767,7 @@ public class RunRightFastVertxApplicationTest {
                             String.format("result.result().headers().contains(MessageHeader.MESSAGE_TIMESTAMP.header) =  %s", result.result().headers().contains(MessageHeader.MESSAGE_TIMESTAMP.header))
                     );
                     log.logp(INFO, getClass().getName(), String.format("responseHandler::%s::headers", messageType.getName()),
-                            JsonUtils.toVertxJsonObject(VertxUtils.toJson(result.result().headers())).encodePrettily()
+                            JsonUtils.toVertxJsonObject(VertxUtils.toJsonObject(result.result().headers())).encodePrettily()
                     );
                     log.logp(INFO, getClass().getName(), String.format("responseHandler::%s::message", messageType.getName()),
                             JsonUtils.toVertxJsonObject(ProtobufUtils.protobuMessageToJson(result.result().body())).encodePrettily()

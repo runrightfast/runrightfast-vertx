@@ -15,8 +15,8 @@
  */
 package co.runrightfast.vertx.orientdb.config;
 
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.PATH_DOES_NOT_EXIST;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.PATH_DOES_NOT_EXIST;
 import co.runrightfast.vertx.orientdb.plugins.OrientDBPluginWithProvidedHazelcastInstance;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;

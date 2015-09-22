@@ -15,8 +15,8 @@
  */
 package co.runrightfast.vertx.orientdb.config;
 
-import co.runrightfast.vertx.core.utils.ConfigUtils;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
+import co.runrightfast.core.utils.ConfigUtils;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.orientechnologies.orient.graph.handler.OGraphServerHandler;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;

@@ -15,7 +15,7 @@
  */
 package co.runrightfast.vertx.core.eventbus;
 
-import co.runrightfast.vertx.core.utils.JsonUtils;
+import co.runrightfast.core.utils.JsonUtils;
 import co.runrightfast.vertx.core.verticles.verticleManager.messages.GetVerticleDeployments;
 import javax.json.JsonObject;
 import lombok.extern.java.Log;

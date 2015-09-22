@@ -15,9 +15,9 @@
  */
 package co.runrightfast.vertx.orientdb.config;
 
-import co.runrightfast.vertx.core.utils.ConfigUtils;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
-import static co.runrightfast.vertx.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
+import co.runrightfast.core.utils.ConfigUtils;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_NOT_BE_BLANK;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.typesafe.config.Config;
 import static java.lang.Boolean.FALSE;

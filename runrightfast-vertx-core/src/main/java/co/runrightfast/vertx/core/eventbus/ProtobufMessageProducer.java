@@ -23,7 +23,7 @@ import static co.runrightfast.vertx.core.RunRightFastVerticleMetrics.Meters.MESS
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_ID;
 import static co.runrightfast.vertx.core.eventbus.MessageHeader.MESSAGE_TIMESTAMP;
 import static co.runrightfast.vertx.core.eventbus.ProtobufMessageCodec.getProtobufMessageCodec;
-import static co.runrightfast.vertx.core.utils.UUIDUtils.uuid;
+import static co.runrightfast.core.utils.UUIDUtils.uuid;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;

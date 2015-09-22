@@ -16,8 +16,8 @@
 package co.runrightfast.vertx.orientdb.impl.embedded;
 
 import co.runrightfast.core.ApplicationException;
-import co.runrightfast.vertx.core.utils.JvmProcess;
-import co.runrightfast.vertx.core.utils.ServiceUtils;
+import co.runrightfast.core.utils.JvmProcess;
+import co.runrightfast.core.utils.ServiceUtils;
 import co.runrightfast.vertx.orientdb.ODatabaseDocumentTxSupplier;
 import static co.runrightfast.vertx.orientdb.OrientDBConstants.NETWORK_BINARY_PROTOCOL;
 import static co.runrightfast.vertx.orientdb.OrientDBConstants.ROOT_USER;

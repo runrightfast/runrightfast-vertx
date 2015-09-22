@@ -16,7 +16,7 @@
 package co.runrightfast.vertx.core.application;
 
 import co.runrightfast.core.JsonRepresentation;
-import static co.runrightfast.vertx.core.utils.ConfigUtils.configPath;
+import static co.runrightfast.core.utils.ConfigUtils.configPath;
 import com.typesafe.config.Config;
 import javax.json.Json;
 import javax.json.JsonObject;

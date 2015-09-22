@@ -21,7 +21,7 @@ import static co.runrightfast.core.application.event.AppEvent.AppEventLevel.ERRO
 import static co.runrightfast.core.application.event.AppEvent.AppEventLevel.INFO;
 import static co.runrightfast.core.application.event.AppEvent.AppEventLevel.WARN;
 import co.runrightfast.vertx.core.RunRightFastVerticleId;
-import co.runrightfast.vertx.core.utils.JsonUtils;
+import co.runrightfast.core.utils.JsonUtils;
 import com.google.common.base.MoreObjects;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;

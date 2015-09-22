@@ -13,23 +13,22 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-package co.runrightfast.vertx.core.utils;
+package co.runrightfast.core.utils;
 
-import java.util.UUID;
-import org.apache.commons.lang3.StringUtils;
+import java.time.Duration;
+import lombok.NonNull;
 
 /**
  *
  * @author alfio
  */
-public interface UUIDUtils {
+public interface ConcurrencyUtils {
 
-    /**
-     *
-     * @return 32 char UUID
-     */
-    static String uuid() {
-        return StringUtils.remove(UUID.randomUUID().toString(), '-');
+    static void sleep(@NonNull final Duration sleepDuration) {
+        try {
+            Thread.sleep(sleepDuration.toMillis());
+        } catch (final InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
     }
-
 }

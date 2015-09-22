@@ -52,6 +52,7 @@ public class DistinguishedNameTest {
         log.info(String.format("principle2 name RFC2253 =\n%s", principal2.getName(X500Principal.RFC2253)));
 
         assertThat(Arrays.areEqual(principal.getEncoded(), principal2.getEncoded()), is(true));
+        assertThat(principal, is(principal2));
     }
 
 }
