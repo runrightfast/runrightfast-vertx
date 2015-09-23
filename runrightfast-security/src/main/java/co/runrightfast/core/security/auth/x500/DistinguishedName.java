@@ -20,7 +20,9 @@ import java.util.Arrays;
 import javax.security.auth.x500.X500Principal;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.asn1.x500.X500Name;
 
 /**
  * <pre>
@@ -199,6 +201,10 @@ public class DistinguishedName {
 
     public X500Principal toX500Principal() {
         return new X500Principal(toString());
+    }
+
+    public static X500Name toX500Name(@NonNull final X500Principal principal) {
+        return X500Name.getInstance(principal.getEncoded());
     }
 
 }

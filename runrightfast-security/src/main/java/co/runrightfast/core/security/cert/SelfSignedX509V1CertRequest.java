@@ -19,20 +19,16 @@ import java.math.BigInteger;
 import java.security.KeyPair;
 import java.time.Instant;
 import javax.security.auth.x500.X500Principal;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
 /**
- * The combination of the {@link X509V1CertRequest#issuerPrincipal } {@link X509V1CertRequest#serialNumber} must be unique.
- *
  *
  * @author alfio
  */
 @ToString(callSuper = true, exclude = "keyPair")
-@EqualsAndHashCode(callSuper = true)
-public final class SelfSignedX509V1CertRequest extends AbstractX509V1CertRequest {
+public final class SelfSignedX509V1CertRequest extends AbstractX509CertRequest {
 
     @Getter
     private final KeyPair keyPair;

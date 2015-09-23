@@ -27,12 +27,13 @@ import lombok.NonNull;
 import lombok.ToString;
 
 /**
+ * The combination of the {@link AbstractX509CertRequest#issuerPrincipal } {@link AbstractX509CertRequest#serialNumber} must be unique.
  *
  * @author alfio
  */
 @ToString
-@EqualsAndHashCode
-public abstract class AbstractX509V1CertRequest {
+@EqualsAndHashCode(of = {"issuerPrincipal", "serialNumber"})
+public abstract class AbstractX509CertRequest {
 
     @Getter
     protected final X500Principal issuerPrincipal;
@@ -49,7 +50,7 @@ public abstract class AbstractX509V1CertRequest {
     @Getter
     protected final Instant notAfter;
 
-    protected AbstractX509V1CertRequest(@NonNull final X500Principal issuerPrincipal, @NonNull final BigInteger serialNumber, @NonNull final Instant notBefore, @NonNull final Instant notAfter) {
+    protected AbstractX509CertRequest(@NonNull final X500Principal issuerPrincipal, @NonNull final BigInteger serialNumber, @NonNull final Instant notBefore, @NonNull final Instant notAfter) {
         checkArgument(serialNumber.signum() == 1, MUST_BE_GREATER_THAN_ZERO, "request.serialNumber");
         checkArgument(notAfter.isAfter(notBefore), MUST_BE_AFTER_THAN, "notAfter", notAfter, "notBefore", notBefore);
         this.issuerPrincipal = issuerPrincipal;

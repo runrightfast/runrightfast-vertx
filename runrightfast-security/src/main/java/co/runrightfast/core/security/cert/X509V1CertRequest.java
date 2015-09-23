@@ -18,32 +18,42 @@ package co.runrightfast.core.security.cert;
 import java.math.BigInteger;
 import java.security.PublicKey;
 import java.time.Instant;
+import java.util.Date;
 import javax.security.auth.x500.X500Principal;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
+import org.bouncycastle.cert.X509v1CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509v1CertificateBuilder;
 
 /**
- * The combination of the {@link X509V1CertRequest#issuerPrincipal } {@link X509V1CertRequest#serialNumber} must be unique.
- *
  *
  * @author alfio
  */
 @ToString(callSuper = true, exclude = "publicKey")
-@EqualsAndHashCode(callSuper = true)
-public final class X509V1CertRequest extends AbstractX509V1CertRequest {
+public final class X509V1CertRequest extends AbstractX509CertRequest {
 
     @Getter
     private final X500Principal subjectPrincipal;
 
     @Getter
-    private final PublicKey publicKey;
+    private final PublicKey subjectPublicKey;
 
-    public X509V1CertRequest(final X500Principal issuerPrincipal, final BigInteger serialNumber, final Instant notBefore, final Instant notAfter, @NonNull final X500Principal subjectPrincipal, @NonNull final PublicKey publicKey) {
+    public X509V1CertRequest(final X500Principal issuerPrincipal, final BigInteger serialNumber, final Instant notBefore, final Instant notAfter, @NonNull final X500Principal subjectPrincipal, @NonNull final PublicKey subjectPublicKey) {
         super(issuerPrincipal, serialNumber, notBefore, notAfter);
         this.subjectPrincipal = subjectPrincipal;
-        this.publicKey = publicKey;
+        this.subjectPublicKey = subjectPublicKey;
+    }
+
+    public X509v1CertificateBuilder x509v1CertificateBuilder() {
+        return new JcaX509v1CertificateBuilder(
+                issuerPrincipal,
+                serialNumber,
+                Date.from(notBefore),
+                Date.from(notAfter),
+                subjectPrincipal,
+                subjectPublicKey
+        );
     }
 
 }

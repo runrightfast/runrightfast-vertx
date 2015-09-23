@@ -76,7 +76,9 @@ public class CertificateServiceImplTest {
         final X500Principal principal = issuer.toX500Principal();
 
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
-        final KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        final KeyPair signingKeyPair = keyPairGenerator.generateKeyPair();
+
+        final KeyPair certKeyPair = keyPairGenerator.generateKeyPair();
 
         final X509V1CertRequest request = new X509V1CertRequest(
                 principal,
@@ -84,17 +86,18 @@ public class CertificateServiceImplTest {
                 Instant.now(),
                 Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)),
                 principal,
-                keyPair.getPublic()
+                certKeyPair.getPublic()
         );
         log.info(String.format("request : %s", request));
 
-        final X509Certificate result = certificateService.generateX509CertificateV1(request, keyPair.getPrivate());
-        log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", result.getSigAlgName(), result.getVersion()));
-        assertThat(result.getVersion(), is(1));
+        final X509Certificate cert = certificateService.generateX509CertificateV1(request, signingKeyPair.getPrivate());
+        log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", cert.getSigAlgName(), cert.getVersion()));
+        assertThat(cert.getVersion(), is(1));
 
-        result.checkValidity();
-        assertThat(Arrays.areEqual(principal.getEncoded(), result.getIssuerX500Principal().getEncoded()), is(true));
-        result.verify(keyPair.getPublic());
+        cert.checkValidity();
+        assertThat(Arrays.areEqual(principal.getEncoded(), cert.getIssuerX500Principal().getEncoded()), is(true));
+        cert.verify(signingKeyPair.getPublic());
+
     }
 
     @Test
@@ -125,13 +128,13 @@ public class CertificateServiceImplTest {
         );
         log.info(String.format("request : %s", request));
 
-        final X509Certificate result = certificateService.generateSelfSignedX509CertificateV1(request);
-        log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", result.getSigAlgName(), result.getVersion()));
-        assertThat(result.getVersion(), is(1));
+        final X509Certificate cert = certificateService.generateSelfSignedX509CertificateV1(request);
+        log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", cert.getSigAlgName(), cert.getVersion()));
+        assertThat(cert.getVersion(), is(1));
 
-        result.checkValidity();
-        assertThat(Arrays.areEqual(principal.getEncoded(), result.getIssuerX500Principal().getEncoded()), is(true));
-        result.verify(keyPair.getPublic());
+        cert.checkValidity();
+        assertThat(Arrays.areEqual(principal.getEncoded(), cert.getIssuerX500Principal().getEncoded()), is(true));
+        cert.verify(cert.getPublicKey());
     }
 
 }

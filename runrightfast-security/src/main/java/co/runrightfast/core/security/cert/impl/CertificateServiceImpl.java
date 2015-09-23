@@ -21,7 +21,6 @@ import co.runrightfast.core.security.cert.CertificateService;
 import co.runrightfast.core.security.cert.CertificateServiceException;
 import co.runrightfast.core.security.cert.SelfSignedX509V1CertRequest;
 import co.runrightfast.core.security.cert.X509V1CertRequest;
-import static co.runrightfast.core.security.cert.X509V1CertRequestToX509v1CertificateBuilder.x509v1CertificateBuilder;
 import static co.runrightfast.core.security.util.SecurityUtils.strongSecureRandom;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
@@ -43,7 +42,7 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public X509Certificate generateX509CertificateV1(@NonNull final X509V1CertRequest request, @NonNull final PrivateKey privateKey) {
         final ContentSigner signer = contentSigner(privateKey);
-        final X509v1CertificateBuilder certBuilder = x509v1CertificateBuilder(request);
+        final X509v1CertificateBuilder certBuilder = request.x509v1CertificateBuilder();
         final X509CertificateHolder certHolder = certBuilder.build(signer);
         try {
             return new JcaX509CertificateConverter()
