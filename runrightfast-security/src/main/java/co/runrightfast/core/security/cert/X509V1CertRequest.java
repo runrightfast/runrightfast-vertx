@@ -28,9 +28,11 @@ import org.bouncycastle.cert.jcajce.JcaX509v1CertificateBuilder;
 
 /**
  *
+ * Version 1 certificates generally only appear as trust anchors.
+ *
  * @author alfio
  */
-@ToString(callSuper = true, exclude = "publicKey")
+@ToString(callSuper = true, exclude = "subjectPublicKey")
 public final class X509V1CertRequest extends AbstractX509CertRequest {
 
     @Getter
