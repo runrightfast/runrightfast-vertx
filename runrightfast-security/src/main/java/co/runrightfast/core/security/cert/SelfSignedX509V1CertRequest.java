@@ -19,9 +19,10 @@ import java.math.BigInteger;
 import java.security.KeyPair;
 import java.time.Instant;
 import javax.security.auth.x500.X500Principal;
-import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 
 /**
  * The combination of the {@link X509V1CertRequest#issuerPrincipal } {@link X509V1CertRequest#serialNumber} must be unique.
@@ -29,27 +30,17 @@ import lombok.NonNull;
  *
  * @author alfio
  */
-@Data
-@Builder
-public class SelfSignedX509V1CertRequest {
+@ToString(callSuper = true, exclude = "keyPair")
+@EqualsAndHashCode(callSuper = true)
+public final class SelfSignedX509V1CertRequest extends AbstractX509V1CertRequest {
 
-    @NonNull
-    private final X500Principal issuerPrincipal;
-
-    /**
-     * Must be a positive number and must be unique per issuerPrincipal
-     */
-    @NonNull
-    private final BigInteger serialNumber;
-
-    @NonNull
-    private final Instant notBefore;
-
-    @NonNull
-    private final Instant notAfter;
-
-    @NonNull
+    @Getter
     private final KeyPair keyPair;
+
+    public SelfSignedX509V1CertRequest(final X500Principal issuerPrincipal, final BigInteger serialNumber, final Instant notBefore, final Instant notAfter, @NonNull final KeyPair keyPair) {
+        super(issuerPrincipal, serialNumber, notBefore, notAfter);
+        this.keyPair = keyPair;
+    }
 
     public X509V1CertRequest toX509V1CertRequest() {
         return new X509V1CertRequest(issuerPrincipal, serialNumber, notBefore, notAfter, issuerPrincipal, keyPair.getPublic());

@@ -15,8 +15,6 @@
  */
 package co.runrightfast.core.security.cert;
 
-import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_ZERO;
-import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Date;
 import java.util.function.Function;
 import lombok.NonNull;
@@ -31,7 +29,6 @@ import org.bouncycastle.cert.jcajce.JcaX509v1CertificateBuilder;
 public interface X509V1CertRequestToX509v1CertificateBuilder extends Function<X509V1CertRequest, X509v1CertificateBuilder> {
 
     static X509v1CertificateBuilder x509v1CertificateBuilder(@NonNull final X509V1CertRequest request) {
-        checkArgument(request.getSerialNumber().signum() == 1, MUST_BE_GREATER_THAN_ZERO, "request.serialNumber");
         return new JcaX509v1CertificateBuilder(
                 request.getIssuerPrincipal(),
                 request.getSerialNumber(),

@@ -28,7 +28,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
@@ -79,16 +78,17 @@ public class CertificateServiceImplTest {
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
         final KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-        final X509V1CertRequest request = X509V1CertRequest.builder()
-                .issuerPrincipal(principal)
-                .notAfter(Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)))
-                .notBefore(Instant.now())
-                .publicKey(keyPair.getPublic())
-                .serialNumber(BigInteger.ONE)
-                .subjectPrincipal(principal)
-                .build();
-        final PrivateKey privateKey = keyPair.getPrivate();
-        final X509Certificate result = certificateService.generateX509CertificateV1(request, privateKey);
+        final X509V1CertRequest request = new X509V1CertRequest(
+                principal,
+                BigInteger.ONE,
+                Instant.now(),
+                Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)),
+                principal,
+                keyPair.getPublic()
+        );
+        log.info(String.format("request : %s", request));
+
+        final X509Certificate result = certificateService.generateX509CertificateV1(request, keyPair.getPrivate());
         log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", result.getSigAlgName(), result.getVersion()));
         assertThat(result.getVersion(), is(1));
 
@@ -116,14 +116,15 @@ public class CertificateServiceImplTest {
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
         final KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-        final SelfSignedX509V1CertRequest request = SelfSignedX509V1CertRequest.builder()
-                .issuerPrincipal(principal)
-                .notAfter(Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)))
-                .notBefore(Instant.now())
-                .keyPair(keyPair)
-                .serialNumber(BigInteger.ONE)
-                .build();
-        final PrivateKey privateKey = keyPair.getPrivate();
+        final SelfSignedX509V1CertRequest request = new SelfSignedX509V1CertRequest(
+                principal,
+                BigInteger.ONE,
+                Instant.now(),
+                Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)),
+                keyPair
+        );
+        log.info(String.format("request : %s", request));
+
         final X509Certificate result = certificateService.generateSelfSignedX509CertificateV1(request);
         log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", result.getSigAlgName(), result.getVersion()));
         assertThat(result.getVersion(), is(1));
