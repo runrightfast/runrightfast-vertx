@@ -33,6 +33,9 @@ public interface PreconditionErrorMessageTemplates {
     // collection validation
     static final String MUST_NOT_BE_EMPTY = "'%s' must not be empty";
 
+    // date / time validation
+    static final String MUST_BE_AFTER_THAN = "'%s'(%s) must be after '%s'(%s)";
+
     // File / Dir validation
     static final String PATH_DOES_NOT_EXIST = "'%s': path does not exist : %s";
     static final String PATH_IS_NOT_A_DIRECTORY = "'%s': %s is not a directory";
