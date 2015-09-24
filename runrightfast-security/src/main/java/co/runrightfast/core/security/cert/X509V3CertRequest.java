@@ -47,16 +47,24 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
     private final PublicKey subjectPublicKey;
 
     @Getter
-    private final Collection<X509CertExtension> extenstions;
+    private final Collection<X509CertExtension> extentions;
 
-    public X509V3CertRequest(final X500Principal issuerPrincipal, final BigInteger serialNumber, final Instant notBefore, final Instant notAfter, @NonNull final X500Principal subjectPrincipal, @NonNull final PublicKey subjectPublicKey, @NonNull final Collection<X509CertExtension> extenstions) {
+    public X509V3CertRequest(
+            final X500Principal issuerPrincipal,
+            final BigInteger serialNumber,
+            final Instant notBefore,
+            final Instant notAfter,
+            @NonNull final X500Principal subjectPrincipal,
+            @NonNull final PublicKey subjectPublicKey,
+            @NonNull final Collection<X509CertExtension> extentions
+    ) {
         super(issuerPrincipal, serialNumber, notBefore, notAfter);
         this.subjectPrincipal = subjectPrincipal;
         this.subjectPublicKey = subjectPublicKey;
-        this.extenstions = ImmutableList.copyOf(extenstions);
+        this.extentions = ImmutableList.copyOf(extentions);
     }
 
-    public X509v3CertificateBuilder x509v1CertificateBuilder() {
+    public X509v3CertificateBuilder x509v3CertificateBuilder() {
         final JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
                 issuerPrincipal,
                 serialNumber,
@@ -66,7 +74,7 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
                 subjectPublicKey
         );
 
-        extenstions.stream().forEach(ext -> {
+        extentions.stream().forEach(ext -> {
             try {
                 builder.addExtension(ext.getOid(), ext.isCritical(), ext.getValue());
             } catch (final CertIOException ex) {

@@ -35,4 +35,13 @@ public interface CertificateService {
 
     X509Certificate generateSelfSignedX509CertificateV1(SelfSignedX509V1CertRequest request) throws CertificateServiceException;
 
+    /**
+     *
+     * @param request X509V3CertRequest
+     * @param privateKey used to sign the certificate
+     * @return X509Certificate
+     * @throws CertificateServiceException
+     */
+    X509Certificate generateX509CertificateV3(X509V3CertRequest request, PrivateKey privateKey) throws CertificateServiceException;
+
 }

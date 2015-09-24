@@ -21,6 +21,7 @@ import co.runrightfast.core.security.cert.CertificateService;
 import co.runrightfast.core.security.cert.CertificateServiceException;
 import co.runrightfast.core.security.cert.SelfSignedX509V1CertRequest;
 import co.runrightfast.core.security.cert.X509V1CertRequest;
+import co.runrightfast.core.security.cert.X509V3CertRequest;
 import static co.runrightfast.core.security.util.SecurityUtils.strongSecureRandom;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
@@ -28,6 +29,7 @@ import java.security.cert.X509Certificate;
 import lombok.NonNull;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v1CertificateBuilder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -44,6 +46,10 @@ public class CertificateServiceImpl implements CertificateService {
         final ContentSigner signer = contentSigner(privateKey);
         final X509v1CertificateBuilder certBuilder = request.x509v1CertificateBuilder();
         final X509CertificateHolder certHolder = certBuilder.build(signer);
+        return toX509Certificate(certHolder);
+    }
+
+    private X509Certificate toX509Certificate(final X509CertificateHolder certHolder) {
         try {
             return new JcaX509CertificateConverter()
                     .setProvider(BOUNCY_CASTLE)
@@ -68,6 +74,14 @@ public class CertificateServiceImpl implements CertificateService {
     public X509Certificate generateSelfSignedX509CertificateV1(@NonNull final SelfSignedX509V1CertRequest request) throws CertificateServiceException {
         return generateX509CertificateV1(request.toX509V1CertRequest(), request.getKeyPair().getPrivate());
 
+    }
+
+    @Override
+    public X509Certificate generateX509CertificateV3(@NonNull final X509V3CertRequest request, @NonNull final PrivateKey privateKey) throws CertificateServiceException {
+        final ContentSigner signer = contentSigner(privateKey);
+        final X509v3CertificateBuilder certBuilder = request.x509v3CertificateBuilder();
+        final X509CertificateHolder certHolder = certBuilder.build(signer);
+        return toX509Certificate(certHolder);
     }
 
 }
