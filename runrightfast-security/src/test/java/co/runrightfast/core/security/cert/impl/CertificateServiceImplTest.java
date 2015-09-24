@@ -20,6 +20,7 @@ import static co.runrightfast.core.security.BouncyCastle.BOUNCY_CASTLE;
 import static co.runrightfast.core.security.KeyPairGeneratorAlgorithm.RSA;
 import co.runrightfast.core.security.auth.x500.DistinguishedName;
 import static co.runrightfast.core.security.bc.BouncyCastleUtils.jcaX509ExtensionUtils;
+import co.runrightfast.core.security.cert.CAIssuedX509V3CertRequest;
 import co.runrightfast.core.security.cert.CertificateService;
 import co.runrightfast.core.security.cert.SelfSignedX509V1CertRequest;
 import co.runrightfast.core.security.cert.X509CertExtension;
@@ -128,7 +129,7 @@ public class CertificateServiceImplTest {
     }
 
     /**
-     * creates an intermediate certificate which can be used to sign other certificates
+     * SubjectKeyIdentifier is not allowed to be specified
      *
      * @throws NoSuchAlgorithmException
      * @throws NoSuchProviderException
@@ -138,8 +139,8 @@ public class CertificateServiceImplTest {
      * @throws InvalidKeyException
      * @throws SignatureException
      */
-    @Test
-    public void testGenerateX509CertificateV3_intermediateCACertificate() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
+    @Test(expected = IllegalArgumentException.class)
+    public void testGenerateX509CertificateV3_intermediateCACertificate_withSubjectKeyIdentifierNoAllowed() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
         final DistinguishedName subject = subject();
 
         final X500Principal subjectPrincipal = subject.toX500Principal();
@@ -185,6 +186,48 @@ public class CertificateServiceImplTest {
                 certKeyPair.getPublic(),
                 x509CertExtensions
         );
+    }
+
+    public void testGenerateX509CertificateV3_intermediateCACertificate() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
+        final DistinguishedName subject = subject();
+
+        final X500Principal subjectPrincipal = subject.toX500Principal();
+
+        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
+        final KeyPair certKeyPair = keyPairGenerator.generateKeyPair();
+
+        final CaCert caCert = caCert();
+        final JcaX509ExtensionUtils extUtils = jcaX509ExtensionUtils();
+        final ImmutableList<X509CertExtension> x509CertExtensions = ImmutableList.<X509CertExtension>builder()
+                .add(X509CertExtension.builder()
+                        .oid(Extension.authorityKeyIdentifier)
+                        .value(extUtils.createAuthorityKeyIdentifier(caCert.getCert()))
+                        .critical(false)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.keyUsage)
+                        .value(new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign))
+                        .critical(true)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.basicConstraints)
+                        .value(new BasicConstraints(0))
+                        .critical(true)
+                        .build()
+                )
+                .build();
+
+        final X509V3CertRequest request = new X509V3CertRequest(
+                caCert.cert.getIssuerX500Principal(),
+                BigInteger.ONE,
+                Instant.now(),
+                Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)),
+                subjectPrincipal,
+                certKeyPair.getPublic(),
+                x509CertExtensions
+        );
         log.info(String.format("request : %s", request));
 
         final X509Certificate cert = certificateService.generateX509CertificateV3(request, caCert.getPrivateKey());
@@ -195,6 +238,142 @@ public class CertificateServiceImplTest {
         assertThat(Arrays.areEqual(subjectPrincipal.getEncoded(), cert.getSubjectX500Principal().getEncoded()), is(true));
         assertThat(Arrays.areEqual(caCert.getCert().getSubjectX500Principal().getEncoded(), cert.getIssuerX500Principal().getEncoded()), is(true));
         cert.verify(caCert.getCert().getPublicKey());
+
+    }
+
+    @Test
+    public void testGenerateX509CertificateV3_CAIssuedX509V3CertRequest() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
+        final DistinguishedName subject = subject();
+
+        final X500Principal subjectPrincipal = subject.toX500Principal();
+
+        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
+        final KeyPair certKeyPair = keyPairGenerator.generateKeyPair();
+
+        final CaCert caCert = caCert();
+        final JcaX509ExtensionUtils extUtils = jcaX509ExtensionUtils();
+        final ImmutableList<X509CertExtension> x509CertExtensions = ImmutableList.<X509CertExtension>builder()
+                .add(X509CertExtension.builder()
+                        .oid(Extension.keyUsage)
+                        .value(new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign))
+                        .critical(true)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.basicConstraints)
+                        .value(new BasicConstraints(0))
+                        .critical(true)
+                        .build()
+                )
+                .build();
+
+        final CAIssuedX509V3CertRequest request = new CAIssuedX509V3CertRequest(
+                caCert.cert,
+                BigInteger.ONE,
+                Instant.now(),
+                Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)),
+                subjectPrincipal,
+                certKeyPair.getPublic(),
+                x509CertExtensions
+        );
+        log.info(String.format("request : %s", request));
+
+        final X509Certificate cert = certificateService.generateX509CertificateV3(request, caCert.getPrivateKey());
+        log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", cert.getSigAlgName(), cert.getVersion()));
+        assertThat(cert.getVersion(), is(3));
+
+        cert.checkValidity();
+        assertThat(Arrays.areEqual(subjectPrincipal.getEncoded(), cert.getSubjectX500Principal().getEncoded()), is(true));
+        assertThat(Arrays.areEqual(caCert.getCert().getSubjectX500Principal().getEncoded(), cert.getIssuerX500Principal().getEncoded()), is(true));
+        cert.verify(caCert.getCert().getPublicKey());
+
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGenerateX509CertificateV3_CAIssuedX509V3CertRequest_withSubjectKeyIdentifierNoAllowed() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
+        final DistinguishedName subject = subject();
+
+        final X500Principal subjectPrincipal = subject.toX500Principal();
+
+        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
+        final KeyPair certKeyPair = keyPairGenerator.generateKeyPair();
+
+        final CaCert caCert = caCert();
+        final JcaX509ExtensionUtils extUtils = jcaX509ExtensionUtils();
+        final ImmutableList<X509CertExtension> x509CertExtensions = ImmutableList.<X509CertExtension>builder()
+                .add(X509CertExtension.builder()
+                        .oid(Extension.subjectKeyIdentifier)
+                        .value(extUtils.createSubjectKeyIdentifier(certKeyPair.getPublic()))
+                        .critical(false)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.keyUsage)
+                        .value(new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign))
+                        .critical(true)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.basicConstraints)
+                        .value(new BasicConstraints(0))
+                        .critical(true)
+                        .build()
+                )
+                .build();
+
+        final CAIssuedX509V3CertRequest request = new CAIssuedX509V3CertRequest(
+                caCert.cert,
+                BigInteger.ONE,
+                Instant.now(),
+                Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)),
+                subjectPrincipal,
+                certKeyPair.getPublic(),
+                x509CertExtensions
+        );
+
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGenerateX509CertificateV3_CAIssuedX509V3CertRequest_withAuthorityKeyIdentifierNoAllowed() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
+        final DistinguishedName subject = subject();
+
+        final X500Principal subjectPrincipal = subject.toX500Principal();
+
+        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
+        final KeyPair certKeyPair = keyPairGenerator.generateKeyPair();
+
+        final CaCert caCert = caCert();
+        final JcaX509ExtensionUtils extUtils = jcaX509ExtensionUtils();
+        final ImmutableList<X509CertExtension> x509CertExtensions = ImmutableList.<X509CertExtension>builder()
+                .add(X509CertExtension.builder()
+                        .oid(Extension.authorityKeyIdentifier)
+                        .value(extUtils.createAuthorityKeyIdentifier(caCert.getCert()))
+                        .critical(false)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.keyUsage)
+                        .value(new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign))
+                        .critical(true)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.basicConstraints)
+                        .value(new BasicConstraints(0))
+                        .critical(true)
+                        .build()
+                )
+                .build();
+
+        final CAIssuedX509V3CertRequest request = new CAIssuedX509V3CertRequest(
+                caCert.cert,
+                BigInteger.ONE,
+                Instant.now(),
+                Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)),
+                subjectPrincipal,
+                certKeyPair.getPublic(),
+                x509CertExtensions
+        );
 
     }
 
@@ -212,6 +391,60 @@ public class CertificateServiceImplTest {
      */
     @Test
     public void testGenerateX509CertificateV3_endEntityCertificate() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
+        final DistinguishedName subject = subject();
+
+        final X500Principal subjectPrincipal = subject.toX500Principal();
+
+        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA.name(), BOUNCY_CASTLE);
+        final KeyPair certKeyPair = keyPairGenerator.generateKeyPair();
+
+        final CaCert caCert = caCert();
+        final JcaX509ExtensionUtils extUtils = jcaX509ExtensionUtils();
+        final ImmutableList<X509CertExtension> x509CertExtensions = ImmutableList.<X509CertExtension>builder()
+                .add(X509CertExtension.builder()
+                        .oid(Extension.authorityKeyIdentifier)
+                        .value(extUtils.createAuthorityKeyIdentifier(caCert.getCert()))
+                        .critical(false)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.keyUsage)
+                        .value(new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment))
+                        .critical(true)
+                        .build()
+                )
+                .add(X509CertExtension.builder()
+                        .oid(Extension.basicConstraints)
+                        .value(new BasicConstraints(false))
+                        .critical(true)
+                        .build()
+                )
+                .build();
+
+        final X509V3CertRequest request = new X509V3CertRequest(
+                caCert.cert.getIssuerX500Principal(),
+                BigInteger.ONE,
+                Instant.now(),
+                Instant.ofEpochMilli(System.currentTimeMillis() + (10 * 1000)),
+                subjectPrincipal,
+                certKeyPair.getPublic(),
+                x509CertExtensions
+        );
+        log.info(String.format("request : %s", request));
+
+        final X509Certificate cert = certificateService.generateX509CertificateV3(request, caCert.getPrivateKey());
+        log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", cert.getSigAlgName(), cert.getVersion()));
+        assertThat(cert.getVersion(), is(3));
+
+        cert.checkValidity();
+        assertThat(Arrays.areEqual(subjectPrincipal.getEncoded(), cert.getSubjectX500Principal().getEncoded()), is(true));
+        assertThat(Arrays.areEqual(caCert.getCert().getSubjectX500Principal().getEncoded(), cert.getIssuerX500Principal().getEncoded()), is(true));
+        cert.verify(caCert.getCert().getPublicKey());
+
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGenerateX509CertificateV3_endEntityCertificate_withSubjectKeyIdentifierNoAllowed() throws NoSuchAlgorithmException, NoSuchProviderException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, InvalidKeyException, SignatureException {
         final DistinguishedName subject = subject();
 
         final X500Principal subjectPrincipal = subject.toX500Principal();
@@ -257,17 +490,6 @@ public class CertificateServiceImplTest {
                 certKeyPair.getPublic(),
                 x509CertExtensions
         );
-        log.info(String.format("request : %s", request));
-
-        final X509Certificate cert = certificateService.generateX509CertificateV3(request, caCert.getPrivateKey());
-        log.info(String.format("result.getSigAlgName() = %s, result.getVersion() = %s ", cert.getSigAlgName(), cert.getVersion()));
-        assertThat(cert.getVersion(), is(3));
-
-        cert.checkValidity();
-        assertThat(Arrays.areEqual(subjectPrincipal.getEncoded(), cert.getSubjectX500Principal().getEncoded()), is(true));
-        assertThat(Arrays.areEqual(caCert.getCert().getSubjectX500Principal().getEncoded(), cert.getIssuerX500Principal().getEncoded()), is(true));
-        cert.verify(caCert.getCert().getPublicKey());
-
     }
 
     private DistinguishedName issuer() {

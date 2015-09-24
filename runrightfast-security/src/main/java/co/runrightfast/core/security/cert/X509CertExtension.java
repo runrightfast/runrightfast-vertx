@@ -15,10 +15,14 @@
  */
 package co.runrightfast.core.security.cert;
 
+import co.runrightfast.core.ApplicationException;
+import static co.runrightfast.core.security.ASN1Encoding.DER;
+import java.io.IOException;
 import lombok.Builder;
 import lombok.Value;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.x509.Extension;
 
 /**
  *
@@ -33,4 +37,12 @@ public class X509CertExtension {
     boolean critical;
 
     ASN1Encodable value;
+
+    public Extension toExtension() {
+        try {
+            return new Extension(oid, critical, value.toASN1Primitive().getEncoded(DER.name()));
+        } catch (final IOException ex) {
+            throw new ApplicationException(ex);
+        }
+    }
 }

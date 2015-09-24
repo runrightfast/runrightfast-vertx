@@ -19,7 +19,6 @@ import static co.runrightfast.core.security.BouncyCastle.BOUNCY_CASTLE;
 import static co.runrightfast.core.security.SignatureAlgorithm.SHA512withRSA;
 import co.runrightfast.core.security.cert.CertificateService;
 import co.runrightfast.core.security.cert.CertificateServiceException;
-import co.runrightfast.core.security.cert.SelfSignedX509V1CertRequest;
 import co.runrightfast.core.security.cert.X509V1CertRequest;
 import co.runrightfast.core.security.cert.X509V3CertRequest;
 import static co.runrightfast.core.security.util.SecurityUtils.strongSecureRandom;
@@ -68,12 +67,6 @@ public class CertificateServiceImpl implements CertificateService {
         } catch (final OperatorCreationException ex) {
             throw new CertificateServiceException(ex);
         }
-    }
-
-    @Override
-    public X509Certificate generateSelfSignedX509CertificateV1(@NonNull final SelfSignedX509V1CertRequest request) throws CertificateServiceException {
-        return generateX509CertificateV1(request.toX509V1CertRequest(), request.getKeyPair().getPrivate());
-
     }
 
     @Override

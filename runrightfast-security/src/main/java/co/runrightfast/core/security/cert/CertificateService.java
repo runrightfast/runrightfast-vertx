@@ -17,6 +17,7 @@ package co.runrightfast.core.security.cert;
 
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import lombok.NonNull;
 
 /**
  *
@@ -33,7 +34,9 @@ public interface CertificateService {
      */
     X509Certificate generateX509CertificateV1(X509V1CertRequest request, PrivateKey privateKey) throws CertificateServiceException;
 
-    X509Certificate generateSelfSignedX509CertificateV1(SelfSignedX509V1CertRequest request) throws CertificateServiceException;
+    default X509Certificate generateSelfSignedX509CertificateV1(@NonNull final SelfSignedX509V1CertRequest request) throws CertificateServiceException {
+        return generateX509CertificateV1(request.toX509V1CertRequest(), request.getKeyPair().getPrivate());
+    }
 
     /**
      *
@@ -43,5 +46,16 @@ public interface CertificateService {
      * @throws CertificateServiceException
      */
     X509Certificate generateX509CertificateV3(X509V3CertRequest request, PrivateKey privateKey) throws CertificateServiceException;
+
+    /**
+     *
+     * @param request CAIssuedX509V3CertRequest
+     * @param privateKey used to sign the certificate
+     * @return X509Certificate
+     * @throws CertificateServiceException
+     */
+    default X509Certificate generateX509CertificateV3(@NonNull final CAIssuedX509V3CertRequest request, final PrivateKey privateKey) throws CertificateServiceException {
+        return generateX509CertificateV3(request.getX509V3CertRequest(), privateKey);
+    }
 
 }

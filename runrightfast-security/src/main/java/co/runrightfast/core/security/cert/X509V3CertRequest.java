@@ -16,6 +16,8 @@
 package co.runrightfast.core.security.cert;
 
 import co.runrightfast.core.ApplicationException;
+import static co.runrightfast.core.security.bc.BouncyCastleUtils.jcaX509ExtensionUtils;
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import java.math.BigInteger;
 import java.security.PublicKey;
@@ -26,14 +28,24 @@ import javax.security.auth.x500.X500Principal;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
+import org.apache.commons.collections4.CollectionUtils;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.Extensions;
+import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 
 /**
  * Version 3 certificates are used as intermediate certificates and for what are referred to as end-entity certificates. An end-entity in this context is usual
  * an organization or individual that is using the certificate for some purpose, either to publish their public encryption key or to provide others with a way
  * of verifying signatures.
+ *
+ * The following extensions are added automatically and must not be specified when constructing and instance:
+ * <ol>
+ * <li>Subject Key Identifier - OID value "2.5.29.14" (id-ce-subjectKeyIdentifier)
+ * </ol>
  *
  * @author alfio
  */
@@ -47,8 +59,19 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
     private final PublicKey subjectPublicKey;
 
     @Getter
-    private final Collection<X509CertExtension> extentions;
+    private final Collection<X509CertExtension> extensions;
 
+    /**
+     *
+     * @param issuerPrincipal X500Principal
+     * @param serialNumber BigInteger
+     * @param notBefore Instant
+     * @param notAfter Instant
+     * @param subjectPrincipal X500Principal
+     * @param subjectPublicKey PublicKey
+     * @param extensions Subject Key Identifier (OID value "2.5.29.14") extension is added automatically. It must not be specified as an extension when
+     * constructing an instance.
+     */
     public X509V3CertRequest(
             final X500Principal issuerPrincipal,
             final BigInteger serialNumber,
@@ -56,12 +79,13 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
             final Instant notAfter,
             @NonNull final X500Principal subjectPrincipal,
             @NonNull final PublicKey subjectPublicKey,
-            @NonNull final Collection<X509CertExtension> extentions
+            @NonNull final Collection<X509CertExtension> extensions
     ) {
         super(issuerPrincipal, serialNumber, notBefore, notAfter);
+        checkConstraints(extensions);
         this.subjectPrincipal = subjectPrincipal;
         this.subjectPublicKey = subjectPublicKey;
-        this.extentions = ImmutableList.copyOf(extentions);
+        this.extensions = augmentExtensions(extensions, subjectPublicKey);
     }
 
     public X509v3CertificateBuilder x509v3CertificateBuilder() {
@@ -74,7 +98,7 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
                 subjectPublicKey
         );
 
-        extentions.stream().forEach(ext -> {
+        extensions.stream().forEach(ext -> {
             try {
                 builder.addExtension(ext.getOid(), ext.isCritical(), ext.getValue());
             } catch (final CertIOException ex) {
@@ -83,6 +107,28 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
         });
 
         return builder;
+    }
+
+    private void checkConstraints(final Collection<X509CertExtension> extensions) {
+        if (CollectionUtils.isEmpty(extensions)) {
+            return;
+        }
+
+        final Extensions exts = new Extensions(extensions.stream().map(X509CertExtension::toExtension).toArray(Extension[]::new));
+        checkArgument(SubjectKeyIdentifier.fromExtensions(exts) == null, "SubjectKeyIdentifier must not be specified as an extension - it is added automatically");
+    }
+
+    private Collection<X509CertExtension> augmentExtensions(final Collection<X509CertExtension> extensions, final PublicKey subjectPublicKey) {
+        final JcaX509ExtensionUtils extUtils = jcaX509ExtensionUtils();
+        return ImmutableList.<X509CertExtension>builder()
+                .add(X509CertExtension.builder()
+                        .oid(Extension.subjectKeyIdentifier)
+                        .value(extUtils.createSubjectKeyIdentifier(subjectPublicKey))
+                        .critical(false)
+                        .build()
+                )
+                .addAll(extensions)
+                .build();
     }
 
 }
