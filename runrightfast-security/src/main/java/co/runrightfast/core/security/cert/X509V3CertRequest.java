@@ -22,13 +22,17 @@ import com.google.common.collect.ImmutableList;
 import java.math.BigInteger;
 import java.security.PublicKey;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.stream.Collectors;
 import javax.security.auth.x500.X500Principal;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 import org.apache.commons.collections4.CollectionUtils;
+import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
@@ -44,6 +48,7 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
  *
  * The following extensions are added automatically and must not be specified when constructing and instance:
  * <ol>
+ * <li>Basic Constraints - OID value "2.5.29.19" (id-ce-basicConstraints)
  * <li>Subject Key Identifier - OID value "2.5.29.14" (id-ce-subjectKeyIdentifier)
  * </ol>
  *
@@ -62,6 +67,7 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
     private final Collection<X509CertExtension> extensions;
 
     /**
+     * Creates end-entity certificate, i.e., with BasicConstraints(false)
      *
      * @param issuerPrincipal X500Principal
      * @param serialNumber BigInteger
@@ -86,6 +92,23 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
         this.subjectPrincipal = subjectPrincipal;
         this.subjectPublicKey = subjectPublicKey;
         this.extensions = augmentExtensions(extensions, subjectPublicKey);
+    }
+
+    public X509V3CertRequest(
+            final X500Principal issuerPrincipal,
+            final BigInteger serialNumber,
+            final Instant notBefore,
+            final Instant notAfter,
+            @NonNull final X500Principal subjectPrincipal,
+            @NonNull final PublicKey subjectPublicKey,
+            @NonNull final Collection<X509CertExtension> extensions,
+            @NonNull final BasicConstraints basicConstraints
+    ) {
+        super(issuerPrincipal, serialNumber, notBefore, notAfter);
+        checkConstraints(extensions);
+        this.subjectPrincipal = subjectPrincipal;
+        this.subjectPublicKey = subjectPublicKey;
+        this.extensions = augmentExtensions(extensions, subjectPublicKey, X509CertExtension.basicConstraints(basicConstraints));
     }
 
     public X509v3CertificateBuilder x509v3CertificateBuilder() {
@@ -115,10 +138,11 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
         }
 
         final Extensions exts = new Extensions(extensions.stream().map(X509CertExtension::toExtension).toArray(Extension[]::new));
+        checkArgument(BasicConstraints.fromExtensions(exts) == null, "BasicConstraints must not be specified as an extension - it is added automatically");
         checkArgument(SubjectKeyIdentifier.fromExtensions(exts) == null, "SubjectKeyIdentifier must not be specified as an extension - it is added automatically");
     }
 
-    private Collection<X509CertExtension> augmentExtensions(final Collection<X509CertExtension> extensions, final PublicKey subjectPublicKey) {
+    private Collection<X509CertExtension> augmentExtensions(final Collection<X509CertExtension> extensions, final PublicKey subjectPublicKey, final X509CertExtension... exts) {
         final JcaX509ExtensionUtils extUtils = jcaX509ExtensionUtils();
         return ImmutableList.<X509CertExtension>builder()
                 .add(X509CertExtension.builder()
@@ -128,6 +152,7 @@ public final class X509V3CertRequest extends AbstractX509CertRequest {
                         .build()
                 )
                 .addAll(extensions)
+                .addAll(exts != null ? Arrays.stream(exts).collect(Collectors.toList()) : Collections.emptyList())
                 .build();
     }
 

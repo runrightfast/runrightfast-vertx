@@ -17,6 +17,7 @@ package co.runrightfast.core.security.cert;
 
 import co.runrightfast.core.ApplicationException;
 import static co.runrightfast.core.security.bc.BouncyCastleUtils.jcaX509ExtensionUtils;
+import static co.runrightfast.core.security.cert.KeyUsage.KEY_CERT_SIGN;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import java.math.BigInteger;
@@ -32,6 +33,7 @@ import lombok.NonNull;
 import lombok.ToString;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
+import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
@@ -49,16 +51,27 @@ import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
  *
  * @author alfio
  */
-@ToString(exclude = "caCert")
-@EqualsAndHashCode(of = "x509V3CertRequest")
+@ToString
+@EqualsAndHashCode
 public final class CAIssuedX509V3CertRequest {
-
-    @Getter
-    private final X509Certificate caCert;
 
     @Getter
     private final X509V3CertRequest x509V3CertRequest;
 
+    /**
+     *
+     * @param caCert
+     * <ol>
+     * <li>supplies the issuer principal
+     * <li>used to add the Authority Key Identifier extension
+     * </ol>
+     * @param serialNumber
+     * @param notBefore
+     * @param notAfter
+     * @param subjectPrincipal
+     * @param subjectPublicKey
+     * @param extensions
+     */
     public CAIssuedX509V3CertRequest(
             @NonNull final X509Certificate caCert,
             @NonNull final BigInteger serialNumber,
@@ -68,8 +81,7 @@ public final class CAIssuedX509V3CertRequest {
             @NonNull final PublicKey subjectPublicKey,
             @NonNull final Collection<X509CertExtension> extensions
     ) {
-        checkConstraints(extensions);
-        this.caCert = caCert;
+        checkArgs(caCert, extensions);
         this.x509V3CertRequest = new X509V3CertRequest(
                 caCert.getSubjectX500Principal(),
                 serialNumber,
@@ -77,8 +89,37 @@ public final class CAIssuedX509V3CertRequest {
                 notAfter,
                 subjectPrincipal,
                 subjectPublicKey,
-                augmentExtensions(extensions)
+                augmentExtensions(extensions, caCert)
         );
+    }
+
+    public CAIssuedX509V3CertRequest(
+            @NonNull final X509Certificate caCert,
+            @NonNull final BigInteger serialNumber,
+            @NonNull final Instant notBefore,
+            @NonNull final Instant notAfter,
+            @NonNull final X500Principal subjectPrincipal,
+            @NonNull final PublicKey subjectPublicKey,
+            @NonNull final Collection<X509CertExtension> extensions,
+            @NonNull final BasicConstraints basicConstraints
+    ) {
+        checkArgs(caCert, extensions);
+        this.x509V3CertRequest = new X509V3CertRequest(
+                caCert.getSubjectX500Principal(),
+                serialNumber,
+                notBefore,
+                notAfter,
+                subjectPrincipal,
+                subjectPublicKey,
+                augmentExtensions(extensions, caCert),
+                basicConstraints
+        );
+    }
+
+    private void checkArgs(final X509Certificate caCert, final Collection<X509CertExtension> extensions) {
+        checkArgument(caCert.getBasicConstraints() >= 0, "caCert cannot be used for signing certificates");
+        checkArgument(CertificateService.containsKeyUsage(caCert, KEY_CERT_SIGN));
+        checkConstraints(extensions);
     }
 
     private void checkConstraints(final Collection<X509CertExtension> extensions) {
@@ -90,7 +131,7 @@ public final class CAIssuedX509V3CertRequest {
         checkArgument(AuthorityKeyIdentifier.fromExtensions(exts) == null, "AuthorityKeyIdentifier must not be specified as an extension - it is added automatically");
     }
 
-    private Collection<X509CertExtension> augmentExtensions(final Collection<X509CertExtension> extensions) {
+    private Collection<X509CertExtension> augmentExtensions(final Collection<X509CertExtension> extensions, final X509Certificate caCert) {
         final JcaX509ExtensionUtils extUtils = jcaX509ExtensionUtils();
         final ImmutableList.Builder<X509CertExtension> x509CertExtensions = ImmutableList.<X509CertExtension>builder().addAll(extensions);
         try {

@@ -25,6 +25,15 @@ import lombok.NonNull;
  */
 public interface CertificateService {
 
+    static boolean containsKeyUsage(@NonNull final X509Certificate cert, @NonNull final KeyUsage keyUsage) {
+        final boolean[] keyUsages = cert.getKeyUsage();
+        if (keyUsages == null) {
+            return false;
+        }
+
+        return keyUsages[keyUsage.id];
+    }
+
     /**
      *
      * @param request X509V1CertRequest
@@ -56,6 +65,10 @@ public interface CertificateService {
      */
     default X509Certificate generateX509CertificateV3(@NonNull final CAIssuedX509V3CertRequest request, final PrivateKey privateKey) throws CertificateServiceException {
         return generateX509CertificateV3(request.getX509V3CertRequest(), privateKey);
+    }
+
+    default X509Certificate generateSelfSignedX509CertificateV3(@NonNull final SelfSignedX509V3CertRequest request) throws CertificateServiceException {
+        return generateX509CertificateV3(request.getX509V3CertRequest(), request.getPrivateKey());
     }
 
 }

@@ -17,12 +17,18 @@ package co.runrightfast.core.security.cert;
 
 import co.runrightfast.core.ApplicationException;
 import static co.runrightfast.core.security.ASN1Encoding.DER;
+import co.runrightfast.core.security.bc.OID;
+import static co.runrightfast.core.utils.PreconditionErrorMessageTemplates.MUST_BE_GREATER_THAN_OR_EQUAL_TO;
+import static com.google.common.base.Preconditions.checkArgument;
 import java.io.IOException;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.KeyUsage;
 
 /**
  *
@@ -44,5 +50,50 @@ public class X509CertExtension {
         } catch (final IOException ex) {
             throw new ApplicationException(ex);
         }
+    }
+
+    public static X509CertExtension basicConstraints(@NonNull final BasicConstraints basicConstraints) {
+        return X509CertExtension.builder()
+                .oid(OID.BASIC_CONSTRAINTS.oid)
+                .value(basicConstraints)
+                .critical(true)
+                .build();
+    }
+
+    public static X509CertExtension basicConstraintsForEndCertificate() {
+        return X509CertExtension.builder()
+                .oid(OID.BASIC_CONSTRAINTS.oid)
+                .value(new BasicConstraints(false))
+                .critical(true)
+                .build();
+    }
+
+    public static X509CertExtension basicConstraintsForCACertificate(final int pathLenConstraint) {
+        checkArgument(pathLenConstraint >= 0, MUST_BE_GREATER_THAN_OR_EQUAL_TO, "pathLenConstraint", 0);
+        return X509CertExtension.builder()
+                .oid(OID.BASIC_CONSTRAINTS.oid)
+                .value(new BasicConstraints(pathLenConstraint))
+                .critical(true)
+                .build();
+    }
+
+    /**
+     *
+     * @return with pathLenConstraint = {@link Integer#MAX_VALUE}
+     */
+    public static X509CertExtension basicConstraintsForCACertificate() {
+        return X509CertExtension.builder()
+                .oid(OID.BASIC_CONSTRAINTS.oid)
+                .value(new BasicConstraints(Integer.MAX_VALUE))
+                .critical(true)
+                .build();
+    }
+
+    public static X509CertExtension keyUsage(@NonNull final KeyUsage keyUsage) {
+        return X509CertExtension.builder()
+                .oid(OID.KEY_USAGE.oid)
+                .value(keyUsage)
+                .critical(true)
+                .build();
     }
 }

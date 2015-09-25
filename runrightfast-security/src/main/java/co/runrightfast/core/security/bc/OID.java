@@ -18,23 +18,23 @@ package co.runrightfast.core.security.bc;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 
 /**
+ * The OID can be looked up via:
+ *
+ * <pre>http://oid-info.com/get/{oid}</pre>
+ *
+ * e.g http://oid-info.com/get/2.5.29.19
  *
  * @author alfio
  */
 public enum OID {
 
-    /**
-     * http://oid-info.com/get/1.0.10118.3.0.59
-     */
+    AUTHORITY_KEY_IDENIFIER("2.5.29.35"),
+    BASIC_CONSTRAINTS("2.5.29.19"),
+    KEY_USAGE("2.5.29.15"),
     SHA256("1.0.10118.3.0.59"),
-    /**
-     * http://oid-info.com/get/1.0.10118.3.0.60
-     */
     SHA384("1.0.10118.3.0.60"),
-    /**
-     * http://www.oid-info.com/get/2.16.840.1.101.3.4.2.3
-     */
-    SHA512("2.16.840.1.101.3.4.2.3");
+    SHA512("2.16.840.1.101.3.4.2.3"),
+    SUBJECT_KEY_IDENIFIER("2.5.29.14"),;
 
     public final ASN1ObjectIdentifier oid;
 
